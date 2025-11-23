@@ -47,7 +47,7 @@ function LoginContent() {
               <Quote className="relative w-10 h-10 text-brand-400" />
             </div>
             <span className="font-bold text-3xl tracking-tight">
-              Quote<span className="text-brand-400">dis</span>
+              Quote<span className="text-brand-400">cord</span>
             </span>
           </Link>
           <p className="text-dark-400">

@@ -9,18 +9,18 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Quotedis - Turn Discord Messages into Beautiful Quotes',
+  title: 'Quotecord - Turn Discord Messages into Beautiful Quotes',
   description: 'Transform any Discord message into stunning, shareable quote images in seconds. The easiest way to create memorable quotes from your favorite Discord moments.',
-  keywords: ['Discord', 'quote', 'bot', 'image', 'generator', 'message', 'quotedis', 'quote this'],
+  keywords: ['Discord', 'quote', 'bot', 'image', 'generator', 'message', 'quotecord', 'quote this'],
   openGraph: {
-    title: 'Quotedis - Turn Discord Messages into Beautiful Quotes',
+    title: 'Quotecord - Turn Discord Messages into Beautiful Quotes',
     description: 'Transform any Discord message into stunning, shareable quote images in seconds.',
     type: 'website',
-    siteName: 'Quotedis',
+    siteName: 'Quotecord',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Quotedis - Turn Discord Messages into Beautiful Quotes',
+    title: 'Quotecord - Turn Discord Messages into Beautiful Quotes',
     description: 'Transform any Discord message into stunning, shareable quote images in seconds.',
   },
   robots: {
