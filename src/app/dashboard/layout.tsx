@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   MessageSquareQuote,
@@ -15,7 +15,7 @@ import {
   X
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
-import { logout } from '@/lib/supabase'
+import { logout, supabase } from '@/lib/supabase'
 
 export default function DashboardLayout({
   children,
@@ -26,13 +26,52 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
 
   useEffect(() => {
-    getCurrentUser().then(u => {
-      setUser(u)
+    // Handle session from URL hash (implicit flow) or existing session
+    const initSession = async () => {
+      // This will automatically parse tokens from URL hash if present
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('Session error:', error)
+        router.push('/login?error=' + encodeURIComponent(error.message))
+        return
+      }
+
+      if (!session) {
+        // No session found, redirect to login
+        router.push('/login')
+        return
+      }
+
+      // Clean up URL hash if present
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+
+      // Fetch user profile
+      const userData = await getCurrentUser()
+      setUser(userData)
       setLoading(false)
-    })
-  }, [])
+    }
+
+    initSession()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          router.push('/login')
+        }
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router])
 
   const handleLogout = async () => {
     await logout()
@@ -51,6 +90,31 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-discord-blurple/30 border-t-discord-blurple rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // Handle case where user session exists but profile data is missing
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 mb-4">
+            <h2 className="text-lg font-semibold text-red-400 mb-2">Profile Not Found</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              We couldn&apos;t load your profile data. This may happen if your account was not set up correctly.
+            </p>
+            <button
+              onClick={handleLogout}
+              className="bg-discord-blurple hover:bg-discord-blurple/80 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Sign Out and Try Again
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            If this problem persists, please contact support.
+          </p>
+        </div>
       </div>
     )
   }
