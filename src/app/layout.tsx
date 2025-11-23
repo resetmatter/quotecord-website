@@ -2,16 +2,30 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
-  title: 'DisQuote - Turn Discord Messages into Beautiful Quotes',
-  description: 'Transform any Discord message into stunning, shareable quote images. Right-click. Customize. Share.',
-  keywords: ['Discord', 'quote', 'bot', 'image', 'generator', 'message'],
+  title: 'Quotedis - Turn Discord Messages into Beautiful Quotes',
+  description: 'Transform any Discord message into stunning, shareable quote images in seconds. The easiest way to create memorable quotes from your favorite Discord moments.',
+  keywords: ['Discord', 'quote', 'bot', 'image', 'generator', 'message', 'quotedis', 'quote this'],
   openGraph: {
-    title: 'DisQuote - Turn Discord Messages into Beautiful Quotes',
-    description: 'Transform any Discord message into stunning, shareable quote images.',
+    title: 'Quotedis - Turn Discord Messages into Beautiful Quotes',
+    description: 'Transform any Discord message into stunning, shareable quote images in seconds.',
     type: 'website',
+    siteName: 'Quotedis',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Quotedis - Turn Discord Messages into Beautiful Quotes',
+    description: 'Transform any Discord message into stunning, shareable quote images in seconds.',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 
@@ -21,8 +35,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={inter.variable}>
+      <body className={`${inter.className} bg-mesh antialiased`}>
+        {children}
+      </body>
     </html>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Crown, Sparkles, ExternalLink, AlertCircle } from 'lucide-react'
+import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 
 export default function BillingPage() {
@@ -66,18 +66,18 @@ export default function BillingPage() {
       <h1 className="text-2xl font-bold mb-6">Billing</h1>
 
       {/* Current Plan */}
-      <div className="bg-discord-darker border border-gray-800 rounded-xl p-6 mb-6">
+      <div className="glass rounded-2xl p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
 
         <div className="flex items-center gap-3 mb-4">
           {isPremium ? (
             <>
-              <div className="w-12 h-12 bg-premium-gold/20 rounded-lg flex items-center justify-center">
-                <Crown className="w-6 h-6 text-premium-gold" />
+              <div className="w-12 h-12 rounded-xl icon-bg-pro flex items-center justify-center">
+                <Crown className="w-6 h-6 text-pro-gold" />
               </div>
               <div>
-                <p className="font-semibold">Premium</p>
-                <p className="text-sm text-gray-400">
+                <p className="font-semibold gradient-text-pro">Pro</p>
+                <p className="text-sm text-dark-400">
                   {user?.subscription?.current_period_end
                     ? `Renews ${new Date(user.subscription.current_period_end).toLocaleDateString()}`
                     : 'Active subscription'
@@ -87,12 +87,12 @@ export default function BillingPage() {
             </>
           ) : (
             <>
-              <div className="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-gray-400" />
+              <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-brand-400" />
               </div>
               <div>
                 <p className="font-semibold">Free</p>
-                <p className="text-sm text-gray-400">Basic features included</p>
+                <p className="text-sm text-dark-400">Basic features included</p>
               </div>
             </>
           )}
@@ -102,7 +102,7 @@ export default function BillingPage() {
           <button
             onClick={handleManageSubscription}
             disabled={loading}
-            className="text-sm text-discord-blurple hover:underline flex items-center gap-1 disabled:opacity-50"
+            className="text-sm text-brand-400 hover:text-brand-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
           >
             Manage Subscription
             <ExternalLink className="w-3 h-3" />
@@ -112,43 +112,62 @@ export default function BillingPage() {
 
       {/* Upgrade Section (for free users) */}
       {!isPremium && (
-        <div className="bg-gradient-to-b from-discord-blurple/20 to-discord-darker border border-discord-blurple/50 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Upgrade to Premium</h2>
+        <div className="relative glass rounded-2xl p-6 border-gradient-pro overflow-hidden">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pro-amber to-pro-gold text-dark-900 text-sm font-bold rounded-full shadow-glow-pro">
+              <Star className="w-4 h-4" />
+              UPGRADE
+            </span>
+          </div>
 
-          <p className="text-gray-400 mb-6">
-            Unlock animated GIFs, preview mode, multi-message quotes, and remove watermarks.
-          </p>
+          <h2 className="text-lg font-semibold mb-4 mt-2">Upgrade to Pro</h2>
+
+          <ul className="space-y-2 mb-6">
+            {[
+              'Preview mode',
+              'Animated GIF export',
+              'Multi-message quotes',
+              'Server avatar choice',
+              'Save presets',
+              'No watermark'
+            ].map((feature, i) => (
+              <li key={i} className="flex items-center gap-2 text-sm text-dark-300">
+                <Check className="w-4 h-4 text-pro-gold flex-shrink-0" />
+                {feature}
+              </li>
+            ))}
+          </ul>
 
           {/* Billing Period Toggle */}
           <div className="mb-6">
-            <label className="text-sm text-gray-400 mb-2 block">Select billing period</label>
+            <label className="text-sm text-dark-400 mb-2 block">Select billing period</label>
             <div className="flex gap-3">
               <button
                 onClick={() => setBillingPeriod('monthly')}
-                className={`flex-1 p-4 rounded-lg border transition-colors ${
+                className={`flex-1 p-4 rounded-xl border transition-all ${
                   billingPeriod === 'monthly'
-                    ? 'border-discord-blurple bg-discord-blurple/10'
-                    : 'border-gray-700 hover:border-gray-600'
+                    ? 'border-brand-500 bg-brand-500/10'
+                    : 'border-dark-700 hover:border-dark-600'
                 }`}
               >
-                <div className="font-semibold">Monthly</div>
+                <div className="font-semibold text-sm">Monthly</div>
                 <div className="text-2xl font-bold">$1.99</div>
-                <div className="text-sm text-gray-400">/month</div>
+                <div className="text-sm text-dark-400">/month</div>
               </button>
               <button
                 onClick={() => setBillingPeriod('annual')}
-                className={`flex-1 p-4 rounded-lg border transition-colors relative ${
+                className={`flex-1 p-4 rounded-xl border transition-all relative ${
                   billingPeriod === 'annual'
-                    ? 'border-discord-blurple bg-discord-blurple/10'
-                    : 'border-gray-700 hover:border-gray-600'
+                    ? 'border-brand-500 bg-brand-500/10'
+                    : 'border-dark-700 hover:border-dark-600'
                 }`}
               >
-                <div className="absolute -top-2 right-2 bg-discord-green text-black text-xs font-semibold px-2 py-0.5 rounded">
+                <div className="absolute -top-2 right-2 bg-success text-dark-900 text-xs font-bold px-2 py-0.5 rounded">
                   Save 37%
                 </div>
-                <div className="font-semibold">Annual</div>
+                <div className="font-semibold text-sm">Annual</div>
                 <div className="text-2xl font-bold">$14.99</div>
-                <div className="text-sm text-gray-400">/year</div>
+                <div className="text-sm text-dark-400">/year</div>
               </button>
             </div>
           </div>
@@ -156,35 +175,37 @@ export default function BillingPage() {
           <button
             onClick={handleUpgrade}
             disabled={loading}
-            className="w-full bg-discord-blurple hover:bg-discord-blurple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber disabled:opacity-50 disabled:cursor-not-allowed text-dark-900 font-bold py-3 px-4 rounded-xl transition-all shadow-glow-pro"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-dark-900/30 border-t-dark-900 rounded-full animate-spin" />
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
                 Upgrade Now
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </>
             )}
           </button>
 
-          <p className="text-xs text-gray-500 text-center mt-4">
-            Secure payment powered by Stripe. Cancel anytime.
-          </p>
+          <div className="flex items-center gap-2 justify-center mt-4 text-dark-500 text-xs">
+            <Shield className="w-3.5 h-3.5" />
+            Secure payment by Stripe. Cancel anytime.
+          </div>
         </div>
       )}
 
       {/* Payment Info */}
-      <div className="mt-6 p-4 bg-gray-800/50 rounded-lg flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-gray-400">
+      <div className="mt-6 glass rounded-xl p-4 flex items-start gap-3">
+        <Shield className="w-5 h-5 text-dark-400 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-dark-400">
           <p className="mb-1">
             All payments are processed securely through Stripe. We never store your card details.
           </p>
           <p>
             Need help with billing? Contact us at{' '}
-            <a href="mailto:support@disquote.app" className="text-discord-blurple hover:underline">
-              support@disquote.app
+            <a href="mailto:support@quotedis.app" className="text-brand-400 hover:text-brand-300 transition-colors">
+              support@quotedis.app
             </a>
           </p>
         </div>

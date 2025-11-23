@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
-  MessageSquareQuote,
+  Quote,
   Home,
   Settings,
   CreditCard,
@@ -29,9 +29,7 @@ export default function DashboardLayout({
   const router = useRouter()
 
   useEffect(() => {
-    // Handle session from URL hash (implicit flow) or existing session
     const initSession = async () => {
-      // This will automatically parse tokens from URL hash if present
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error) {
@@ -41,17 +39,14 @@ export default function DashboardLayout({
       }
 
       if (!session) {
-        // No session found, redirect to login
         router.push('/login')
         return
       }
 
-      // Clean up URL hash if present
       if (window.location.hash) {
         window.history.replaceState(null, '', window.location.pathname)
       }
 
-      // Fetch user profile
       const userData = await getCurrentUser()
       setUser(userData)
       setLoading(false)
@@ -59,7 +54,6 @@ export default function DashboardLayout({
 
     initSession()
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
@@ -88,30 +82,29 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-discord-blurple/30 border-t-discord-blurple rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-mesh">
+        <div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
       </div>
     )
   }
 
-  // Handle case where user session exists but profile data is missing
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-mesh">
         <div className="text-center max-w-md">
-          <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 mb-4">
-            <h2 className="text-lg font-semibold text-red-400 mb-2">Profile Not Found</h2>
-            <p className="text-gray-400 text-sm mb-4">
+          <div className="glass rounded-2xl p-8 mb-4">
+            <h2 className="text-lg font-semibold text-error mb-2">Profile Not Found</h2>
+            <p className="text-dark-400 text-sm mb-6">
               We couldn&apos;t load your profile data. This may happen if your account was not set up correctly.
             </p>
             <button
               onClick={handleLogout}
-              className="bg-discord-blurple hover:bg-discord-blurple/80 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded-xl transition-all"
             >
               Sign Out and Try Again
             </button>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-dark-500">
             If this problem persists, please contact support.
           </p>
         </div>
@@ -120,7 +113,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-mesh">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -132,30 +125,35 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-discord-darker border-r border-gray-800
+        w-64 glass-darker
         transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-800">
-            <Link href="/" className="flex items-center gap-2">
-              <MessageSquareQuote className="w-8 h-8 text-discord-blurple" />
-              <span className="font-bold text-xl">DisQuote</span>
+          <div className="p-6 border-b border-dark-700">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-brand-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+                <Quote className="relative w-7 h-7 text-brand-400" />
+              </div>
+              <span className="font-bold text-lg tracking-tight">
+                Quote<span className="text-brand-400">dis</span>
+              </span>
             </Link>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4">
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {navItems.map(item => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                       pathname === item.href
-                        ? 'bg-discord-blurple text-white'
-                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                        ? 'bg-brand-500 text-white shadow-glow'
+                        : 'text-dark-400 hover:text-white hover:bg-dark-800/50'
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -168,7 +166,7 @@ export default function DashboardLayout({
           </nav>
 
           {/* User */}
-          <div className="p-4 border-t border-gray-800">
+          <div className="p-4 border-t border-dark-700">
             <div className="flex items-center gap-3 mb-4">
               {user?.discord_avatar ? (
                 <Image
@@ -179,7 +177,7 @@ export default function DashboardLayout({
                   className="rounded-full"
                 />
               ) : (
-                <div className="w-10 h-10 bg-discord-blurple rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium">
                     {user?.discord_username?.[0]?.toUpperCase() || '?'}
                   </span>
@@ -187,11 +185,11 @@ export default function DashboardLayout({
               )}
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{user?.discord_username || 'User'}</p>
-                <p className="text-xs text-gray-500 flex items-center gap-1">
+                <p className="text-xs text-dark-500 flex items-center gap-1">
                   {isPremium ? (
                     <>
-                      <Crown className="w-3 h-3 text-premium-gold" />
-                      <span className="text-premium-gold">Premium</span>
+                      <Crown className="w-3 h-3 text-pro-gold" />
+                      <span className="text-pro-gold font-medium">Pro</span>
                     </>
                   ) : (
                     'Free'
@@ -201,7 +199,7 @@ export default function DashboardLayout({
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -213,15 +211,15 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between p-4 border-b border-gray-800 bg-discord-darker">
+        <header className="lg:hidden flex items-center justify-between p-4 glass-darker">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-gray-400 hover:text-white"
+            className="p-2 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all"
           >
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-medium">Dashboard</span>
-          <div className="w-6" />
+          <div className="w-10" />
         </header>
 
         {/* Page content */}

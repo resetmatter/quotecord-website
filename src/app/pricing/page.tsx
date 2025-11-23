@@ -4,61 +4,74 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { Check, X, Sparkles, HelpCircle } from 'lucide-react'
+import { Check, X, Sparkles, ChevronDown, Crown, Star, ArrowRight, Zap } from 'lucide-react'
 
 type BillingPeriod = 'monthly' | 'annual'
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('annual')
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
-    <main className="min-h-screen">
+    <>
       <Header />
-
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
+      <main className="relative pt-32 pb-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Hero */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Start creating beautiful quotes for free. Upgrade to Premium for advanced features and no watermarks.
+            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+              Simple, transparent
+              <span className="gradient-text-pro"> pricing</span>
+            </h1>
+            <p className="text-dark-400 text-lg max-w-2xl mx-auto">
+              Start creating beautiful quotes for free. Upgrade to Pro for advanced features and no watermarks.
             </p>
 
             {/* Billing Toggle */}
-            <div className="mt-8 inline-flex items-center bg-discord-darker rounded-lg p-1">
+            <div className="mt-8 inline-flex items-center glass rounded-xl p-1.5">
               <button
                 onClick={() => setBillingPeriod('monthly')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   billingPeriod === 'monthly'
-                    ? 'bg-discord-blurple text-white'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'bg-brand-500 text-white shadow-glow'
+                    : 'text-dark-400 hover:text-white'
                 }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setBillingPeriod('annual')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                   billingPeriod === 'annual'
-                    ? 'bg-discord-blurple text-white'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'bg-brand-500 text-white shadow-glow'
+                    : 'text-dark-400 hover:text-white'
                 }`}
               >
                 Annual
-                <span className="ml-2 text-xs bg-discord-green/20 text-discord-green px-2 py-0.5 rounded">
-                  Save 37%
+                <span className="text-xs bg-success/20 text-success px-2 py-0.5 rounded font-semibold">
+                  -37%
                 </span>
               </button>
             </div>
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
+          <div className="grid md:grid-cols-2 gap-8 mb-20">
             {/* Free Tier */}
-            <div className="bg-discord-darker border border-gray-800 rounded-xl p-8">
-              <h2 className="text-2xl font-semibold mb-2">Free</h2>
-              <p className="text-gray-400 mb-6">Perfect for casual users</p>
-              <div className="text-4xl font-bold mb-8">
-                $0<span className="text-lg text-gray-400">/forever</span>
+            <div className="glass rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl icon-bg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-brand-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Free</h2>
+                  <p className="text-dark-400 text-sm">Perfect for casual users</p>
+                </div>
+              </div>
+
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className="text-5xl font-bold">$0</span>
+                <span className="text-dark-400">/forever</span>
               </div>
 
               <ul className="space-y-4 mb-8">
@@ -79,35 +92,53 @@ export default function PricingPage() {
 
               <Link
                 href="/add"
-                className="block w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
+                className="block w-full text-center bg-dark-800/50 hover:bg-dark-700/50 text-white font-semibold py-3 px-6 rounded-xl border border-dark-600 hover:border-brand-500/50 transition-all"
               >
                 Get Started Free
               </Link>
             </div>
 
-            {/* Premium Tier */}
-            <div className="bg-gradient-to-b from-discord-blurple/20 to-discord-darker border border-discord-blurple/50 rounded-xl p-8 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-premium-gold text-black text-sm font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Popular
+            {/* Pro Tier */}
+            <div className="relative glass rounded-2xl p-8 border-gradient-pro">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pro-amber to-pro-gold text-dark-900 text-sm font-bold rounded-full shadow-glow-pro">
+                  <Star className="w-4 h-4" />
+                  MOST POPULAR
+                </span>
               </div>
 
-              <h2 className="text-2xl font-semibold mb-2">Premium</h2>
-              <p className="text-gray-400 mb-6">For power users & content creators</p>
-              <div className="text-4xl font-bold mb-2">
+              <div className="flex items-center gap-3 mb-4 mt-2">
+                <div className="w-10 h-10 rounded-xl icon-bg-pro flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-pro-gold" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Pro</h2>
+                  <p className="text-dark-400 text-sm">For power users & creators</p>
+                </div>
+              </div>
+
+              <div className="mb-2">
                 {billingPeriod === 'monthly' ? (
-                  <>$1.99<span className="text-lg text-gray-400">/month</span></>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-bold gradient-text-pro">$1.99</span>
+                    <span className="text-dark-400">/month</span>
+                  </div>
                 ) : (
-                  <>$14.99<span className="text-lg text-gray-400">/year</span></>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-bold gradient-text-pro">$14.99</span>
+                    <span className="text-dark-400">/year</span>
+                  </div>
                 )}
               </div>
               {billingPeriod === 'annual' && (
-                <p className="text-sm text-discord-green mb-6">
-                  That&apos;s only $1.25/month!
+                <p className="text-sm text-success mb-6">
+                  That&apos;s only $1.25/month - save $9/year!
                 </p>
               )}
               {billingPeriod === 'monthly' && (
-                <p className="text-sm text-gray-400 mb-6">&nbsp;</p>
+                <p className="text-sm text-dark-400 mb-6">
+                  or $14.99/year (save 37%)
+                </p>
               )}
 
               <ul className="space-y-4 mb-8">
@@ -127,29 +158,31 @@ export default function PricingPage() {
 
               <Link
                 href="/login"
-                className="block w-full bg-discord-blurple hover:bg-discord-blurple/80 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
+                className="group flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-3 px-6 rounded-xl transition-all shadow-glow-pro"
               >
-                Upgrade to Premium
+                <Sparkles className="w-5 h-5" />
+                Get Pro
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
 
           {/* Feature Comparison Table */}
-          <div className="bg-discord-darker rounded-xl border border-gray-800 overflow-hidden">
-            <div className="p-6 border-b border-gray-800">
+          <div className="glass rounded-2xl overflow-hidden mb-20">
+            <div className="p-6 border-b border-dark-700">
               <h2 className="text-xl font-semibold">Feature Comparison</h2>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="text-left py-4 px-6 font-medium">Feature</th>
-                    <th className="text-center py-4 px-6 font-medium">Free</th>
-                    <th className="text-center py-4 px-6 font-medium text-premium-gold">Premium</th>
+                  <tr className="border-b border-dark-700">
+                    <th className="text-left py-4 px-6 font-medium text-dark-300">Feature</th>
+                    <th className="text-center py-4 px-6 font-medium text-dark-300">Free</th>
+                    <th className="text-center py-4 px-6 font-medium gradient-text-pro">Pro</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-dark-800">
                   <ComparisonRow feature="Quote Creation" free="Unlimited" premium="Unlimited" />
                   <ComparisonRow feature="Templates" free="All 3" premium="All 3" />
                   <ComparisonRow feature="Fonts" free="All 19" premium="All 19" />
@@ -167,33 +200,59 @@ export default function PricingPage() {
           </div>
 
           {/* FAQ */}
-          <div className="mt-16">
+          <div>
             <h2 className="text-2xl font-semibold text-center mb-8">Frequently Asked Questions</h2>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <FAQItem
-                question="Can I cancel anytime?"
-                answer="Yes! You can cancel your Premium subscription at any time. You'll continue to have access until the end of your billing period."
-              />
-              <FAQItem
-                question="What payment methods do you accept?"
-                answer="We accept all major credit cards through Stripe, including Visa, Mastercard, and American Express."
-              />
-              <FAQItem
-                question="Is there a free trial?"
-                answer="While we don't offer a traditional free trial, you can use all core features for free forever. Premium just unlocks additional power features."
-              />
-              <FAQItem
-                question="Do I need to sign up to use the bot?"
-                answer="No! You can use the free tier without signing up. Only sign up when you're ready to upgrade to Premium."
-              />
+            <div className="space-y-3">
+              {[
+                {
+                  question: "Can I cancel anytime?",
+                  answer: "Yes! You can cancel your Pro subscription at any time. You'll continue to have access until the end of your billing period."
+                },
+                {
+                  question: "What payment methods do you accept?",
+                  answer: "We accept all major credit cards through Stripe, including Visa, Mastercard, and American Express. Your payment info is secure and never stored on our servers."
+                },
+                {
+                  question: "Is there a free trial?",
+                  answer: "While we don't offer a traditional free trial, you can use all core features for free forever. Pro just unlocks additional power features."
+                },
+                {
+                  question: "Do I need to sign up to use the bot?",
+                  answer: "No! You can use the free tier without signing up. Only sign up when you're ready to upgrade to Pro."
+                },
+                {
+                  question: "Can I switch between monthly and annual?",
+                  answer: "Yes! You can switch between billing periods at any time. When switching to annual, you'll be prorated for any remaining time on your monthly plan."
+                },
+                {
+                  question: "What happens to my presets if I cancel?",
+                  answer: "Your presets are saved but won't be accessible until you resubscribe. We keep them for 90 days in case you decide to come back."
+                }
+              ].map((faq, index) => (
+                <div key={index} className="glass rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                    className="w-full flex items-center justify-between p-5 text-left hover:bg-dark-800/30 transition-colors"
+                  >
+                    <span className="font-medium">{faq.question}</span>
+                    <ChevronDown className={`w-5 h-5 text-dark-400 transition-transform ${
+                      openFaq === index ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                  {openFaq === index && (
+                    <div className="px-5 pb-5 text-dark-400 text-sm animate-slide-down">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </section>
-
+      </main>
       <Footer />
-    </main>
+    </>
   )
 }
 
@@ -209,11 +268,11 @@ function PricingItem({
   return (
     <li className="flex items-center gap-3">
       {included ? (
-        <Check className={`w-5 h-5 flex-shrink-0 ${premium ? 'text-premium-gold' : 'text-discord-green'}`} />
+        <Check className={`w-5 h-5 flex-shrink-0 ${premium ? 'text-pro-gold' : 'text-success'}`} />
       ) : (
-        <X className="w-5 h-5 flex-shrink-0 text-gray-600" />
+        <X className="w-5 h-5 flex-shrink-0 text-dark-600" />
       )}
-      <span className={included ? (premium ? 'text-white' : 'text-gray-300') : 'text-gray-500'}>
+      <span className={included ? (premium ? 'text-white font-medium' : 'text-dark-300') : 'text-dark-500'}>
         {children}
       </span>
     </li>
@@ -230,42 +289,30 @@ function ComparisonRow({
   premium: string | boolean
 }) {
   return (
-    <tr className="border-b border-gray-800 last:border-0">
-      <td className="py-4 px-6 text-gray-300">{feature}</td>
+    <tr>
+      <td className="py-4 px-6 text-dark-300">{feature}</td>
       <td className="text-center py-4 px-6">
         {typeof free === 'boolean' ? (
           free ? (
-            <Check className="w-5 h-5 text-discord-green mx-auto" />
+            <Check className="w-5 h-5 text-success mx-auto" />
           ) : (
-            <X className="w-5 h-5 text-gray-600 mx-auto" />
+            <X className="w-5 h-5 text-dark-600 mx-auto" />
           )
         ) : (
-          <span className="text-gray-400">{free}</span>
+          <span className="text-dark-400">{free}</span>
         )}
       </td>
       <td className="text-center py-4 px-6">
         {typeof premium === 'boolean' ? (
           premium ? (
-            <Check className="w-5 h-5 text-premium-gold mx-auto" />
+            <Check className="w-5 h-5 text-pro-gold mx-auto" />
           ) : (
-            <X className="w-5 h-5 text-gray-600 mx-auto" />
+            <X className="w-5 h-5 text-dark-600 mx-auto" />
           )
         ) : (
-          <span className="text-white">{premium}</span>
+          <span className="text-white font-medium">{premium}</span>
         )}
       </td>
     </tr>
-  )
-}
-
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="bg-discord-dark border border-gray-800 rounded-lg p-6">
-      <h3 className="font-medium mb-2 flex items-center gap-2">
-        <HelpCircle className="w-4 h-4 text-discord-blurple" />
-        {question}
-      </h3>
-      <p className="text-gray-400 text-sm">{answer}</p>
-    </div>
   )
 }

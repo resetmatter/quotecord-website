@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { MessageSquareQuote, ArrowLeft } from 'lucide-react'
+import { Quote, ArrowLeft, Shield } from 'lucide-react'
 import { loginWithDiscord } from '@/lib/supabase'
 
 function LoginContent() {
@@ -12,7 +12,6 @@ function LoginContent() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check for error from auth callback
     const errorParam = searchParams.get('error')
     if (errorParam) {
       setError(errorParam)
@@ -24,17 +23,17 @@ function LoginContent() {
       setLoading(true)
       setError(null)
       await loginWithDiscord()
-    } catch (err) {
+    } catch {
       setError('Failed to initiate login. Please try again.')
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-mesh">
       <Link
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        className="absolute top-6 left-6 flex items-center gap-2 text-dark-400 hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to home
@@ -42,20 +41,25 @@ function LoginContent() {
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <MessageSquareQuote className="w-10 h-10 text-discord-blurple" />
-            <h1 className="text-3xl font-bold">DisQuote</h1>
-          </div>
-          <p className="text-gray-400">
+          <Link href="/" className="inline-flex items-center justify-center gap-2.5 mb-4 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-brand-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+              <Quote className="relative w-10 h-10 text-brand-400" />
+            </div>
+            <span className="font-bold text-3xl tracking-tight">
+              Quote<span className="text-brand-400">dis</span>
+            </span>
+          </Link>
+          <p className="text-dark-400">
             Sign in to manage your subscription and preferences
           </p>
         </div>
 
-        <div className="bg-discord-darker rounded-xl p-8 border border-gray-800">
+        <div className="glass rounded-2xl p-8">
           <h2 className="text-xl font-semibold mb-6 text-center">Welcome back</h2>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
+            <div className="bg-error/10 border border-error/50 text-error px-4 py-3 rounded-xl mb-4 text-sm">
               {error}
             </div>
           )}
@@ -63,7 +67,7 @@ function LoginContent() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full bg-discord-blurple hover:bg-discord-blurple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-3"
+            className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-glow hover:shadow-glow-lg flex items-center justify-center gap-3"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -77,21 +81,26 @@ function LoginContent() {
             )}
           </button>
 
-          <p className="text-xs text-gray-500 text-center mt-4">
+          <div className="flex items-center gap-2 justify-center mt-4 text-dark-500 text-xs">
+            <Shield className="w-3.5 h-3.5" />
+            Secured by Discord OAuth
+          </div>
+
+          <p className="text-xs text-dark-500 text-center mt-4">
             By signing in, you agree to our{' '}
-            <Link href="/terms" className="text-discord-blurple hover:underline">
+            <Link href="/terms" className="text-brand-400 hover:text-brand-300">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="text-discord-blurple hover:underline">
+            <Link href="/privacy" className="text-brand-400 hover:text-brand-300">
               Privacy Policy
             </Link>
           </p>
         </div>
 
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-dark-500 text-sm mt-6">
           Don&apos;t have an account?{' '}
-          <span className="text-gray-400">
+          <span className="text-dark-400">
             It will be created automatically when you sign in.
           </span>
         </p>
@@ -103,8 +112,8 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-discord-blurple/30 border-t-discord-blurple rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-mesh">
+        <div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
       </div>
     }>
       <LoginContent />
