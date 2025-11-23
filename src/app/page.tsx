@@ -46,11 +46,11 @@ export default function Home() {
 
             {/* Main headline */}
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-slide-up">
-              <span className="gradient-text">Quote This</span>
+              <span className="gradient-text">quotecord</span>
             </h1>
 
             <p className="text-xl sm:text-2xl md:text-3xl text-dark-300 mb-4 animate-slide-up" style={{ animationDelay: '100ms' }}>
-              Turn Discord messages into beautiful quotes
+              Beautiful quotes from Discord messages
             </p>
 
             <p className="text-lg text-dark-400 max-w-2xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: '200ms' }}>
