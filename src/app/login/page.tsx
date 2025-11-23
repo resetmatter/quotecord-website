@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { MessageSquareQuote, ArrowLeft } from 'lucide-react'
 import { loginWithDiscord } from '@/lib/supabase'
@@ -8,6 +9,15 @@ import { loginWithDiscord } from '@/lib/supabase'
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Check for error from auth callback
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      setError(errorParam)
+    }
+  }, [searchParams])
 
   const handleLogin = async () => {
     try {

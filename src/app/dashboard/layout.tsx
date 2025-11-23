@@ -55,6 +55,31 @@ export default function DashboardLayout({
     )
   }
 
+  // Handle case where user session exists but profile data is missing
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 mb-4">
+            <h2 className="text-lg font-semibold text-red-400 mb-2">Profile Not Found</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              We couldn&apos;t load your profile data. This may happen if your account was not set up correctly.
+            </p>
+            <button
+              onClick={handleLogout}
+              className="bg-discord-blurple hover:bg-discord-blurple/80 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Sign Out and Try Again
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            If this problem persists, please contact support.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Mobile sidebar backdrop */}
