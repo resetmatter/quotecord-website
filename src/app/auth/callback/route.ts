@@ -17,33 +17,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // No code means something went wrong
-  if (!code) {
-    console.error('No code received in callback')
-    const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('error', 'No authorization code received')
-    return NextResponse.redirect(redirectUrl)
-  }
+  // If there's a code, exchange it for a session (PKCE flow)
+  if (code) {
+    try {
+      const cookieStore = cookies()
+      const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
-  try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (exchangeError) {
-      console.error('Code exchange error:', exchangeError.message)
+      if (exchangeError) {
+        console.error('Code exchange error:', exchangeError.message)
+        const redirectUrl = new URL('/login', request.url)
+        redirectUrl.searchParams.set('error', exchangeError.message)
+        return NextResponse.redirect(redirectUrl)
+      }
+    } catch (err) {
+      console.error('Auth callback error:', err)
       const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('error', exchangeError.message)
+      redirectUrl.searchParams.set('error', 'Authentication failed. Please try again.')
       return NextResponse.redirect(redirectUrl)
     }
-
-    // Success - redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  } catch (err) {
-    console.error('Auth callback error:', err)
-    const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('error', 'Authentication failed. Please try again.')
-    return NextResponse.redirect(redirectUrl)
   }
+
+  // Redirect to dashboard - if using implicit flow, tokens will be in URL hash
+  // and the dashboard's client-side code will handle them
+  return NextResponse.redirect(new URL('/dashboard', request.url))
 }
