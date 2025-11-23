@@ -22,8 +22,8 @@ import {
 } from 'lucide-react'
 
 export const metadata = {
-  title: 'Features - Quotedis',
-  description: 'Explore all the powerful features Quotedis offers to create stunning Discord quote images.',
+  title: 'Features - Quotecord',
+  description: 'Explore all the powerful features Quotecord offers to create stunning Discord quote images.',
 }
 
 export default function FeaturesPage() {
@@ -151,7 +151,7 @@ export default function FeaturesPage() {
             <div className="relative">
               <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
               <p className="text-dark-400 mb-8 max-w-xl mx-auto">
-                Add Quotedis to your Discord server and start creating beautiful quotes today.
+                Add Quotecord to your Discord server and start creating beautiful quotes today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

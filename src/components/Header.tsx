@@ -38,7 +38,7 @@ export function Header() {
               <Quote className="relative w-8 h-8 text-brand-400 group-hover:text-brand-300 transition-colors" />
             </div>
             <span className="font-bold text-xl tracking-tight">
-              Quote<span className="text-brand-400">dis</span>
+              Quote<span className="text-brand-400">cord</span>
             </span>
           </Link>
 

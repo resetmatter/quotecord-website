@@ -4,8 +4,8 @@ import { Footer } from '@/components/Footer'
 import { MessageCircle, Mail, Book, ExternalLink, ChevronRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'Support - Quotedis',
-  description: 'Get help with Quotedis or contact us for any questions.',
+  title: 'Support - Quotecord',
+  description: 'Get help with Quotecord or contact us for any questions.',
 }
 
 export default function SupportPage() {
@@ -21,7 +21,7 @@ export default function SupportPage() {
               <span className="gradient-text"> Support</span>
             </h1>
             <p className="text-dark-400 text-lg">
-              Get help with Quotedis or contact us for any questions
+              Get help with Quotecord or contact us for any questions
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export default function SupportPage() {
             </a>
 
             <a
-              href="mailto:support@quotedis.app"
+              href="mailto:support@quotecord.app"
               className="glass rounded-2xl p-6 card-hover group"
             >
               <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -54,7 +54,7 @@ export default function SupportPage() {
               </div>
               <h2 className="text-lg font-semibold mb-2">Email Support</h2>
               <p className="text-dark-400 text-sm">
-                For billing issues or private inquiries, email us at support@quotedis.app
+                For billing issues or private inquiries, email us at support@quotecord.app
               </p>
             </a>
           </div>
@@ -80,8 +80,8 @@ export default function SupportPage() {
                 answer="Animated GIFs are a Pro feature. When you create a quote from a user with an animated avatar, the bot will automatically generate a GIF instead of a PNG. Upgrade to Pro to unlock this feature."
               />
               <FAQItem
-                question="Can I use Quotedis in DMs?"
-                answer="Yes! Quotedis supports both guild install and user install modes. You can add it to your user account to use in DMs and group chats."
+                question="Can I use Quotecord in DMs?"
+                answer="Yes! Quotecord supports both guild install and user install modes. You can add it to your user account to use in DMs and group chats."
               />
               <FAQItem
                 question="How do I cancel my subscription?"
@@ -93,7 +93,7 @@ export default function SupportPage() {
               />
               <FAQItem
                 question="Is there a refund policy?"
-                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@quotedis.app with your Discord username and we'll process your refund."
+                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@quotecord.app with your Discord username and we'll process your refund."
               />
             </div>
           </div>

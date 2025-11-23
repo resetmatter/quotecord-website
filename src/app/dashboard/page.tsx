@@ -140,7 +140,7 @@ export default function DashboardPage() {
             href="/add"
             className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
           >
-            <span>Add Quotedis to Another Server</span>
+            <span>Add Quotecord to Another Server</span>
             <ArrowRight className="w-4 h-4 text-dark-400 group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
           </Link>
           <Link
