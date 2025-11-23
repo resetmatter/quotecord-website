@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "health": "./scripts/health-check.sh",
+    "fix": "./scripts/fix-issues.sh",
+    "db:setup": "./scripts/setup-database.sh"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",
