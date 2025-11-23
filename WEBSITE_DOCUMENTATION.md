@@ -4,7 +4,7 @@
 
 ---
 
-## Table of Contents
+## Table of Contents 
 
 1. [Bot Overview](#bot-overview)
 2. [Feature Breakdown: Free vs Premium](#feature-breakdown-free-vs-premium)
