@@ -1,64 +1,72 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { HelpCircle, MessageCircle, Mail, Book, ExternalLink } from 'lucide-react'
+import { MessageCircle, Mail, Book, ExternalLink, ChevronRight } from 'lucide-react'
+
+export const metadata = {
+  title: 'Support - Quotedis',
+  description: 'Get help with Quotedis or contact us for any questions.',
+}
 
 export default function SupportPage() {
   return (
-    <main className="min-h-screen">
+    <>
       <Header />
-
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <main className="relative pt-32 pb-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Hero */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Help & Support</h1>
-            <p className="text-gray-400">
-              Get help with DisQuote or contact us for any questions
+            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+              Help &
+              <span className="gradient-text"> Support</span>
+            </h1>
+            <p className="text-dark-400 text-lg">
+              Get help with Quotedis or contact us for any questions
             </p>
           </div>
 
           {/* Support Options */}
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 gap-6 mb-16">
             <a
               href="https://discord.gg/your-support-server"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-discord-darker border border-gray-800 rounded-xl p-6 hover:border-discord-blurple/50 transition-colors group"
+              className="glass rounded-2xl p-6 card-hover group"
             >
-              <div className="w-12 h-12 bg-discord-blurple/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-discord-blurple/30 transition-colors">
-                <MessageCircle className="w-6 h-6 text-discord-blurple" />
+              <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <MessageCircle className="w-6 h-6 text-brand-400" />
               </div>
               <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
                 Discord Support Server
-                <ExternalLink className="w-4 h-4 text-gray-500" />
+                <ExternalLink className="w-4 h-4 text-dark-500" />
               </h2>
-              <p className="text-gray-400 text-sm">
+              <p className="text-dark-400 text-sm">
                 Join our community for quick help, feature requests, and updates
               </p>
             </a>
 
             <a
-              href="mailto:support@disquote.app"
-              className="bg-discord-darker border border-gray-800 rounded-xl p-6 hover:border-discord-blurple/50 transition-colors group"
+              href="mailto:support@quotedis.app"
+              className="glass rounded-2xl p-6 card-hover group"
             >
-              <div className="w-12 h-12 bg-discord-blurple/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-discord-blurple/30 transition-colors">
-                <Mail className="w-6 h-6 text-discord-blurple" />
+              <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Mail className="w-6 h-6 text-brand-400" />
               </div>
               <h2 className="text-lg font-semibold mb-2">Email Support</h2>
-              <p className="text-gray-400 text-sm">
-                For billing issues or private inquiries, email us at support@disquote.app
+              <p className="text-dark-400 text-sm">
+                For billing issues or private inquiries, email us at support@quotedis.app
               </p>
             </a>
           </div>
 
           {/* FAQ */}
-          <div className="bg-discord-darker border border-gray-800 rounded-xl p-8">
+          <div className="glass rounded-2xl p-8" id="faq">
             <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <Book className="w-5 h-5 text-discord-blurple" />
+              <Book className="w-5 h-5 text-brand-400" />
               Frequently Asked Questions
             </h2>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <FAQItem
                 question="How do I create a quote?"
                 answer="Right-click on any message in Discord, hover over 'Apps', and select 'Create Quote'. You can then customize the template, font, theme, and orientation before generating your quote."
@@ -69,11 +77,11 @@ export default function SupportPage() {
               />
               <FAQItem
                 question="How do I get animated GIF quotes?"
-                answer="Animated GIFs are a Premium feature. When you create a quote from a user with an animated avatar, the bot will automatically generate a GIF instead of a PNG. Upgrade to Premium to unlock this feature."
+                answer="Animated GIFs are a Pro feature. When you create a quote from a user with an animated avatar, the bot will automatically generate a GIF instead of a PNG. Upgrade to Pro to unlock this feature."
               />
               <FAQItem
-                question="Can I use DisQuote in DMs?"
-                answer="Yes! DisQuote supports both guild install and user install modes. You can add it to your user account to use in DMs and group chats."
+                question="Can I use Quotedis in DMs?"
+                answer="Yes! Quotedis supports both guild install and user install modes. You can add it to your user account to use in DMs and group chats."
               />
               <FAQItem
                 question="How do I cancel my subscription?"
@@ -81,30 +89,29 @@ export default function SupportPage() {
               />
               <FAQItem
                 question="What happens when my subscription ends?"
-                answer="You'll be downgraded to the free tier. You'll keep access to all core features but lose premium features like animated GIFs, preview mode, and watermark removal."
+                answer="You'll be downgraded to the free tier. You'll keep access to all core features but lose Pro features like animated GIFs, preview mode, and watermark removal."
               />
               <FAQItem
                 question="Is there a refund policy?"
-                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@disquote.app with your Discord username and we'll process your refund."
+                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@quotedis.app with your Discord username and we'll process your refund."
               />
             </div>
           </div>
         </div>
-      </section>
-
+      </main>
       <Footer />
-    </main>
+    </>
   )
 }
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   return (
-    <div className="border-b border-gray-800 last:border-0 pb-6 last:pb-0">
+    <div className="border-b border-dark-700 last:border-0 pb-4 last:pb-0">
       <h3 className="font-medium mb-2 flex items-start gap-2">
-        <HelpCircle className="w-4 h-4 text-discord-blurple mt-1 flex-shrink-0" />
+        <ChevronRight className="w-4 h-4 text-brand-400 mt-1 flex-shrink-0" />
         {question}
       </h3>
-      <p className="text-gray-400 text-sm pl-6">{answer}</p>
+      <p className="text-dark-400 text-sm pl-6">{answer}</p>
     </div>
   )
 }

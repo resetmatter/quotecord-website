@@ -2,292 +2,372 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import {
+  Sparkles,
   Zap,
   Palette,
-  Type,
   Image,
-  Sparkles,
+  ArrowRight,
   Check,
   Star,
-  ArrowRight,
-  MousePointerClick,
-  Wand2,
-  Share2
+  MousePointer,
+  Sliders,
+  Share2,
+  Crown,
+  Film,
+  Eye,
+  Users,
+  Save,
+  Layers,
+  ChevronRight
 } from 'lucide-react'
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <>
       <Header />
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-discord-blurple/10 border border-discord-blurple/30 rounded-full px-4 py-2 mb-6">
-            <Sparkles className="w-4 h-4 text-discord-blurple" />
-            <span className="text-sm text-discord-blurple">Now with animated GIF support</span>
+      <main className="relative">
+        {/* Hero Section */}
+        <section className="relative min-h-screen flex items-center justify-center pt-20 pb-32 overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl animate-pulse-slow" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-3xl animate-pulse-slow delay-1000" />
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            Turn Discord Messages into{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-discord-blurple to-purple-500">
-              Beautiful Quotes
-            </span>
-          </h1>
-
-          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Transform any Discord message into stunning, shareable quote images in seconds.
-            Right-click. Customize. Share.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/add"
-              className="bg-discord-blurple hover:bg-discord-blurple/80 text-white font-semibold py-3 px-8 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              Add to Discord
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/features"
-              className="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-            >
-              See Features
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <div className="text-3xl font-bold text-discord-blurple">3</div>
-              <div className="text-gray-400 text-sm">Templates</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-discord-blurple">19</div>
-              <div className="text-gray-400 text-sm">Fonts</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-discord-blurple">2</div>
-              <div className="text-gray-400 text-sm">Themes</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-discord-blurple">Unlimited</div>
-              <div className="text-gray-400 text-sm">Quotes</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-discord-darker/50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-discord-blurple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MousePointerClick className="w-8 h-8 text-discord-blurple" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">1. Right-Click</h3>
-              <p className="text-gray-400">
-                Right-click any message in Discord and select &quot;Create Quote&quot;
-              </p>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-dark-800/50 border border-dark-700 mb-8 animate-fade-in">
+              <Sparkles className="w-4 h-4 text-pro-gold" />
+              <span className="text-sm text-dark-200">
+                Pro now available - Unlock GIF exports & more
+              </span>
+              <ChevronRight className="w-4 h-4 text-dark-400" />
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-discord-blurple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wand2 className="w-8 h-8 text-discord-blurple" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">2. Customize</h3>
-              <p className="text-gray-400">
-                Choose your template, font, theme, and orientation
-              </p>
-            </div>
+            {/* Main headline */}
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-slide-up">
+              <span className="gradient-text">Quote This</span>
+            </h1>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-discord-blurple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Share2 className="w-8 h-8 text-discord-blurple" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">3. Share</h3>
-              <p className="text-gray-400">
-                Get your beautiful quote image instantly and share it anywhere
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+            <p className="text-xl sm:text-2xl md:text-3xl text-dark-300 mb-4 animate-slide-up" style={{ animationDelay: '100ms' }}>
+              Turn Discord messages into beautiful quotes
+            </p>
 
-      {/* Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">Powerful Features</h2>
-          <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
-            Everything you need to create stunning quote images from your Discord messages
-          </p>
+            <p className="text-lg text-dark-400 max-w-2xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: '200ms' }}>
+              Right-click any message. Choose your style. Get stunning, shareable quote images in seconds.
+              The easiest way to capture memorable Discord moments.
+            </p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={<Zap className="w-6 h-6" />}
-              title="Instant Generation"
-              description="Create beautiful quotes in seconds with a simple right-click"
-            />
-            <FeatureCard
-              icon={<Palette className="w-6 h-6" />}
-              title="3 Templates"
-              description="Classic, Discord Screenshot, and Profile Background styles"
-            />
-            <FeatureCard
-              icon={<Type className="w-6 h-6" />}
-              title="19 Fonts"
-              description="Professional fonts across 7 categories for any style"
-            />
-            <FeatureCard
-              icon={<Image className="w-6 h-6" />}
-              title="Dark & Light Themes"
-              description="Choose the perfect theme to match your aesthetic"
-            />
-            <FeatureCard
-              icon={<Sparkles className="w-6 h-6" />}
-              title="Animated GIFs"
-              description="Auto-generates GIFs for animated avatars (Premium)"
-              premium
-            />
-            <FeatureCard
-              icon={<Star className="w-6 h-6" />}
-              title="No Watermark"
-              description="Clean exports without branding (Premium)"
-              premium
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Preview */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-discord-darker/50">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
-          <p className="text-gray-400 text-center mb-12">
-            Start free, upgrade when you need more power
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Free Tier */}
-            <div className="bg-discord-dark border border-gray-800 rounded-xl p-8">
-              <h3 className="text-xl font-semibold mb-2">Free</h3>
-              <div className="text-3xl font-bold mb-6">$0<span className="text-lg text-gray-400">/forever</span></div>
-
-              <ul className="space-y-3 mb-8">
-                <PricingFeature>Unlimited quote creation</PricingFeature>
-                <PricingFeature>All 3 templates</PricingFeature>
-                <PricingFeature>All 19 fonts</PricingFeature>
-                <PricingFeature>Dark & Light themes</PricingFeature>
-                <PricingFeature>Portrait & Landscape</PricingFeature>
-                <PricingFeature>High-quality PNG export</PricingFeature>
-              </ul>
-
-              <Link
-                href="/add"
-                className="block w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
-              >
-                Get Started
-              </Link>
-            </div>
-
-            {/* Premium Tier */}
-            <div className="bg-gradient-to-b from-discord-blurple/20 to-transparent border border-discord-blurple/50 rounded-xl p-8 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-premium-gold text-black text-sm font-semibold px-3 py-1 rounded-full">
-                Popular
-              </div>
-
-              <h3 className="text-xl font-semibold mb-2">Premium</h3>
-              <div className="text-3xl font-bold mb-2">
-                $1.99<span className="text-lg text-gray-400">/month</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-6">or $14.99/year (save 37%)</p>
-
-              <ul className="space-y-3 mb-8">
-                <PricingFeature>Everything in Free</PricingFeature>
-                <PricingFeature premium>Preview quotes before generating</PricingFeature>
-                <PricingFeature premium>Animated GIF export</PricingFeature>
-                <PricingFeature premium>Choose server avatar</PricingFeature>
-                <PricingFeature premium>Multi-message quotes (up to 5)</PricingFeature>
-                <PricingFeature premium>Save presets (up to 10)</PricingFeature>
-                <PricingFeature premium>No watermark</PricingFeature>
-              </ul>
-
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '300ms' }}>
               <Link
                 href="/pricing"
-                className="block w-full bg-discord-blurple hover:bg-discord-blurple/80 text-white font-medium py-3 px-4 rounded-lg transition-colors text-center"
+                className="group flex items-center gap-2 bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-4 px-8 rounded-xl transition-all shadow-glow-pro text-lg"
               >
-                Upgrade to Premium
+                <Sparkles className="w-5 h-5" />
+                Get Pro
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                href="/add"
+                className="group flex items-center gap-2 bg-dark-800/50 hover:bg-dark-700/50 text-white font-semibold py-4 px-8 rounded-xl border border-dark-600 hover:border-brand-500/50 transition-all text-lg"
+              >
+                Add to Discord - Free
+              </Link>
+            </div>
+
+            {/* Social proof */}
+            <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8 text-dark-400 text-sm animate-fade-in" style={{ animationDelay: '500ms' }}>
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 text-pro-gold fill-pro-gold" />
+                  ))}
+                </div>
+                <span>Loved by thousands</span>
+              </div>
+              <div className="hidden sm:block w-px h-4 bg-dark-700" />
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                <span>Active in 10,000+ servers</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="py-24 relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                Three clicks to perfect quotes
+              </h2>
+              <p className="text-dark-400 text-lg max-w-2xl mx-auto">
+                No complicated setup. No learning curve. Just beautiful quotes.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  step: '01',
+                  icon: MousePointer,
+                  title: 'Right-click',
+                  description: 'Select any message in Discord and choose "Create Quote" from the context menu'
+                },
+                {
+                  step: '02',
+                  icon: Sliders,
+                  title: 'Customize',
+                  description: 'Pick from templates, fonts, themes, and orientations to match your style'
+                },
+                {
+                  step: '03',
+                  icon: Share2,
+                  title: 'Share',
+                  description: 'Get your quote instantly as PNG or animated GIF with Pro'
+                }
+              ].map((item, index) => (
+                <div key={index} className="relative group">
+                  <div className="glass rounded-2xl p-8 card-hover h-full">
+                    <div className="text-6xl font-bold text-dark-800 mb-4">{item.step}</div>
+                    <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4">
+                      <item.icon className="w-6 h-6 text-brand-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                    <p className="text-dark-400">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="py-24 relative bg-dark-900/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                Everything you need, nothing you don&apos;t
+              </h2>
+              <p className="text-dark-400 text-lg max-w-2xl mx-auto">
+                Powerful features for everyone. Premium upgrades for power users.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Free Features */}
+              {[
+                {
+                  icon: Palette,
+                  title: '19 Custom Fonts',
+                  description: 'From elegant serifs to modern sans-serifs across 7 categories'
+                },
+                {
+                  icon: Layers,
+                  title: '3 Templates',
+                  description: 'Classic, Discord Screenshot, and Profile Background styles'
+                },
+                {
+                  icon: Image,
+                  title: 'Multiple Formats',
+                  description: 'Portrait and landscape orientations with dark & light themes'
+                },
+                {
+                  icon: Zap,
+                  title: 'Instant Generation',
+                  description: 'High-quality PNG exports in seconds, unlimited usage'
+                }
+              ].map((feature, index) => (
+                <div key={index} className="glass rounded-2xl p-6 card-hover">
+                  <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-brand-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-dark-400 text-sm">{feature.description}</p>
+                </div>
+              ))}
+
+              {/* Pro Features */}
+              {[
+                {
+                  icon: Film,
+                  title: 'Animated GIFs',
+                  description: 'Auto-generate animated quotes when users have animated avatars',
+                  pro: true
+                },
+                {
+                  icon: Eye,
+                  title: 'Preview Mode',
+                  description: 'See exactly how your quote will look before generating',
+                  pro: true
+                },
+                {
+                  icon: Users,
+                  title: 'Multi-Message',
+                  description: 'Combine up to 5 messages into a single beautiful quote',
+                  pro: true
+                },
+                {
+                  icon: Save,
+                  title: 'Save Presets',
+                  description: 'Save up to 10 custom configurations for one-click quoting',
+                  pro: true
+                }
+              ].map((feature, index) => (
+                <div key={index} className="relative glass rounded-2xl p-6 card-hover border-gradient-pro overflow-hidden">
+                  <div className="absolute top-4 right-4">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-pro-amber/20 text-pro-gold text-xs font-semibold rounded">
+                      <Crown className="w-3 h-3" />
+                      PRO
+                    </span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl icon-bg-pro flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-pro-gold" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-dark-400 text-sm">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <Link
+                href="/features"
+                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 font-medium transition-colors"
+              >
+                View all features
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Create Beautiful Quotes?</h2>
-          <p className="text-gray-400 mb-8">
-            Join thousands of Discord users who are already creating stunning quote images.
-          </p>
-          <Link
-            href="/add"
-            className="inline-flex items-center gap-2 bg-discord-blurple hover:bg-discord-blurple/80 text-white font-semibold py-4 px-8 rounded-lg transition-colors"
-          >
-            Add DisQuote to Discord
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
+        {/* Pricing Preview */}
+        <section className="py-24 relative">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                Simple, transparent pricing
+              </h2>
+              <p className="text-dark-400 text-lg max-w-2xl mx-auto">
+                Start free, upgrade when you need more power
+              </p>
+            </div>
 
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Free Tier */}
+              <div className="glass rounded-2xl p-8">
+                <h3 className="text-xl font-semibold mb-2">Free</h3>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-bold">$0</span>
+                  <span className="text-dark-400">forever</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Unlimited quote creation',
+                    'All 3 templates',
+                    'All 19 fonts',
+                    'Dark & light themes',
+                    'PNG export'
+                  ].map((item, index) => (
+                    <li key={index} className="flex items-center gap-3 text-dark-300">
+                      <Check className="w-5 h-5 text-success flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/add"
+                  className="block w-full text-center bg-dark-800/50 hover:bg-dark-700/50 text-white font-semibold py-3 px-6 rounded-xl border border-dark-600 hover:border-brand-500/50 transition-all"
+                >
+                  Add to Discord
+                </Link>
+              </div>
+
+              {/* Pro Tier */}
+              <div className="relative glass rounded-2xl p-8 border-gradient-pro">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pro-amber to-pro-gold text-dark-900 text-sm font-bold rounded-full shadow-glow-pro">
+                    <Star className="w-4 h-4" />
+                    MOST POPULAR
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 mt-2">Pro</h3>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-bold gradient-text-pro">$1.99</span>
+                  <span className="text-dark-400">/month</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Everything in Free',
+                    'Animated GIF export',
+                    'Preview before generating',
+                    'Multi-message quotes (up to 5)',
+                    'Save presets (up to 10)',
+                    'Server avatar selection',
+                    'No watermark'
+                  ].map((item, index) => (
+                    <li key={index} className="flex items-center gap-3 text-dark-300">
+                      <Check className="w-5 h-5 text-pro-gold flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/pricing"
+                  className="group flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-3 px-6 rounded-xl transition-all shadow-glow-pro"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Get Pro
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <p className="text-center text-dark-400 text-sm mt-3">
+                  or $14.99/year (save 37%)
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-24 relative">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative glass rounded-3xl p-12 md:p-16 text-center overflow-hidden">
+              {/* Background glow */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl" />
+              </div>
+
+              <div className="relative">
+                <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                  Ready to create beautiful quotes?
+                </h2>
+                <p className="text-dark-400 text-lg mb-8 max-w-xl mx-auto">
+                  Join thousands of Discord users who trust Quotedis to capture their favorite moments.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href="/pricing"
+                    className="group flex items-center gap-2 bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-4 px-8 rounded-xl transition-all shadow-glow-pro text-lg"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Start with Pro
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/add"
+                    className="text-dark-300 hover:text-white font-medium transition-colors"
+                  >
+                    or try free first
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
       <Footer />
-    </main>
-  )
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-  premium = false
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-  premium?: boolean
-}) {
-  return (
-    <div className="bg-discord-darker border border-gray-800 rounded-xl p-6 hover:border-discord-blurple/50 transition-colors">
-      <div className="w-12 h-12 bg-discord-blurple/20 rounded-lg flex items-center justify-center mb-4 text-discord-blurple">
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-        {title}
-        {premium && (
-          <span className="text-xs bg-premium-gold/20 text-premium-gold px-2 py-0.5 rounded">
-            Premium
-          </span>
-        )}
-      </h3>
-      <p className="text-gray-400 text-sm">{description}</p>
-    </div>
-  )
-}
-
-function PricingFeature({
-  children,
-  premium = false
-}: {
-  children: React.ReactNode
-  premium?: boolean
-}) {
-  return (
-    <li className="flex items-center gap-3">
-      <Check className={`w-5 h-5 flex-shrink-0 ${premium ? 'text-premium-gold' : 'text-discord-green'}`} />
-      <span className={premium ? 'text-white' : 'text-gray-300'}>{children}</span>
-    </li>
+    </>
   )
 }
