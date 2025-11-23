@@ -27,69 +27,105 @@ export default function Home() {
       <Header />
       <main className="relative">
         {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center pt-20 pb-32 overflow-hidden">
+        <section className="relative min-h-screen flex items-center pt-20 pb-32 overflow-hidden">
           {/* Background effects */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl animate-pulse-slow" />
             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-3xl animate-pulse-slow delay-1000" />
           </div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-dark-800/50 border border-dark-700 mb-8 animate-fade-in">
-              <Sparkles className="w-4 h-4 text-pro-gold" />
-              <span className="text-sm text-dark-200">
-                Pro now available - Unlock GIF exports & more
-              </span>
-              <ChevronRight className="w-4 h-4 text-dark-400" />
-            </div>
-
-            {/* Main headline */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-slide-up">
-              <span className="gradient-text">quotecord</span>
-            </h1>
-
-            <p className="text-xl sm:text-2xl md:text-3xl text-dark-300 mb-4 animate-slide-up" style={{ animationDelay: '100ms' }}>
-              Beautiful quotes from Discord messages
-            </p>
-
-            <p className="text-lg text-dark-400 max-w-2xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: '200ms' }}>
-              Right-click any message. Choose your style. Get stunning, shareable quote images in seconds.
-              The easiest way to capture memorable Discord moments.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '300ms' }}>
-              <Link
-                href="/pricing"
-                className="group flex items-center gap-2 bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-4 px-8 rounded-xl transition-all shadow-glow-pro text-lg"
-              >
-                <Sparkles className="w-5 h-5" />
-                Get Pro
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/add"
-                className="group flex items-center gap-2 bg-dark-800/50 hover:bg-dark-700/50 text-white font-semibold py-4 px-8 rounded-xl border border-dark-600 hover:border-brand-500/50 transition-all text-lg"
-              >
-                Add to Discord - Free
-              </Link>
-            </div>
-
-            {/* Social proof */}
-            <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8 text-dark-400 text-sm animate-fade-in" style={{ animationDelay: '500ms' }}>
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-pro-gold fill-pro-gold" />
-                  ))}
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              {/* Left side - Text content */}
+              <div className="text-center lg:text-left">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-dark-800/50 border border-dark-700 mb-8 animate-fade-in">
+                  <Sparkles className="w-4 h-4 text-pro-gold" />
+                  <span className="text-sm text-dark-200">
+                    Pro now available
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-dark-400" />
                 </div>
-                <span>Loved by thousands</span>
+
+                {/* Main headline */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 animate-slide-up">
+                  Turn Discord messages into{' '}
+                  <span className="gradient-text">shareable art</span>
+                </h1>
+
+                <p className="text-lg sm:text-xl text-dark-300 mb-8 animate-slide-up max-w-xl mx-auto lg:mx-0" style={{ animationDelay: '100ms' }}>
+                  Right-click any message. Pick your style. Get a stunning quote image in seconds.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 animate-slide-up" style={{ animationDelay: '200ms' }}>
+                  <Link
+                    href="/pricing"
+                    className="group flex items-center gap-2 bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-4 px-8 rounded-xl transition-all shadow-glow-pro text-lg"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Get Pro
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/add"
+                    className="group flex items-center gap-2 bg-dark-800/50 hover:bg-dark-700/50 text-white font-semibold py-4 px-8 rounded-xl border border-dark-600 hover:border-brand-500/50 transition-all text-lg"
+                  >
+                    Add to Discord - Free
+                  </Link>
+                </div>
+
+                {/* Social proof */}
+                <div className="mt-10 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-6 text-dark-400 text-sm animate-fade-in" style={{ animationDelay: '400ms' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 text-pro-gold fill-pro-gold" />
+                      ))}
+                    </div>
+                    <span>Loved by thousands</span>
+                  </div>
+                  <div className="hidden sm:block w-px h-4 bg-dark-700" />
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>10,000+ servers</span>
+                  </div>
+                </div>
               </div>
-              <div className="hidden sm:block w-px h-4 bg-dark-700" />
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>Active in 10,000+ servers</span>
+
+              {/* Right side - Quote card showcase */}
+              <div className="relative animate-fade-in" style={{ animationDelay: '300ms' }}>
+                <div className="relative">
+                  {/* Main quote card */}
+                  <div className="relative z-10 glass rounded-2xl p-6 shadow-2xl transform hover:scale-[1.02] transition-transform">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-accent-purple flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="font-semibold text-white">Discord User</div>
+                        <div className="text-dark-400 text-sm">Today at 4:20 PM</div>
+                      </div>
+                    </div>
+                    <p className="text-lg text-white leading-relaxed mb-4">
+                      &ldquo;This bot is incredible! Finally a way to share our best server moments without ugly screenshots.&rdquo;
+                    </p>
+                    <div className="flex items-center justify-between text-dark-400 text-sm">
+                      <span className="text-brand-400 font-medium">quotecord</span>
+                      <span>Classic Template</span>
+                    </div>
+                  </div>
+
+                  {/* Background cards for depth */}
+                  <div className="absolute -top-4 -right-4 w-full h-full glass rounded-2xl opacity-50 -z-10 transform rotate-3" />
+                  <div className="absolute -bottom-4 -left-4 w-full h-full glass rounded-2xl opacity-30 -z-20 transform -rotate-2" />
+                </div>
+
+                {/* Floating elements */}
+                <div className="absolute -top-8 -right-8 w-16 h-16 rounded-xl bg-gradient-to-br from-pro-amber to-pro-gold flex items-center justify-center shadow-glow-pro animate-float">
+                  <Film className="w-8 h-8 text-dark-900" />
+                </div>
+                <div className="absolute -bottom-6 -left-6 w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-accent-purple flex items-center justify-center shadow-glow animate-float" style={{ animationDelay: '1s' }}>
+                  <Palette className="w-7 h-7 text-white" />
+                </div>
               </div>
             </div>
           </div>
