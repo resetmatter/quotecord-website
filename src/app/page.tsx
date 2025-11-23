@@ -95,36 +95,21 @@ export default function Home() {
 
               {/* Right side - Quote card showcase */}
               <div className="relative animate-fade-in" style={{ animationDelay: '300ms' }}>
-                <div className="relative">
-                  {/* Main quote card */}
-                  <div className="relative z-10 glass rounded-2xl p-6 shadow-2xl transform hover:scale-[1.02] transition-transform">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-accent-purple flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-white">Discord User</div>
-                        <div className="text-dark-400 text-sm">Today at 4:20 PM</div>
-                      </div>
-                    </div>
-                    <p className="text-lg text-white leading-relaxed mb-4">
-                      &ldquo;This bot is incredible! Finally a way to share our best server moments without ugly screenshots.&rdquo;
-                    </p>
-                    <div className="flex items-center justify-between text-dark-400 text-sm">
-                      <span className="text-brand-400 font-medium">quotecord</span>
-                      <span>Classic Template</span>
+                <div className="glass rounded-2xl p-8 shadow-2xl">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-accent-purple flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">Discord User</div>
+                      <div className="text-dark-400 text-sm">Today at 4:20 PM</div>
                     </div>
                   </div>
-
-                  {/* Background cards for depth */}
-                  <div className="absolute -top-4 -right-4 w-full h-full glass rounded-2xl opacity-50 -z-10 transform rotate-3" />
-                  <div className="absolute -bottom-4 -left-4 w-full h-full glass rounded-2xl opacity-30 -z-20 transform -rotate-2" />
-                </div>
-
-                {/* Floating elements */}
-                <div className="absolute -top-8 -right-8 w-16 h-16 rounded-xl bg-gradient-to-br from-pro-amber to-pro-gold flex items-center justify-center shadow-glow-pro animate-float">
-                  <Film className="w-8 h-8 text-dark-900" />
-                </div>
-                <div className="absolute -bottom-6 -left-6 w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-accent-purple flex items-center justify-center shadow-glow animate-float" style={{ animationDelay: '1s' }}>
-                  <Palette className="w-7 h-7 text-white" />
+                  <p className="text-xl text-white leading-relaxed mb-6">
+                    &ldquo;This bot is incredible! Finally a way to share our best server moments.&rdquo;
+                  </p>
+                  <div className="flex items-center justify-between text-dark-400 text-sm pt-4 border-t border-dark-700">
+                    <span className="text-brand-400 font-medium">quotecord</span>
+                    <span>Classic Template</span>
+                  </div>
                 </div>
               </div>
             </div>
