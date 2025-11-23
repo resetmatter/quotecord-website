@@ -17,7 +17,7 @@ export function Footer() {
                 <Quote className="relative w-7 h-7 text-brand-400" />
               </div>
               <span className="font-bold text-lg tracking-tight">
-                Quote<span className="text-brand-400">cord</span>
+                quote<span className="text-brand-400">cord</span>
               </span>
             </Link>
             <p className="text-dark-400 text-sm leading-relaxed mb-6">
