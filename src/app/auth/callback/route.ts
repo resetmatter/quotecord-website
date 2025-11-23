@@ -3,18 +3,34 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+function getBaseUrl(request: NextRequest): string {
+  // Get the host from headers (works with proxies like Railway)
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const host = request.headers.get('host')
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+
+  const actualHost = forwardedHost || host
+
+  if (actualHost) {
+    return `${protocol}://${actualHost}`
+  }
+
+  // Fallback to environment variable
+  return process.env.NEXT_PUBLIC_URL || 'https://quotecord.com'
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
 
+  const baseUrl = getBaseUrl(request)
+
   // Handle OAuth errors from provider
   if (error) {
     console.error('OAuth error:', error, errorDescription)
-    const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('error', errorDescription || error)
-    return NextResponse.redirect(redirectUrl)
+    return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(errorDescription || error)}`)
   }
 
   // If there's a code, exchange it for a session (PKCE flow)
@@ -27,19 +43,15 @@ export async function GET(request: NextRequest) {
 
       if (exchangeError) {
         console.error('Code exchange error:', exchangeError.message)
-        const redirectUrl = new URL('/login', request.url)
-        redirectUrl.searchParams.set('error', exchangeError.message)
-        return NextResponse.redirect(redirectUrl)
+        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(exchangeError.message)}`)
       }
     } catch (err) {
       console.error('Auth callback error:', err)
-      const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('error', 'Authentication failed. Please try again.')
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent('Authentication failed. Please try again.')}`)
     }
   }
 
   // Redirect to dashboard - if using implicit flow, tokens will be in URL hash
   // and the dashboard's client-side code will handle them
-  return NextResponse.redirect(new URL('/dashboard', request.url))
+  return NextResponse.redirect(`${baseUrl}/dashboard`)
 }
