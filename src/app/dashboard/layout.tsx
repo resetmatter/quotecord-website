@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   MessageSquareQuote,
@@ -15,7 +15,7 @@ import {
   X
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
-import { logout } from '@/lib/supabase'
+import { logout, supabase } from '@/lib/supabase'
 
 export default function DashboardLayout({
   children,
@@ -26,13 +26,52 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
 
   useEffect(() => {
-    getCurrentUser().then(u => {
-      setUser(u)
+    // Handle session from URL hash (implicit flow) or existing session
+    const initSession = async () => {
+      // This will automatically parse tokens from URL hash if present
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('Session error:', error)
+        router.push('/login?error=' + encodeURIComponent(error.message))
+        return
+      }
+
+      if (!session) {
+        // No session found, redirect to login
+        router.push('/login')
+        return
+      }
+
+      // Clean up URL hash if present
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+
+      // Fetch user profile
+      const userData = await getCurrentUser()
+      setUser(userData)
       setLoading(false)
-    })
-  }, [])
+    }
+
+    initSession()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          router.push('/login')
+        }
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router])
 
   const handleLogout = async () => {
     await logout()
