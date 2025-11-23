@@ -49,8 +49,8 @@ export default function Home() {
 
                 {/* Main headline */}
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 animate-slide-up">
-                  Turn Discord messages into{' '}
-                  <span className="gradient-text">shareable art</span>
+                  Capture Discord moments.{' '}
+                  <span className="gradient-text">Make them look good.</span>
                 </h1>
 
                 <p className="text-lg sm:text-xl text-dark-300 mb-8 animate-slide-up max-w-xl mx-auto lg:mx-0" style={{ animationDelay: '100ms' }}>
