@@ -2,6 +2,26 @@
 -- Run this SQL in your Supabase SQL Editor to set up the database
 
 -- ============================================
+-- STORAGE BUCKETS (Run in Supabase Dashboard > Storage)
+-- ============================================
+-- Create a bucket named 'memes' with:
+-- - Public access: true (for serving meme images)
+-- - File size limit: 10MB
+-- - Allowed MIME types: image/png, image/gif, image/jpeg, image/webp
+--
+-- Storage Policies (run in SQL Editor):
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('memes', 'memes', true);
+--
+-- CREATE POLICY "Allow public read access" ON storage.objects
+--   FOR SELECT USING (bucket_id = 'memes');
+--
+-- CREATE POLICY "Allow service role to upload" ON storage.objects
+--   FOR INSERT WITH CHECK (bucket_id = 'memes' AND auth.role() = 'service_role');
+--
+-- CREATE POLICY "Allow service role to delete" ON storage.objects
+--   FOR DELETE USING (bucket_id = 'memes' AND auth.role() = 'service_role');
+
+-- ============================================
 -- TABLES
 -- ============================================
 
@@ -199,3 +219,122 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_discord_id ON subscriptions(discord
 CREATE INDEX IF NOT EXISTS idx_profiles_discord_id ON profiles(discord_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_discord_id ON quotes(discord_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_created_at ON quotes(created_at DESC);
+
+-- ============================================
+-- MEME GALLERY TABLE
+-- ============================================
+
+-- Meme gallery table - Stores meme metadata with references to Supabase Storage
+CREATE TABLE IF NOT EXISTS meme_gallery (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  discord_id TEXT NOT NULL,
+
+  -- Meme metadata
+  file_path TEXT NOT NULL, -- Path in Supabase Storage
+  file_name TEXT NOT NULL,
+  file_size INTEGER,
+  mime_type TEXT NOT NULL, -- 'image/png', 'image/gif', etc.
+
+  -- Generation details
+  template TEXT NOT NULL,
+  font TEXT NOT NULL,
+  theme TEXT NOT NULL,
+  orientation TEXT,
+  animated BOOLEAN DEFAULT FALSE,
+
+  -- Quote content (for display purposes)
+  quote_text TEXT,
+  author_name TEXT,
+  guild_id TEXT,
+
+  -- Storage info
+  public_url TEXT, -- Public URL for the meme
+
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE meme_gallery ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own memes
+CREATE POLICY "Users can view own memes" ON meme_gallery
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Users can delete their own memes
+CREATE POLICY "Users can delete own memes" ON meme_gallery
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Service role can insert memes (for bot)
+CREATE POLICY "Service role can insert memes" ON meme_gallery
+  FOR INSERT WITH CHECK (auth.role() = 'service_role');
+
+-- Service role can manage all memes
+CREATE POLICY "Service role can manage memes" ON meme_gallery
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- Indexes for meme gallery
+CREATE INDEX IF NOT EXISTS idx_meme_gallery_discord_id ON meme_gallery(discord_id);
+CREATE INDEX IF NOT EXISTS idx_meme_gallery_user_id ON meme_gallery(user_id);
+CREATE INDEX IF NOT EXISTS idx_meme_gallery_created_at ON meme_gallery(created_at DESC);
+
+-- ============================================
+-- BOT API KEY TABLE
+-- ============================================
+
+-- API keys for bot authentication
+CREATE TABLE IF NOT EXISTS bot_api_keys (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  key_hash TEXT UNIQUE NOT NULL, -- SHA256 hash of the API key
+  name TEXT NOT NULL, -- Descriptive name for the key
+  is_active BOOLEAN DEFAULT TRUE,
+  last_used_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE bot_api_keys ENABLE ROW LEVEL SECURITY;
+
+-- Only service role can access API keys
+CREATE POLICY "Service role can manage API keys" ON bot_api_keys
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- ============================================
+-- ADDITIONAL FUNCTIONS
+-- ============================================
+
+-- Function to get user meme count
+CREATE OR REPLACE FUNCTION get_user_meme_count(discord_user_id TEXT)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(*)::INTEGER FROM meme_gallery
+    WHERE discord_id = discord_user_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check if user has storage quota available (Premium: 1000, Free: 50)
+CREATE OR REPLACE FUNCTION check_storage_quota(discord_user_id TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+  is_premium BOOLEAN;
+  meme_count INTEGER;
+  max_memes INTEGER;
+BEGIN
+  -- Check if user is premium
+  SELECT is_premium_user(discord_user_id) INTO is_premium;
+
+  -- Set max memes based on tier
+  IF is_premium THEN
+    max_memes := 1000;
+  ELSE
+    max_memes := 50;
+  END IF;
+
+  -- Get current meme count
+  SELECT get_user_meme_count(discord_user_id) INTO meme_count;
+
+  RETURN meme_count < max_memes;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
