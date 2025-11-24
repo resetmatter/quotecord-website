@@ -238,6 +238,9 @@ export interface Database {
         }
       }
     }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       is_premium_user: {
         Args: { discord_user_id: string }
@@ -259,6 +262,12 @@ export interface Database {
         Args: { discord_user_id: string }
         Returns: boolean
       }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
