@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('memes')
+      .from('quotes')
       .upload(fileName, imageBuffer, {
         contentType: mimeType,
         upsert: false
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('memes')
+      .from('quotes')
       .getPublicUrl(fileName)
 
     // Store metadata in meme_gallery
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     if (insertError) {
       console.error('Database insert error:', insertError)
       // Clean up uploaded file
-      await supabase.storage.from('memes').remove([fileName])
+      await supabase.storage.from('quotes').remove([fileName])
       return NextResponse.json(
         { error: 'Failed to save meme metadata' },
         { status: 500 }

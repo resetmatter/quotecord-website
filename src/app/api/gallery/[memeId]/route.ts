@@ -77,7 +77,7 @@ export async function DELETE(
     // Delete from storage using service client (has full access)
     const serviceClient = createServiceClient()
     const { error: storageError } = await serviceClient.storage
-      .from('memes')
+      .from('quotes')
       .remove([meme.file_path])
 
     if (storageError) {
