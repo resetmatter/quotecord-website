@@ -152,7 +152,7 @@ export interface Database {
           created_at?: string
         }
       }
-      meme_gallery: {
+      quote_gallery: {
         Row: {
           id: string
           user_id: string | null
@@ -251,7 +251,7 @@ export interface Database {
           current_period_end: string | null
         }[]
       }
-      get_user_meme_count: {
+      get_user_quote_count: {
         Args: { discord_user_id: string }
         Returns: number
       }

@@ -3,10 +3,10 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 
-// GET /api/gallery/[memeId] - Get a single meme
+// GET /api/gallery/[quoteId] - Get a single quote
 export async function GET(
   request: Request,
-  { params }: { params: { memeId: string } }
+  { params }: { params: { quoteId: string } }
 ) {
   try {
     const cookieStore = cookies()
@@ -17,36 +17,36 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { memeId } = params
+    const { quoteId } = params
 
-    const { data: meme, error } = await supabase
-      .from('meme_gallery')
+    const { data: quote, error } = await supabase
+      .from('quote_gallery')
       .select('*')
-      .eq('id', memeId)
+      .eq('id', quoteId)
       .eq('user_id', session.user.id)
       .single()
 
-    if (error || !meme) {
+    if (error || !quote) {
       return NextResponse.json(
-        { error: 'Meme not found' },
+        { error: 'Quote not found' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json({ meme })
+    return NextResponse.json({ quote })
   } catch (error) {
-    console.error('Meme fetch error:', error)
+    console.error('Quote fetch error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch meme' },
+      { error: 'Failed to fetch quote' },
       { status: 500 }
     )
   }
 }
 
-// DELETE /api/gallery/[memeId] - Delete a meme
+// DELETE /api/gallery/[quoteId] - Delete a quote
 export async function DELETE(
   request: Request,
-  { params }: { params: { memeId: string } }
+  { params }: { params: { quoteId: string } }
 ) {
   try {
     const cookieStore = cookies()
@@ -57,19 +57,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { memeId } = params
+    const { quoteId } = params
 
-    // First, get the meme to check ownership and get file path
-    const { data: meme, error: fetchError } = await supabase
-      .from('meme_gallery')
+    // First, get the quote to check ownership and get file path
+    const { data: quote, error: fetchError } = await supabase
+      .from('quote_gallery')
       .select('id, file_path, user_id')
-      .eq('id', memeId)
+      .eq('id', quoteId)
       .eq('user_id', session.user.id)
       .single()
 
-    if (fetchError || !meme) {
+    if (fetchError || !quote) {
       return NextResponse.json(
-        { error: 'Meme not found or access denied' },
+        { error: 'Quote not found or access denied' },
         { status: 404 }
       )
     }
@@ -78,7 +78,7 @@ export async function DELETE(
     const serviceClient = createServiceClient()
     const { error: storageError } = await serviceClient.storage
       .from('quotes')
-      .remove([meme.file_path])
+      .remove([quote.file_path])
 
     if (storageError) {
       console.error('Storage delete error:', storageError)
@@ -87,27 +87,27 @@ export async function DELETE(
 
     // Delete from database
     const { error: deleteError } = await supabase
-      .from('meme_gallery')
+      .from('quote_gallery')
       .delete()
-      .eq('id', memeId)
+      .eq('id', quoteId)
       .eq('user_id', session.user.id)
 
     if (deleteError) {
       console.error('Database delete error:', deleteError)
       return NextResponse.json(
-        { error: 'Failed to delete meme' },
+        { error: 'Failed to delete quote' },
         { status: 500 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Meme deleted successfully'
+      message: 'Quote deleted successfully'
     })
   } catch (error) {
-    console.error('Meme delete error:', error)
+    console.error('Quote delete error:', error)
     return NextResponse.json(
-      { error: 'Failed to delete meme' },
+      { error: 'Failed to delete quote' },
       { status: 500 }
     )
   }

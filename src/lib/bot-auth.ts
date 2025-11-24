@@ -75,7 +75,7 @@ export const PREMIUM_FEATURES = {
   galleryStorage: {
     name: 'Gallery Storage',
     requiresPremium: false, // Available to all, but with different limits
-    description: 'Store generated memes in your gallery'
+    description: 'Store generated quotes in your gallery'
   }
 } as const
 

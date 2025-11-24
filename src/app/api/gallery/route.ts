@@ -2,7 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-// GET /api/gallery - Get user's meme gallery
+// GET /api/gallery - Get user's quote gallery
 export async function GET(request: Request) {
   try {
     const cookieStore = cookies()
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     // Build query
     let query = supabase
-      .from('meme_gallery')
+      .from('quote_gallery')
       .select('*', { count: 'exact' })
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       query = query.eq('animated', animated === 'true')
     }
 
-    const { data: memes, count, error } = await query
+    const { data: quotes, count, error } = await query
 
     if (error) {
       console.error('Gallery fetch error:', error)
@@ -56,10 +56,10 @@ export async function GET(request: Request) {
       .single()
 
     const isPremium = subscription?.tier === 'premium'
-    const maxMemes = isPremium ? 1000 : 50
+    const maxQuotes = isPremium ? 1000 : 50
 
     return NextResponse.json({
-      memes: memes || [],
+      quotes: quotes || [],
       pagination: {
         page,
         limit,
@@ -68,8 +68,8 @@ export async function GET(request: Request) {
       },
       quota: {
         used: count || 0,
-        max: maxMemes,
-        remaining: maxMemes - (count || 0)
+        max: maxQuotes,
+        remaining: maxQuotes - (count || 0)
       }
     })
   } catch (error) {

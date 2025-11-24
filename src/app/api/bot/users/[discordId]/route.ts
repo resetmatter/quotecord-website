@@ -50,9 +50,9 @@ export async function GET(
       subscription.status === 'active' &&
       (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
 
-    // Get meme count for quota info
-    const { data: memeCount } = await supabase
-      .rpc('get_user_meme_count', { discord_user_id: discordId })
+    // Get quote count for quota info
+    const { data: quoteCount } = await supabase
+      .rpc('get_user_quote_count', { discord_user_id: discordId })
 
     return NextResponse.json({
       discordId,
@@ -71,7 +71,7 @@ export async function GET(
         galleryStorage: true,
         maxGallerySize: isPremium ? 1000 : 50
       },
-      memeCount: memeCount || 0
+      quoteCount: quoteCount || 0
     })
   } catch (error) {
     console.error('Error fetching user tier:', error)
