@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyBotApiKey } from '@/lib/bot-auth'
 
-interface MemeUploadRequest {
+interface QuoteUploadRequest {
   discordId: string
   imageData: string // Base64 encoded image data
   mimeType: string // 'image/png', 'image/gif', 'image/jpeg', 'image/webp'
@@ -16,7 +16,7 @@ interface MemeUploadRequest {
   guildId?: string
 }
 
-// POST /api/bot/memes - Upload and store a meme
+// POST /api/bot/quotes - Upload and store a quote image
 export async function POST(request: Request) {
   // Verify bot API key
   if (!await verifyBotApiKey(request)) {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json() as MemeUploadRequest
+    const body = await request.json() as QuoteUploadRequest
     const {
       discordId,
       imageData,
@@ -71,13 +71,13 @@ export async function POST(request: Request) {
         .single()
 
       const isPremium = subscription?.tier === 'premium'
-      const maxMemes = isPremium ? 1000 : 50
+      const maxQuotes = isPremium ? 1000 : 50
 
       return NextResponse.json({
         error: 'Storage quota exceeded',
         message: isPremium
-          ? `You've reached the maximum of ${maxMemes} memes. Please delete some to make room.`
-          : `You've reached the free tier limit of ${maxMemes} memes. Upgrade to Premium for up to 1000 memes.`
+          ? `You've reached the maximum of ${maxQuotes} quotes. Please delete some to make room.`
+          : `You've reached the free tier limit of ${maxQuotes} quotes. Upgrade to Premium for up to 1000 quotes.`
       }, { status: 403 })
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
     if (uploadError) {
       console.error('Storage upload error:', uploadError)
       return NextResponse.json(
-        { error: 'Failed to upload meme to storage' },
+        { error: 'Failed to upload quote to storage' },
         { status: 500 }
       )
     }
@@ -118,9 +118,9 @@ export async function POST(request: Request) {
       .from('quotes')
       .getPublicUrl(fileName)
 
-    // Store metadata in meme_gallery
-    const { data: meme, error: insertError } = await supabase
-      .from('meme_gallery')
+    // Store metadata in quote_gallery
+    const { data: quote, error: insertError } = await supabase
+      .from('quote_gallery')
       .insert({
         user_id: profile?.id || null,
         discord_id: discordId,
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
       // Clean up uploaded file
       await supabase.storage.from('quotes').remove([fileName])
       return NextResponse.json(
-        { error: 'Failed to save meme metadata' },
+        { error: 'Failed to save quote metadata' },
         { status: 500 }
       )
     }
@@ -167,24 +167,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      meme: {
-        id: meme.id,
+      quote: {
+        id: quote.id,
         publicUrl,
         fileName,
         fileSize,
-        createdAt: meme.created_at
+        createdAt: quote.created_at
       }
     })
   } catch (error) {
-    console.error('Error storing meme:', error)
+    console.error('Error storing quote:', error)
     return NextResponse.json(
-      { error: 'Failed to store meme' },
+      { error: 'Failed to store quote' },
       { status: 500 }
     )
   }
 }
 
-// GET /api/bot/memes - Get meme count and stats for a user
+// GET /api/bot/quotes - Get quote count and stats for a user
 export async function GET(request: Request) {
   // Verify bot API key
   if (!await verifyBotApiKey(request)) {
@@ -204,9 +204,9 @@ export async function GET(request: Request) {
   try {
     const supabase = createServiceClient()
 
-    // Get meme count
-    const { data: memeCount } = await supabase
-      .rpc('get_user_meme_count', { discord_user_id: discordId })
+    // Get quote count
+    const { data: quoteCount } = await supabase
+      .rpc('get_user_quote_count', { discord_user_id: discordId })
 
     // Check if user has account and get their quota
     const { data: subscription } = await supabase
@@ -216,19 +216,19 @@ export async function GET(request: Request) {
       .single()
 
     const isPremium = subscription?.tier === 'premium'
-    const maxMemes = isPremium ? 1000 : 50
+    const maxQuotes = isPremium ? 1000 : 50
 
     return NextResponse.json({
       discordId,
-      memeCount: memeCount || 0,
-      maxMemes,
+      quoteCount: quoteCount || 0,
+      maxQuotes,
       hasAccount: !!subscription,
-      quotaRemaining: maxMemes - (memeCount || 0)
+      quotaRemaining: maxQuotes - (quoteCount || 0)
     })
   } catch (error) {
-    console.error('Error fetching meme stats:', error)
+    console.error('Error fetching quote stats:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch meme stats' },
+      { error: 'Failed to fetch quote stats' },
       { status: 500 }
     )
   }
