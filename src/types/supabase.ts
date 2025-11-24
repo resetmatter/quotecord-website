@@ -152,6 +152,91 @@ export interface Database {
           created_at?: string
         }
       }
+      meme_gallery: {
+        Row: {
+          id: string
+          user_id: string | null
+          discord_id: string
+          file_path: string
+          file_name: string
+          file_size: number | null
+          mime_type: string
+          template: string
+          font: string
+          theme: string
+          orientation: string | null
+          animated: boolean
+          quote_text: string | null
+          author_name: string | null
+          guild_id: string | null
+          public_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          discord_id: string
+          file_path: string
+          file_name: string
+          file_size?: number | null
+          mime_type: string
+          template: string
+          font: string
+          theme: string
+          orientation?: string | null
+          animated?: boolean
+          quote_text?: string | null
+          author_name?: string | null
+          guild_id?: string | null
+          public_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          discord_id?: string
+          file_path?: string
+          file_name?: string
+          file_size?: number | null
+          mime_type?: string
+          template?: string
+          font?: string
+          theme?: string
+          orientation?: string | null
+          animated?: boolean
+          quote_text?: string | null
+          author_name?: string | null
+          guild_id?: string | null
+          public_url?: string | null
+          created_at?: string
+        }
+      }
+      bot_api_keys: {
+        Row: {
+          id: string
+          key_hash: string
+          name: string
+          is_active: boolean
+          last_used_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          key_hash: string
+          name: string
+          is_active?: boolean
+          last_used_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          key_hash?: string
+          name?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          created_at?: string
+        }
+      }
     }
     Functions: {
       is_premium_user: {
@@ -165,6 +250,14 @@ export interface Database {
           status: string
           current_period_end: string | null
         }[]
+      }
+      get_user_meme_count: {
+        Args: { discord_user_id: string }
+        Returns: number
+      }
+      check_storage_quota: {
+        Args: { discord_user_id: string }
+        Returns: boolean
       }
     }
   }
