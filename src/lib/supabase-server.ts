@@ -15,6 +15,12 @@ export function createServiceClient() {
 export async function createRouteClient() {
   const cookieStore = await cookies()
 
+  // Debug logging
+  const allCookies = cookieStore.getAll()
+  const supabaseCookies = allCookies.filter(c => c.name.includes('supabase') || c.name.includes('sb-'))
+  console.log(`[createRouteClient] Total cookies: ${allCookies.length}, Supabase cookies: ${supabaseCookies.length}`)
+  console.log(`[createRouteClient] Supabase cookie names: ${supabaseCookies.map(c => c.name).join(', ') || 'none'}`)
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

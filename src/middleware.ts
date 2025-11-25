@@ -3,6 +3,15 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname
+
+  // Debug logging
+  const allCookies = request.cookies.getAll()
+  const supabaseCookies = allCookies.filter(c => c.name.includes('supabase') || c.name.includes('sb-'))
+  console.log(`[Middleware] Path: ${path}`)
+  console.log(`[Middleware] Total cookies: ${allCookies.length}, Supabase cookies: ${supabaseCookies.length}`)
+  console.log(`[Middleware] Supabase cookie names: ${supabaseCookies.map(c => c.name).join(', ') || 'none'}`)
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -32,7 +41,10 @@ export async function middleware(request: NextRequest) {
   // getUser() validates the session and refreshes if needed
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
+
+  console.log(`[Middleware] User: ${user?.id || 'null'}, Error: ${userError?.message || 'none'}`)
 
   // Dashboard routes: let client-side handle all auth
   // The dashboard layout will check session and redirect to login if needed
