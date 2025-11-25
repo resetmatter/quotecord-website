@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       .from('profiles')
       .select('id')
       .eq('discord_id', discordId)
-      .single()
+      .single() as { data: { id: string } | null }
 
     // Decode base64 image
     const imageBuffer = Buffer.from(imageData, 'base64')
