@@ -25,14 +25,14 @@ export async function verifyBotApiKey(request: Request): Promise<boolean> {
     .select('id, is_active')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
-    .single()
+    .single() as { data: { id: string; is_active: boolean } | null; error: any }
 
   if (error || !data) {
     return false
   }
 
   // Update last used timestamp
-  await supabase
+  await (supabase as any)
     .from('bot_api_keys')
     .update({ last_used_at: new Date().toISOString() })
     .eq('id', data.id)
