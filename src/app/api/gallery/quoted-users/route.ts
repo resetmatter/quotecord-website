@@ -9,6 +9,13 @@ interface QuotedUserStats {
   latest_quote_at: string
 }
 
+interface QuoteRow {
+  quoted_user_id: string | null
+  quoted_user_name: string | null
+  quoted_user_avatar: string | null
+  created_at: string
+}
+
 // GET /api/gallery/quoted-users - Get list of quoted users with stats
 export async function GET(request: Request) {
   try {
@@ -49,7 +56,7 @@ export async function GET(request: Request) {
       query = query.ilike('quoted_user_name', `%${search}%`)
     }
 
-    const { data: quotes, error } = await query
+    const { data: quotes, error } = await query as { data: QuoteRow[] | null, error: any }
 
     if (error) {
       console.error('[QuotedUsers API] Error:', error)
