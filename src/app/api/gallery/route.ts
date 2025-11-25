@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createRouteClient } from '@/lib/supabase-server'
+import { createRouteClient, createServiceClient } from '@/lib/supabase-server'
 
 // GET /api/gallery - Get user's quote gallery
 export async function GET(request: Request) {
@@ -8,11 +8,30 @@ export async function GET(request: Request) {
     const supabase = await createRouteClient()
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log(`[Gallery API] User: ${user?.id || 'null'}, Error: ${userError?.message || 'none'}`)
+    console.log(`[Gallery API] Auth User ID: ${user?.id || 'null'}, Error: ${userError?.message || 'none'}`)
 
     if (!user) {
       console.log('[Gallery API] No user found, returning 401')
       return NextResponse.json({ error: 'Unauthorized', debug: userError?.message }, { status: 401 })
+    }
+
+    // Get user's profile to find their discord_id
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('discord_id')
+      .eq('id', user.id)
+      .single()
+
+    console.log(`[Gallery API] Profile discord_id: ${profile?.discord_id || 'null'}`)
+
+    if (!profile?.discord_id) {
+      console.log('[Gallery API] No discord_id found in profile')
+      return NextResponse.json({
+        quotes: [],
+        pagination: { page: 1, limit: 12, total: 0, totalPages: 0 },
+        quota: { used: 0, max: 50, remaining: 50 },
+        debug: 'No discord_id in profile'
+      })
     }
 
     // Get query parameters for pagination and filtering
@@ -26,11 +45,24 @@ export async function GET(request: Request) {
 
     const offset = (page - 1) * limit
 
-    // Build query
-    let query = supabase
+    // Use service client to bypass RLS for querying
+    // This handles quotes created before user logged in (user_id was null)
+    const serviceClient = createServiceClient()
+
+    // Debug: Check what's in the database
+    const { data: allQuotesDebug, count: totalInDb } = await serviceClient
+      .from('quote_gallery')
+      .select('id, user_id, discord_id', { count: 'exact' })
+      .limit(5)
+
+    console.log(`[Gallery API] Total quotes in DB: ${totalInDb}`)
+    console.log(`[Gallery API] Sample quotes:`, JSON.stringify(allQuotesDebug))
+
+    // Query quotes by discord_id (most reliable since bot always has this)
+    let query = serviceClient
       .from('quote_gallery')
       .select('*', { count: 'exact' })
-      .eq('user_id', user.id)
+      .eq('discord_id', profile.discord_id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -45,26 +77,27 @@ export async function GET(request: Request) {
       query = query.eq('quoted_user_id', quotedUserId)
     }
     if (search) {
-      // Search in quote text and author names
       query = query.or(`quote_text.ilike.%${search}%,quoted_user_name.ilike.%${search}%,author_name.ilike.%${search}%`)
     }
 
     const { data: quotes, count, error } = await query
 
     if (error) {
-      console.error('Gallery fetch error:', error)
+      console.error('[Gallery API] Query error:', error)
       return NextResponse.json(
-        { error: 'Failed to fetch gallery' },
+        { error: 'Failed to fetch gallery', debug: error.message },
         { status: 500 }
       )
     }
 
+    console.log(`[Gallery API] Found ${count} quotes for discord_id ${profile.discord_id}`)
+
     // Get user's subscription for quota info
-    const { data: subscription } = await supabase
+    const { data: subscription } = await serviceClient
       .from('subscriptions')
       .select('tier')
-      .eq('user_id', user.id)
-      .single() as { data: { tier: string } | null }
+      .eq('discord_id', profile.discord_id)
+      .single()
 
     const isPremium = subscription?.tier === 'premium'
     const maxQuotes = isPremium ? 1000 : 50
@@ -84,7 +117,7 @@ export async function GET(request: Request) {
       }
     })
   } catch (error) {
-    console.error('Gallery fetch error:', error)
+    console.error('[Gallery API] Error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch gallery' },
       { status: 500 }
