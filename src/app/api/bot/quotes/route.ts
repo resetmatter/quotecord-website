@@ -12,8 +12,15 @@ interface QuoteUploadRequest {
   orientation?: string
   animated?: boolean
   quoteText?: string
-  authorName?: string
+  authorName?: string // Legacy field, use quotedUser instead
   guildId?: string
+  // Quoted user info (who is being quoted)
+  quotedUserId?: string
+  quotedUserName?: string
+  quotedUserAvatar?: string
+  // Quoter info (who created the quote) - for caching
+  quoterUserName?: string
+  quoterUserAvatar?: string
 }
 
 // POST /api/bot/quotes - Upload and store a quote image
@@ -36,7 +43,12 @@ export async function POST(request: Request) {
       animated = false,
       quoteText,
       authorName,
-      guildId
+      guildId,
+      quotedUserId,
+      quotedUserName,
+      quotedUserAvatar,
+      quoterUserName,
+      quoterUserAvatar
     } = body
 
     // Validate required fields
@@ -134,9 +146,16 @@ export async function POST(request: Request) {
         orientation,
         animated,
         quote_text: quoteText,
-        author_name: authorName,
+        author_name: authorName, // Legacy field
         guild_id: guildId,
-        public_url: publicUrl
+        public_url: publicUrl,
+        // New quoted user fields
+        quoted_user_id: quotedUserId,
+        quoted_user_name: quotedUserName || authorName, // Fallback to authorName for backwards compat
+        quoted_user_avatar: quotedUserAvatar,
+        // Quoter info cache
+        quoter_user_name: quoterUserName,
+        quoter_user_avatar: quoterUserAvatar
       })
       .select()
       .single()
