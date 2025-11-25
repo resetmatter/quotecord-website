@@ -1,15 +1,13 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { createRouteClient } from '@/lib/supabase-server'
 
 // GET /api/gallery - Get user's quote gallery
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -28,7 +26,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from('quote_gallery')
       .select('*', { count: 'exact' })
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -61,7 +59,7 @@ export async function GET(request: Request) {
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('tier')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single() as { data: { tier: string } | null }
 
     const isPremium = subscription?.tier === 'premium'
