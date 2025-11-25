@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################
-# DisQuote Auto-Fix Script
+# quotecord Auto-Fix Script
 # Automatically fixes common issues
 #############################################
 
@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 echo -e "${BLUE}═══════════════════════════════════════════${NC}"
-echo -e "${BLUE}       DisQuote Auto-Fix                   ${NC}"
+echo -e "${BLUE}       quotecord Auto-Fix                  ${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════${NC}"
 echo ""
 

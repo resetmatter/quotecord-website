@@ -18,7 +18,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
               <p className="text-dark-300 mb-4">
-                By accessing or using Quotecord ("the Service"), you agree to be bound by these Terms of Service.
+                By accessing or using quotecord ("the Service"), you agree to be bound by these Terms of Service.
                 If you do not agree to these terms, please do not use the Service.
               </p>
             </section>
@@ -26,7 +26,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
               <p className="text-dark-300 mb-4">
-                Quotecord is a Discord bot that allows users to create quote images from Discord messages.
+                quotecord is a Discord bot that allows users to create quote images from Discord messages.
                 The Service includes both free and premium (Pro) features accessible through Discord and our website.
               </p>
             </section>
@@ -61,7 +61,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">5. Premium Subscription (Pro)</h2>
               <p className="text-dark-300 mb-4">
-                Quotecord Pro is a paid subscription service that provides additional features. By subscribing to Pro:
+                quotecord Pro is a paid subscription service that provides additional features. By subscribing to Pro:
               </p>
               <ul className="list-disc list-inside text-dark-300 space-y-2 mb-4">
                 <li>You agree to pay the applicable subscription fees</li>
@@ -75,7 +75,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">6. Intellectual Property</h2>
               <p className="text-dark-300 mb-4">
-                The Service and its original content, features, and functionality are owned by Quotecord and
+                The Service and its original content, features, and functionality are owned by quotecord and
                 are protected by international copyright, trademark, and other intellectual property laws.
               </p>
               <p className="text-dark-300 mb-4">

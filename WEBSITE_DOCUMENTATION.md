@@ -1,6 +1,6 @@
-# DisQuote Website Documentation
+# quotecord Website Documentation
 
-> Complete documentation for building the DisQuote marketing website with premium subscription integration using Supabase and Discord OAuth.
+> Complete documentation for building the quotecord marketing website with premium subscription integration using Supabase and Discord OAuth.
 
 ---
 
@@ -24,9 +24,9 @@
 
 ## Bot Overview
 
-### What is DisQuote?
+### What is quotecord?
 
-DisQuote is a Discord bot that transforms messages into beautiful, shareable quote images. Users can right-click any message and instantly generate stunning quote graphics with customizable templates, fonts, and themes.
+quotecord is a Discord bot that transforms messages into beautiful, shareable quote images. Users can right-click any message and instantly generate stunning quote graphics with customizable templates, fonts, and themes.
 
 ### Core Value Propositions
 
@@ -59,7 +59,7 @@ DisQuote is a Discord bot that transforms messages into beautiful, shareable quo
 | **Static PNG Export** | High-quality PNG images |
 | **Default Avatar** | Uses global Discord avatar (no choice) |
 | **Single Message Quotes** | One message per quote |
-| **Watermark/Ad** | Small "Made with DisQuote" branding |
+| **Watermark/Ad** | Small "Made with quotecord" branding |
 
 ### PREMIUM TIER ($1.99/month or $14.99/year)
 
@@ -184,7 +184,7 @@ STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_xxx
 STRIPE_PREMIUM_ANNUAL_PRICE_ID=price_xxx
 
 # App
-NEXT_PUBLIC_URL=https://disquote.app
+NEXT_PUBLIC_URL=https://quotecord.app
 ```
 
 ### Environment Variables (Bot)
@@ -213,7 +213,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ### 3. Create Discord Application
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create a new application (or use existing DisQuote app)
+2. Create a new application (or use existing quotecord app)
 3. Go to **OAuth2** → **General**
 4. Add redirect URL: `https://<your-project>.supabase.co/auth/v1/callback`
 5. Copy **Client ID** and **Client Secret** to Supabase Discord provider settings
@@ -689,7 +689,7 @@ client.on('interactionCreate', async (interaction) => {
 
       if (!canAnimate) {
         return interaction.reply({
-          content: '⭐ **Animated GIF export is a Premium feature!**\n\nUpgrade at https://disquote.app/upgrade to unlock animated quotes, preview mode, and more!',
+          content: '⭐ **Animated GIF export is a Premium feature!**\n\nUpgrade at https://quotecord.app/upgrade to unlock animated quotes, preview mode, and more!',
           ephemeral: true
         })
       }
@@ -714,7 +714,7 @@ async function buildQuoteEmbed(discordId, quoteUrl) {
 
   if (!isPremium) {
     embed.setFooter({
-      text: 'Made with DisQuote • Upgrade for no watermark!'
+      text: 'Made with quotecord • Upgrade for no watermark!'
     })
   }
 
@@ -741,7 +741,7 @@ function getActionRow(isPremium) {
       new ButtonBuilder()
         .setLabel('⭐ Upgrade to Premium')
         .setStyle(ButtonStyle.Link)
-        .setURL('https://disquote.app/upgrade?ref=bot')
+        .setURL('https://quotecord.app/upgrade?ref=bot')
     )
   }
 
@@ -1032,7 +1032,7 @@ export async function POST() {
 ### Taglines
 - **Primary**: "Turn Discord messages into stunning quotes"
 - **Secondary**: "The quote generator Discord deserves"
-- **Premium**: "Unlock the full DisQuote experience"
+- **Premium**: "Unlock the full quotecord experience"
 
 ### Feature Headlines
 
@@ -1108,7 +1108,7 @@ export async function POST() {
 ## User Flow Summary
 
 ### New User Signup
-1. User visits disquote.app → Clicks "Login with Discord"
+1. User visits quotecord.app → Clicks "Login with Discord"
 2. Redirected to Discord OAuth → Approves access
 3. Supabase creates auth user → Trigger creates profile + free subscription
 4. User lands on dashboard with free tier
@@ -1131,8 +1131,8 @@ export async function POST() {
 
 ```bash
 # Website setup
-npx create-next-app@latest disquote-website --typescript --tailwind --app --src-dir
-cd disquote-website
+npx create-next-app@latest quotecord-website --typescript --tailwind --app --src-dir
+cd quotecord-website
 
 # Install dependencies
 npm install @supabase/supabase-js @supabase/auth-helpers-nextjs stripe
@@ -1156,5 +1156,5 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 ---
 
-*Documentation for DisQuote Bot v1.0*
+*Documentation for quotecord Bot v1.0*
 *Last updated: 2025-11-23*

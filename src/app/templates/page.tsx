@@ -4,8 +4,8 @@ import { Footer } from '@/components/Footer'
 import { ArrowRight, Sparkles, Type, Moon, Sun, Maximize2, Crown } from 'lucide-react'
 
 export const metadata = {
-  title: 'Templates - Quotecord',
-  description: 'Explore the 3 professionally designed templates available in Quotecord.',
+  title: 'Templates - quotecord',
+  description: 'Explore the 3 professionally designed templates available in quotecord.',
 }
 
 export default function TemplatesPage() {
@@ -96,7 +96,7 @@ export default function TemplatesPage() {
             <div className="relative">
               <h2 className="text-3xl font-bold mb-4">Try all templates free</h2>
               <p className="text-dark-400 mb-8 max-w-xl mx-auto">
-                All templates are available in the free tier. Add Quotecord to your server and start creating.
+                All templates are available in the free tier. Add quotecord to your server and start creating.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

@@ -18,7 +18,7 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
               <p className="text-dark-300 mb-4">
-                Quotecord ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy
+                quotecord ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy
                 explains how we collect, use, disclose, and safeguard your information when you use our Discord
                 bot and website (collectively, the "Service").
               </p>

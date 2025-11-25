@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################
-# DisQuote Database Setup Helper
+# quotecord Database Setup Helper
 # Helps set up Supabase database
 #############################################
 
