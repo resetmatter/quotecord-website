@@ -22,7 +22,7 @@ export async function GET(
       .from('subscriptions')
       .select('tier, status, current_period_end')
       .eq('discord_id', discordId)
-      .single()
+      .single() as { data: { tier: string; status: string; current_period_end: string | null } | null; error: any }
 
     if (error || !subscription) {
       // User doesn't have an account yet - return free tier
