@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 // GET /api/gallery - Get user's quote gallery
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const { data: { session } } = await supabase.auth.getSession()

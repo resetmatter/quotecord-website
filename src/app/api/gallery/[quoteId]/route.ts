@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { quoteId: string } }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const { data: { session } } = await supabase.auth.getSession()
@@ -49,7 +49,7 @@ export async function DELETE(
   { params }: { params: { quoteId: string } }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     const { data: { session } } = await supabase.auth.getSession()
