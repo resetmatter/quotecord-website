@@ -70,21 +70,34 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient()
 
-    // Check if user has an account and storage quota
-    const { data: hasQuota } = await (supabase as any)
-      .rpc('check_storage_quota', { discord_user_id: discordId })
+    // Check subscription tier first
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('tier')
+      .eq('discord_id', discordId)
+      .single() as { data: { tier: string } | null }
 
-    if (!hasQuota) {
-      // Get user's tier to provide appropriate message
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('tier')
-        .eq('discord_id', discordId)
-        .single() as { data: { tier: string } | null }
+    const isPremium = subscription?.tier === 'premium'
+    const maxQuotes = isPremium ? 1000 : 50
 
-      const isPremium = subscription?.tier === 'premium'
-      const maxQuotes = isPremium ? 1000 : 50
+    // Get current quote count directly from quote_gallery
+    const { count: quoteCount, error: countError } = await supabase
+      .from('quote_gallery')
+      .select('*', { count: 'exact', head: true })
+      .eq('discord_id', discordId)
 
+    if (countError) {
+      console.error('Error counting quotes:', countError)
+      return NextResponse.json(
+        { error: 'Failed to check quota' },
+        { status: 500 }
+      )
+    }
+
+    const currentCount = quoteCount ?? 0
+    console.log(`Quota check for ${discordId}: ${currentCount}/${maxQuotes} quotes (premium: ${isPremium})`)
+
+    if (currentCount >= maxQuotes) {
       return NextResponse.json({
         error: 'Storage quota exceeded',
         message: isPremium
