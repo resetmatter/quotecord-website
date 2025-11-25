@@ -170,6 +170,7 @@ export interface Database {
           author_name: string | null
           guild_id: string | null
           public_url: string | null
+          privacy_mode: string | null
           created_at: string
         }
         Insert: {
@@ -189,6 +190,7 @@ export interface Database {
           author_name?: string | null
           guild_id?: string | null
           public_url?: string | null
+          privacy_mode?: string | null
           created_at?: string
         }
         Update: {
@@ -208,6 +210,7 @@ export interface Database {
           author_name?: string | null
           guild_id?: string | null
           public_url?: string | null
+          privacy_mode?: string | null
           created_at?: string
         }
       }

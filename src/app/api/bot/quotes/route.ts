@@ -24,6 +24,8 @@ interface QuoteUploadRequest {
   // Message link(s) to the original Discord message
   messageUrl?: string // Single message URL
   messageUrls?: string[] // Array of URLs for multi-message quotes
+  // Privacy mode ('public', 'anonymous', 'private', 'dmonly')
+  privacyMode?: string
 }
 
 // POST /api/bot/quotes - Upload and store a quote image
@@ -53,7 +55,8 @@ export async function POST(request: Request) {
       quoterUserName,
       quoterUserAvatar,
       messageUrl,
-      messageUrls
+      messageUrls,
+      privacyMode = 'public'
     } = body
 
     // Validate required fields
@@ -176,7 +179,9 @@ export async function POST(request: Request) {
         quoter_user_avatar: quoterUserAvatar,
         // Message link(s) to original Discord message
         message_url: messageUrl,
-        message_urls: messageUrls || []
+        message_urls: messageUrls || [],
+        // Privacy mode
+        privacy_mode: privacyMode
       })
       .select()
       .single()
