@@ -21,6 +21,9 @@ interface QuoteUploadRequest {
   // Quoter info (who created the quote) - for caching
   quoterUserName?: string
   quoterUserAvatar?: string
+  // Message link(s) to the original Discord message
+  messageUrl?: string // Single message URL
+  messageUrls?: string[] // Array of URLs for multi-message quotes
 }
 
 // POST /api/bot/quotes - Upload and store a quote image
@@ -48,7 +51,9 @@ export async function POST(request: Request) {
       quotedUserName,
       quotedUserAvatar,
       quoterUserName,
-      quoterUserAvatar
+      quoterUserAvatar,
+      messageUrl,
+      messageUrls
     } = body
 
     // Validate required fields
@@ -168,7 +173,10 @@ export async function POST(request: Request) {
         quoted_user_avatar: quotedUserAvatar,
         // Quoter info cache
         quoter_user_name: quoterUserName,
-        quoter_user_avatar: quoterUserAvatar
+        quoter_user_avatar: quoterUserAvatar,
+        // Message link(s) to original Discord message
+        message_url: messageUrl,
+        message_urls: messageUrls || []
       })
       .select()
       .single()

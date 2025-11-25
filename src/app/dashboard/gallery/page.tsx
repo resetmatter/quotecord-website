@@ -42,6 +42,8 @@ interface Quote {
   quoter_user_avatar: string | null
   public_url: string
   created_at: string
+  message_url: string | null
+  message_urls: string[] | null
 }
 
 interface UserProfile {
@@ -534,6 +536,17 @@ function QuoteModal({
             </div>
 
             <div className="flex gap-2">
+              {quote.message_url && (
+                <a
+                  href={quote.message_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 text-dark-400 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors"
+                  title="Jump to original message"
+                >
+                  <MessageSquareQuote className="w-5 h-5" />
+                </a>
+              )}
               <a
                 href={quote.public_url}
                 target="_blank"
@@ -590,6 +603,37 @@ function QuoteModal({
             </div>
             {quote.quote_text && (
               <p className="text-dark-300 mt-3 pl-11">&ldquo;{quote.quote_text}&rdquo;</p>
+            )}
+            {/* Jump to original message link(s) */}
+            {(quote.message_url || (quote.message_urls && quote.message_urls.length > 0)) && (
+              <div className="mt-3 pt-3 border-t border-dark-700">
+                {quote.message_urls && quote.message_urls.length > 1 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {quote.message_urls.map((url, index) => (
+                      <a
+                        key={index}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-dark-700 hover:bg-dark-600 rounded-lg text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Message {index + 1}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <a
+                    href={quote.message_url || quote.message_urls?.[0]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Jump to original message
+                  </a>
+                )}
+              </div>
             )}
           </div>
 
