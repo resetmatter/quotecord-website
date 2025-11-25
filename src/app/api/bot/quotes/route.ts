@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     }
 
     // Also log to quotes table for usage tracking
-    await supabase
+    await (supabase as any)
       .from('quotes')
       .insert({
         user_id: profile?.id || null,
