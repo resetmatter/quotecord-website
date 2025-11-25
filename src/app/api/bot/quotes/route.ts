@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         .from('subscriptions')
         .select('tier')
         .eq('discord_id', discordId)
-        .single()
+        .single() as { data: { tier: string } | null }
 
       const isPremium = subscription?.tier === 'premium'
       const maxQuotes = isPremium ? 1000 : 50
@@ -213,7 +213,7 @@ export async function GET(request: Request) {
       .from('subscriptions')
       .select('tier')
       .eq('discord_id', discordId)
-      .single()
+      .single() as { data: { tier: string } | null }
 
     const isPremium = subscription?.tier === 'premium'
     const maxQuotes = isPremium ? 1000 : 50
