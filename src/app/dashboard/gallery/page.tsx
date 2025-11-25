@@ -44,6 +44,12 @@ interface Quote {
   created_at: string
 }
 
+interface UserProfile {
+  discordId: string
+  username: string | null
+  avatar: string | null
+}
+
 interface GalleryResponse {
   quotes: Quote[]
   pagination: {
@@ -57,6 +63,7 @@ interface GalleryResponse {
     max: number
     remaining: number
   }
+  userProfile?: UserProfile
 }
 
 const TEMPLATES = ['Classic', 'Discord Screenshot', 'Profile Background']
@@ -72,6 +79,7 @@ export default function GalleryPage() {
     totalPages: 0
   })
   const [quota, setQuota] = useState({ used: 0, max: 50, remaining: 50 })
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('')
@@ -107,6 +115,7 @@ export default function GalleryPage() {
       setQuotes(data.quotes)
       setPagination(data.pagination)
       setQuota(data.quota)
+      if (data.userProfile) setUserProfile(data.userProfile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load gallery')
     } finally {
@@ -310,6 +319,7 @@ export default function GalleryPage() {
               <QuoteCard
                 key={quote.id}
                 quote={quote}
+                userProfile={userProfile}
                 onClick={() => setSelectedQuote(quote)}
               />
             ))}
@@ -346,6 +356,7 @@ export default function GalleryPage() {
       {selectedQuote && (
         <QuoteModal
           quote={selectedQuote}
+          userProfile={userProfile}
           onClose={() => setSelectedQuote(null)}
           onDelete={() => setDeleteConfirm(selectedQuote)}
         />
@@ -364,8 +375,10 @@ export default function GalleryPage() {
   )
 }
 
-function QuoteCard({ quote, onClick }: { quote: Quote; onClick: () => void }) {
-  const quoterName = quote.quoter_user_name || 'Unknown'
+function QuoteCard({ quote, userProfile, onClick }: { quote: Quote; userProfile: UserProfile | null; onClick: () => void }) {
+  // Use quote's quoter info, fallback to user's profile (since this is their gallery)
+  const quoterName = quote.quoter_user_name || userProfile?.username || 'Unknown'
+  const quoterAvatar = quote.quoter_user_avatar || userProfile?.avatar
   const quotedName = quote.quoted_user_name || quote.author_name || 'Unknown'
 
   return (
@@ -394,9 +407,9 @@ function QuoteCard({ quote, onClick }: { quote: Quote; onClick: () => void }) {
       <div className="p-4">
         {/* Quoter (who created the quote) */}
         <div className="flex items-center gap-2 mb-2">
-          {quote.quoter_user_avatar ? (
+          {quoterAvatar ? (
             <Image
-              src={quote.quoter_user_avatar}
+              src={quoterAvatar}
               alt={quoterName}
               width={24}
               height={24}
@@ -453,14 +466,18 @@ function QuoteCard({ quote, onClick }: { quote: Quote; onClick: () => void }) {
 
 function QuoteModal({
   quote,
+  userProfile,
   onClose,
   onDelete
 }: {
   quote: Quote
+  userProfile: UserProfile | null
   onClose: () => void
   onDelete: () => void
 }) {
-  const quoterName = quote.quoter_user_name || 'Unknown'
+  // Use quote's quoter info, fallback to user's profile (since this is their gallery)
+  const quoterName = quote.quoter_user_name || userProfile?.username || 'Unknown'
+  const quoterAvatar = quote.quoter_user_avatar || userProfile?.avatar
   const quotedName = quote.quoted_user_name || quote.author_name || 'Unknown'
 
   return (
@@ -497,9 +514,9 @@ function QuoteModal({
           <div className="flex items-start justify-between gap-4 mb-4">
             {/* Quoter info (who created this quote) */}
             <div className="flex items-center gap-3">
-              {quote.quoter_user_avatar ? (
+              {quoterAvatar ? (
                 <Image
-                  src={quote.quoter_user_avatar}
+                  src={quoterAvatar}
                   alt={quoterName}
                   width={48}
                   height={48}
