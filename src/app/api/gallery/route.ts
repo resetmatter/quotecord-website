@@ -42,6 +42,8 @@ export async function GET(request: Request) {
     const animated = searchParams.get('animated')
     const quotedUserId = searchParams.get('quotedUserId')
     const search = searchParams.get('search')
+    const sortBy = searchParams.get('sortBy') || 'created_at'
+    const sortDir = searchParams.get('sortDir') || 'desc'
 
     const offset = (page - 1) * limit
 
@@ -58,12 +60,33 @@ export async function GET(request: Request) {
     console.log(`[Gallery API] Total quotes in DB: ${totalInDb}`)
     console.log(`[Gallery API] Sample quotes:`, JSON.stringify(allQuotesDebug))
 
+    // Get unique quoted users for filter dropdown
+    const { data: quotedUsers } = await serviceClient
+      .from('quote_gallery')
+      .select('quoted_user_id, quoted_user_name, quoted_user_avatar')
+      .eq('discord_id', profile.discord_id)
+      .not('quoted_user_id', 'is', null) as { data: { quoted_user_id: string; quoted_user_name: string | null; quoted_user_avatar: string | null }[] | null }
+
+    // Deduplicate quoted users
+    const uniqueQuotedUsers = quotedUsers
+      ? Array.from(
+          new Map(
+            quotedUsers.map(u => [u.quoted_user_id, u])
+          ).values()
+        ).sort((a, b) => (a.quoted_user_name || '').localeCompare(b.quoted_user_name || ''))
+      : []
+
+    // Determine sort column and direction
+    const validSortColumns = ['created_at', 'quoted_user_name', 'quote_text']
+    const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'created_at'
+    const ascending = sortDir === 'asc'
+
     // Query quotes by discord_id (most reliable since bot always has this)
     let query = serviceClient
       .from('quote_gallery')
       .select('*', { count: 'exact' })
       .eq('discord_id', profile.discord_id)
-      .order('created_at', { ascending: false })
+      .order(sortColumn, { ascending })
       .range(offset, offset + limit - 1)
 
     // Apply filters
@@ -120,7 +143,9 @@ export async function GET(request: Request) {
         discordId: profile.discord_id,
         username: profile.discord_username,
         avatar: profile.discord_avatar
-      }
+      },
+      // Include unique quoted users for filter dropdown
+      quotedUsers: uniqueQuotedUsers
     })
   } catch (error) {
     console.error('[Gallery API] Error:', error)
