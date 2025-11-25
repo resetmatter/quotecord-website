@@ -109,7 +109,7 @@ export default function GalleryPage() {
   const [templateFilter, setTemplateFilter] = useState<string>('')
   const [animatedFilter, setAnimatedFilter] = useState<string>('')
   const [quotedUserFilter, setQuotedUserFilter] = useState<string>('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [showFilters, setShowFilters] = useState(true)
 
   // Sorting
   const [sortBy, setSortBy] = useState<string>('created_at')
