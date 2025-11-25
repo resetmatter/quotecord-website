@@ -15,12 +15,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized', debug: userError?.message }, { status: 401 })
     }
 
-    // Get user's profile to find their discord_id
+    // Get user's profile to find their discord_id and info
     const { data: profile } = await supabase
       .from('profiles')
-      .select('discord_id')
+      .select('discord_id, discord_username, discord_avatar')
       .eq('id', user.id)
-      .single() as { data: { discord_id: string } | null }
+      .single() as { data: { discord_id: string; discord_username: string | null; discord_avatar: string | null } | null }
 
     console.log(`[Gallery API] Profile discord_id: ${profile?.discord_id || 'null'}`)
 
@@ -114,6 +114,12 @@ export async function GET(request: Request) {
         used: count || 0,
         max: maxQuotes,
         remaining: maxQuotes - (count || 0)
+      },
+      // Include user profile for fallback when quoter info is missing
+      userProfile: {
+        discordId: profile.discord_id,
+        username: profile.discord_username,
+        avatar: profile.discord_avatar
       }
     })
   } catch (error) {
