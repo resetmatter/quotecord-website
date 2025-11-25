@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       .getPublicUrl(fileName)
 
     // Store metadata in quote_gallery
-    const { data: quote, error: insertError } = await supabase
+    const { data: quote, error: insertError } = await (supabase as any)
       .from('quote_gallery')
       .insert({
         user_id: profile?.id || null,
