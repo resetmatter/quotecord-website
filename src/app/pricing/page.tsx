@@ -9,7 +9,7 @@ import { Check, X, Sparkles, ChevronDown, Crown, Star, ArrowRight, Zap } from 'l
 type BillingPeriod = 'monthly' | 'annual'
 
 export default function PricingPage() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('annual')
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
