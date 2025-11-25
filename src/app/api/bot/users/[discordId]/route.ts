@@ -51,8 +51,8 @@ export async function GET(
       (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
 
     // Get quote count for quota info
-    const { data: quoteCount } = await supabase
-      .rpc('get_user_quote_count' as any, { discord_user_id: discordId })
+    const { data: quoteCount } = await (supabase as any)
+      .rpc('get_user_quote_count', { discord_user_id: discordId })
 
     return NextResponse.json({
       discordId,
@@ -118,8 +118,8 @@ export async function POST(
     }
 
     // Check premium status
-    const { data: isPremium } = await supabase
-      .rpc('is_premium_user' as any, { discord_user_id: discordId })
+    const { data: isPremium } = await (supabase as any)
+      .rpc('is_premium_user', { discord_user_id: discordId })
 
     if (isPremium) {
       return NextResponse.json({

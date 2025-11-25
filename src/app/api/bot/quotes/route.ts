@@ -59,8 +59,8 @@ export async function POST(request: Request) {
     const supabase = createServiceClient()
 
     // Check if user has an account and storage quota
-    const { data: hasQuota } = await supabase
-      .rpc('check_storage_quota' as any, { discord_user_id: discordId })
+    const { data: hasQuota } = await (supabase as any)
+      .rpc('check_storage_quota', { discord_user_id: discordId })
 
     if (!hasQuota) {
       // Get user's tier to provide appropriate message
@@ -205,8 +205,8 @@ export async function GET(request: Request) {
     const supabase = createServiceClient()
 
     // Get quote count
-    const { data: quoteCount } = await supabase
-      .rpc('get_user_quote_count' as any, { discord_user_id: discordId })
+    const { data: quoteCount } = await (supabase as any)
+      .rpc('get_user_quote_count', { discord_user_id: discordId })
 
     // Check if user has account and get their quota
     const { data: subscription } = await supabase
