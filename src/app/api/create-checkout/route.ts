@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       .from('profiles')
       .select('discord_id, email')
       .eq('id', session.user.id)
-      .single()
+      .single() as { data: { discord_id: string; email: string } | null }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', session.user.id)
-      .single()
+      .single() as { data: { stripe_customer_id: string | null } | null }
 
     let customerId = subscription?.stripe_customer_id
 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       customerId = customer.id
 
       // Save customer ID
-      await supabase
+      await (supabase as any)
         .from('subscriptions')
         .update({ stripe_customer_id: customerId })
         .eq('user_id', session.user.id)

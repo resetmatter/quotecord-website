@@ -16,7 +16,7 @@ export async function GET() {
       .from('subscriptions')
       .select('*')
       .eq('user_id', session.user.id)
-      .single()
+      .single() as { data: any }
 
     return NextResponse.json(subscription || { tier: 'free', status: 'active' })
   } catch (error) {
