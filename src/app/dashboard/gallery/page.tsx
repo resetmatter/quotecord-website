@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import {
   Search,
@@ -17,7 +17,10 @@ import {
   Loader2,
   AlertTriangle,
   ExternalLink,
-  Download
+  Download,
+  ChevronDown,
+  Check,
+  Users
 } from 'lucide-react'
 
 interface Quote {
@@ -69,6 +72,14 @@ interface GalleryResponse {
   userProfile?: UserProfile
 }
 
+interface QuotedUserStats {
+  quoted_user_id: string
+  quoted_user_name: string | null
+  quoted_user_avatar: string | null
+  quote_count: number
+  latest_quote_at: string
+}
+
 const TEMPLATES = ['Classic', 'Discord Screenshot', 'Profile Background']
 
 export default function GalleryPage() {
@@ -88,7 +99,15 @@ export default function GalleryPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [templateFilter, setTemplateFilter] = useState<string>('')
   const [animatedFilter, setAnimatedFilter] = useState<string>('')
+  const [quotedUserFilter, setQuotedUserFilter] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
+
+  // Quoted users for filter
+  const [quotedUsers, setQuotedUsers] = useState<QuotedUserStats[]>([])
+  const [quotedUsersLoading, setQuotedUsersLoading] = useState(false)
+  const [userSearchQuery, setUserSearchQuery] = useState('')
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const userDropdownRef = useRef<HTMLDivElement>(null)
 
   // Modal states
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
@@ -108,6 +127,7 @@ export default function GalleryPage() {
       if (searchQuery) params.append('search', searchQuery)
       if (templateFilter) params.append('template', templateFilter)
       if (animatedFilter) params.append('animated', animatedFilter)
+      if (quotedUserFilter) params.append('quotedUserId', quotedUserFilter)
 
       const response = await fetch(`/api/gallery?${params}`)
       if (!response.ok) {
@@ -124,11 +144,50 @@ export default function GalleryPage() {
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, searchQuery, templateFilter, animatedFilter])
+  }, [pagination.page, pagination.limit, searchQuery, templateFilter, animatedFilter, quotedUserFilter])
 
   useEffect(() => {
     fetchQuotes()
   }, [fetchQuotes])
+
+  // Fetch quoted users when filter panel opens or search changes
+  const fetchQuotedUsers = useCallback(async () => {
+    setQuotedUsersLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (userSearchQuery) params.append('search', userSearchQuery)
+      params.append('limit', '100')
+
+      const response = await fetch(`/api/gallery/quoted-users?${params}`)
+      if (response.ok) {
+        const data = await response.json()
+        setQuotedUsers(data.quotedUsers || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch quoted users:', err)
+    } finally {
+      setQuotedUsersLoading(false)
+    }
+  }, [userSearchQuery])
+
+  useEffect(() => {
+    if (showFilters) {
+      fetchQuotedUsers()
+    }
+  }, [showFilters, fetchQuotedUsers])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false)
+      }
+    }
+    if (showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showUserDropdown])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -160,10 +219,20 @@ export default function GalleryPage() {
     setSearchQuery('')
     setTemplateFilter('')
     setAnimatedFilter('')
+    setQuotedUserFilter('')
+    setUserSearchQuery('')
     setPagination(prev => ({ ...prev, page: 1 }))
   }
 
-  const hasActiveFilters = searchQuery || templateFilter || animatedFilter
+  const hasActiveFilters = searchQuery || templateFilter || animatedFilter || quotedUserFilter
+
+  // Get selected user info for display
+  const selectedUser = quotedUsers.find(u => u.quoted_user_id === quotedUserFilter)
+
+  // Filter users by search
+  const filteredUsers = quotedUsers.filter(u =>
+    !userSearchQuery || u.quoted_user_name?.toLowerCase().includes(userSearchQuery.toLowerCase())
+  )
 
   return (
     <div className="max-w-6xl">
@@ -236,6 +305,223 @@ export default function GalleryPage() {
                 <option value="false">Static (PNG)</option>
                 <option value="true">Animated (GIF)</option>
               </select>
+            </div>
+
+            {/* Quoted User Filter - Searchable Dropdown */}
+            <div className="relative" ref={userDropdownRef}>
+              <label className="block text-xs text-dark-500 mb-1">Quoted Person</label>
+              <button
+                type="button"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="flex items-center gap-2 px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500 min-w-[180px]"
+              >
+                {selectedUser ? (
+                  <>
+                    {selectedUser.quoted_user_avatar ? (
+                      <Image
+                        src={selectedUser.quoted_user_avatar}
+                        alt={selectedUser.quoted_user_name || 'User'}
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 bg-dark-700 rounded-full flex items-center justify-center">
+                        <User className="w-3 h-3 text-dark-500" />
+                      </div>
+                    )}
+                    <span className="truncate">{selectedUser.quoted_user_name || 'Unknown'}</span>
+                    <span className="text-dark-500 text-xs">({selectedUser.quote_count})</span>
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-4 h-4 text-dark-500" />
+                    <span className="text-dark-400">All People</span>
+                  </>
+                )}
+                <ChevronDown className="w-4 h-4 text-dark-500 ml-auto" />
+              </button>
+
+              {/* Dropdown Panel */}
+              {showUserDropdown && (
+                <div className="absolute z-50 top-full left-0 mt-1 w-72 bg-dark-800 border border-dark-700 rounded-xl shadow-xl overflow-hidden">
+                  {/* Search Input */}
+                  <div className="p-2 border-b border-dark-700">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                      <input
+                        type="text"
+                        placeholder="Search people..."
+                        value={userSearchQuery}
+                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-dark-900 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  {/* User List */}
+                  <div className="max-h-64 overflow-y-auto">
+                    {quotedUsersLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
+                      </div>
+                    ) : (
+                      <>
+                        {/* All People Option */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuotedUserFilter('')
+                            setShowUserDropdown(false)
+                            setPagination(prev => ({ ...prev, page: 1 }))
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-dark-700 transition-colors ${
+                            !quotedUserFilter ? 'bg-brand-500/10' : ''
+                          }`}
+                        >
+                          <Users className="w-5 h-5 text-dark-400" />
+                          <span className="flex-1">All People</span>
+                          {!quotedUserFilter && <Check className="w-4 h-4 text-brand-500" />}
+                        </button>
+
+                        {filteredUsers.length === 0 && userSearchQuery && (
+                          <div className="px-3 py-4 text-center text-dark-500 text-sm">
+                            No people found matching &quot;{userSearchQuery}&quot;
+                          </div>
+                        )}
+
+                        {/* Top Quoted Section */}
+                        {filteredUsers.length > 0 && !userSearchQuery && (
+                          <div className="px-3 py-1.5 text-xs text-dark-500 bg-dark-900/50">
+                            Most Quoted
+                          </div>
+                        )}
+
+                        {filteredUsers.slice(0, 5).map(user => (
+                          <button
+                            key={user.quoted_user_id}
+                            type="button"
+                            onClick={() => {
+                              setQuotedUserFilter(user.quoted_user_id)
+                              setShowUserDropdown(false)
+                              setUserSearchQuery('')
+                              setPagination(prev => ({ ...prev, page: 1 }))
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-dark-700 transition-colors ${
+                              quotedUserFilter === user.quoted_user_id ? 'bg-brand-500/10' : ''
+                            }`}
+                          >
+                            {user.quoted_user_avatar ? (
+                              <Image
+                                src={user.quoted_user_avatar}
+                                alt={user.quoted_user_name || 'User'}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-dark-700 rounded-full flex items-center justify-center">
+                                <User className="w-3 h-3 text-dark-500" />
+                              </div>
+                            )}
+                            <span className="flex-1 truncate">{user.quoted_user_name || 'Unknown User'}</span>
+                            <span className="text-xs text-dark-500 bg-dark-700 px-1.5 py-0.5 rounded">
+                              {user.quote_count}
+                            </span>
+                            {quotedUserFilter === user.quoted_user_id && (
+                              <Check className="w-4 h-4 text-brand-500" />
+                            )}
+                          </button>
+                        ))}
+
+                        {/* Others Section */}
+                        {filteredUsers.length > 5 && !userSearchQuery && (
+                          <>
+                            <div className="px-3 py-1.5 text-xs text-dark-500 bg-dark-900/50">
+                              Others ({filteredUsers.length - 5} more)
+                            </div>
+                            {filteredUsers.slice(5).map(user => (
+                              <button
+                                key={user.quoted_user_id}
+                                type="button"
+                                onClick={() => {
+                                  setQuotedUserFilter(user.quoted_user_id)
+                                  setShowUserDropdown(false)
+                                  setUserSearchQuery('')
+                                  setPagination(prev => ({ ...prev, page: 1 }))
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-dark-700 transition-colors ${
+                                  quotedUserFilter === user.quoted_user_id ? 'bg-brand-500/10' : ''
+                                }`}
+                              >
+                                {user.quoted_user_avatar ? (
+                                  <Image
+                                    src={user.quoted_user_avatar}
+                                    alt={user.quoted_user_name || 'User'}
+                                    width={24}
+                                    height={24}
+                                    className="rounded-full"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 bg-dark-700 rounded-full flex items-center justify-center">
+                                    <User className="w-3 h-3 text-dark-500" />
+                                  </div>
+                                )}
+                                <span className="flex-1 truncate">{user.quoted_user_name || 'Unknown User'}</span>
+                                <span className="text-xs text-dark-500 bg-dark-700 px-1.5 py-0.5 rounded">
+                                  {user.quote_count}
+                                </span>
+                                {quotedUserFilter === user.quoted_user_id && (
+                                  <Check className="w-4 h-4 text-brand-500" />
+                                )}
+                              </button>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Show filtered results when searching */}
+                        {userSearchQuery && filteredUsers.slice(5).map(user => (
+                          <button
+                            key={user.quoted_user_id}
+                            type="button"
+                            onClick={() => {
+                              setQuotedUserFilter(user.quoted_user_id)
+                              setShowUserDropdown(false)
+                              setUserSearchQuery('')
+                              setPagination(prev => ({ ...prev, page: 1 }))
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-dark-700 transition-colors ${
+                              quotedUserFilter === user.quoted_user_id ? 'bg-brand-500/10' : ''
+                            }`}
+                          >
+                            {user.quoted_user_avatar ? (
+                              <Image
+                                src={user.quoted_user_avatar}
+                                alt={user.quoted_user_name || 'User'}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 bg-dark-700 rounded-full flex items-center justify-center">
+                                <User className="w-3 h-3 text-dark-500" />
+                              </div>
+                            )}
+                            <span className="flex-1 truncate">{user.quoted_user_name || 'Unknown User'}</span>
+                            <span className="text-xs text-dark-500 bg-dark-700 px-1.5 py-0.5 rounded">
+                              {user.quote_count}
+                            </span>
+                            {quotedUserFilter === user.quoted_user_id && (
+                              <Check className="w-4 h-4 text-brand-500" />
+                            )}
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {hasActiveFilters && (
