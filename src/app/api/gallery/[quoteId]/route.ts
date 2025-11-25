@@ -1,7 +1,5 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase-server'
+import { createRouteClient, createServiceClient } from '@/lib/supabase-server'
 
 // GET /api/gallery/[quoteId] - Get a single quote
 export async function GET(
@@ -9,11 +7,10 @@ export async function GET(
   { params }: { params: { quoteId: string } }
 ) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -23,7 +20,7 @@ export async function GET(
       .from('quote_gallery')
       .select('*')
       .eq('id', quoteId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (error || !quote) {
@@ -49,11 +46,10 @@ export async function DELETE(
   { params }: { params: { quoteId: string } }
 ) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -64,8 +60,8 @@ export async function DELETE(
       .from('quote_gallery')
       .select('id, file_path, user_id')
       .eq('id', quoteId)
-      .eq('user_id', session.user.id)
-      .single()
+      .eq('user_id', user.id)
+      .single() as { data: { id: string; file_path: string; user_id: string } | null; error: any }
 
     if (fetchError || !quote) {
       return NextResponse.json(
@@ -90,7 +86,7 @@ export async function DELETE(
       .from('quote_gallery')
       .delete()
       .eq('id', quoteId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (deleteError) {
       console.error('Database delete error:', deleteError)
