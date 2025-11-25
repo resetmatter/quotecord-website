@@ -291,7 +291,7 @@ export default function GalleryPage() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="glass rounded-xl p-4 mb-6 animate-slide-down">
+        <div className="glass rounded-xl p-4 mb-6 animate-slide-down relative z-20">
           <div className="flex flex-wrap gap-4">
             <div>
               <label className="block text-xs text-dark-500 mb-1">Template</label>
@@ -395,7 +395,7 @@ export default function GalleryPage() {
 
               {/* Dropdown Panel */}
               {showUserDropdown && (
-                <div className="absolute z-50 top-full left-0 mt-1 w-72 bg-dark-800 border border-dark-700 rounded-xl shadow-xl overflow-hidden">
+                <div className="absolute z-[100] top-full left-0 mt-1 w-72 bg-dark-800 border border-dark-700 rounded-xl shadow-xl overflow-hidden">
                   {/* Search Input */}
                   <div className="p-2 border-b border-dark-700">
                     <div className="relative">
