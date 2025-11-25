@@ -323,6 +323,7 @@ export default function GalleryPage() {
                 quote={quote}
                 userProfile={userProfile}
                 onClick={() => setSelectedQuote(quote)}
+                onDelete={() => setDeleteConfirm(quote)}
               />
             ))}
           </div>
@@ -377,11 +378,16 @@ export default function GalleryPage() {
   )
 }
 
-function QuoteCard({ quote, userProfile, onClick }: { quote: Quote; userProfile: UserProfile | null; onClick: () => void }) {
+function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; userProfile: UserProfile | null; onClick: () => void; onDelete: () => void }) {
   // Use quote's quoter info, fallback to user's profile (since this is their gallery)
   const quoterName = quote.quoter_user_name || userProfile?.username || 'Unknown'
   const quoterAvatar = quote.quoter_user_avatar || userProfile?.avatar
   const quotedName = quote.quoted_user_name || quote.author_name || 'Unknown'
+
+  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation()
+    action()
+  }
 
   return (
     <button
@@ -452,14 +458,61 @@ function QuoteCard({ quote, userProfile, onClick }: { quote: Quote; userProfile:
           <span className="font-medium text-dark-400 truncate">{quotedName}</span>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-dark-500">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            {new Date(quote.created_at).toLocaleDateString()}
-          </span>
-          <span className="px-1.5 py-0.5 bg-dark-800 rounded text-dark-400">
-            {quote.template}
-          </span>
+        <div className="flex items-center justify-between text-xs text-dark-500">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {new Date(quote.created_at).toLocaleDateString()}
+            </span>
+            <span className="px-1.5 py-0.5 bg-dark-800 rounded text-dark-400">
+              {quote.template}
+            </span>
+          </div>
+
+          {/* Quick action buttons */}
+          <div className="flex items-center gap-1">
+            {quote.message_url && (
+              <a
+                href={quote.message_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="p-1.5 text-dark-500 hover:text-brand-400 hover:bg-brand-500/10 rounded-md transition-colors"
+                title="Jump to message"
+              >
+                <MessageSquareQuote className="w-3.5 h-3.5" />
+              </a>
+            )}
+            <a
+              href={quote.public_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 text-dark-500 hover:text-white hover:bg-dark-700 rounded-md transition-colors"
+              title="Open in new tab"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+            <a
+              href={quote.public_url}
+              download={quote.file_name}
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 text-dark-500 hover:text-white hover:bg-dark-700 rounded-md transition-colors"
+              title="Download"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </a>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => handleActionClick(e, onDelete)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleActionClick(e as unknown as React.MouseEvent, onDelete) }}
+              className="p-1.5 text-dark-500 hover:text-error hover:bg-error/10 rounded-md transition-colors cursor-pointer"
+              title="Delete"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </span>
+          </div>
         </div>
       </div>
     </button>
