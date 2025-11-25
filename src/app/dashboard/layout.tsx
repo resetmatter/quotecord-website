@@ -12,7 +12,8 @@ import {
   LogOut,
   Crown,
   Menu,
-  X
+  X,
+  Images
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 import { logout, supabase } from '@/lib/supabase'
@@ -76,6 +77,7 @@ export default function DashboardLayout({
 
   const navItems = [
     { href: '/dashboard', label: 'Overview', icon: Home },
+    { href: '/dashboard/gallery', label: 'Gallery', icon: Images },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]

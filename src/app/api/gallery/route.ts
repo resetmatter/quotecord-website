@@ -19,6 +19,8 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const template = searchParams.get('template')
     const animated = searchParams.get('animated')
+    const quotedUserId = searchParams.get('quotedUserId')
+    const search = searchParams.get('search')
 
     const offset = (page - 1) * limit
 
@@ -36,6 +38,13 @@ export async function GET(request: Request) {
     }
     if (animated !== null && animated !== undefined) {
       query = query.eq('animated', animated === 'true')
+    }
+    if (quotedUserId) {
+      query = query.eq('quoted_user_id', quotedUserId)
+    }
+    if (search) {
+      // Search in quote text and author names
+      query = query.or(`quote_text.ilike.%${search}%,quoted_user_name.ilike.%${search}%,author_name.ilike.%${search}%`)
     }
 
     const { data: quotes, count, error } = await query

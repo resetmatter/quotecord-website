@@ -228,7 +228,7 @@ CREATE INDEX IF NOT EXISTS idx_quotes_created_at ON quotes(created_at DESC);
 CREATE TABLE IF NOT EXISTS quote_gallery (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  discord_id TEXT NOT NULL,
+  discord_id TEXT NOT NULL, -- Discord ID of the user who CREATED the quote (the quoter)
 
   -- Quote image metadata
   file_path TEXT NOT NULL, -- Path in Supabase Storage
@@ -245,8 +245,17 @@ CREATE TABLE IF NOT EXISTS quote_gallery (
 
   -- Quote content (for display purposes)
   quote_text TEXT,
-  author_name TEXT,
+  author_name TEXT, -- Legacy field, use quoted_user_name instead
   guild_id TEXT,
+
+  -- Quoted user info (the person being quoted)
+  quoted_user_id TEXT, -- Discord ID of the user being quoted
+  quoted_user_name TEXT, -- Cached Discord username
+  quoted_user_avatar TEXT, -- Cached Discord avatar URL
+
+  -- Quoter info cache (for display without lookups)
+  quoter_user_name TEXT, -- Cached Discord username of the quoter
+  quoter_user_avatar TEXT, -- Cached Discord avatar URL of the quoter
 
   -- Storage info
   public_url TEXT, -- Public URL for the quote image
@@ -277,6 +286,7 @@ CREATE POLICY "Service role can manage gallery quotes" ON quote_gallery
 CREATE INDEX IF NOT EXISTS idx_quote_gallery_discord_id ON quote_gallery(discord_id);
 CREATE INDEX IF NOT EXISTS idx_quote_gallery_user_id ON quote_gallery(user_id);
 CREATE INDEX IF NOT EXISTS idx_quote_gallery_created_at ON quote_gallery(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_quote_gallery_quoted_user_id ON quote_gallery(quoted_user_id);
 
 -- ============================================
 -- BOT API KEY TABLE
