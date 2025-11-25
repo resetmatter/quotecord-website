@@ -17,7 +17,10 @@ import {
   Loader2,
   AlertTriangle,
   ExternalLink,
-  Download
+  Download,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 
 interface Quote {
@@ -52,6 +55,12 @@ interface UserProfile {
   avatar: string | null
 }
 
+interface QuotedUser {
+  quoted_user_id: string
+  quoted_user_name: string | null
+  quoted_user_avatar: string | null
+}
+
 interface GalleryResponse {
   quotes: Quote[]
   pagination: {
@@ -66,6 +75,7 @@ interface GalleryResponse {
     remaining: number
   }
   userProfile?: UserProfile
+  quotedUsers?: QuotedUser[]
 }
 
 const TEMPLATES = ['Classic', 'Discord Screenshot', 'Profile Background']
@@ -87,7 +97,15 @@ export default function GalleryPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [templateFilter, setTemplateFilter] = useState<string>('')
   const [animatedFilter, setAnimatedFilter] = useState<string>('')
+  const [quotedUserFilter, setQuotedUserFilter] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
+
+  // Sorting
+  const [sortBy, setSortBy] = useState<string>('created_at')
+  const [sortDir, setSortDir] = useState<string>('desc')
+
+  // Quoted users for filter dropdown
+  const [quotedUsers, setQuotedUsers] = useState<QuotedUser[]>([])
 
   // Modal states
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
@@ -101,12 +119,15 @@ export default function GalleryPage() {
     try {
       const params = new URLSearchParams({
         page: pagination.page.toString(),
-        limit: pagination.limit.toString()
+        limit: pagination.limit.toString(),
+        sortBy,
+        sortDir
       })
 
       if (searchQuery) params.append('search', searchQuery)
       if (templateFilter) params.append('template', templateFilter)
       if (animatedFilter) params.append('animated', animatedFilter)
+      if (quotedUserFilter) params.append('quotedUserId', quotedUserFilter)
 
       const response = await fetch(`/api/gallery?${params}`)
       if (!response.ok) {
@@ -118,12 +139,13 @@ export default function GalleryPage() {
       setPagination(data.pagination)
       setQuota(data.quota)
       if (data.userProfile) setUserProfile(data.userProfile)
+      if (data.quotedUsers) setQuotedUsers(data.quotedUsers)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load gallery')
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, searchQuery, templateFilter, animatedFilter])
+  }, [pagination.page, pagination.limit, searchQuery, templateFilter, animatedFilter, quotedUserFilter, sortBy, sortDir])
 
   useEffect(() => {
     fetchQuotes()
@@ -159,10 +181,14 @@ export default function GalleryPage() {
     setSearchQuery('')
     setTemplateFilter('')
     setAnimatedFilter('')
+    setQuotedUserFilter('')
+    setSortBy('created_at')
+    setSortDir('desc')
     setPagination(prev => ({ ...prev, page: 1 }))
   }
 
-  const hasActiveFilters = searchQuery || templateFilter || animatedFilter
+  const hasActiveFilters = searchQuery || templateFilter || animatedFilter || quotedUserFilter
+  const hasNonDefaultSort = sortBy !== 'created_at' || sortDir !== 'desc'
 
   return (
     <div className="max-w-6xl">
@@ -204,6 +230,28 @@ export default function GalleryPage() {
       {showFilters && (
         <div className="glass rounded-xl p-4 mb-6 animate-slide-down">
           <div className="flex flex-wrap gap-4">
+            {/* Quoted User Filter */}
+            {quotedUsers.length > 0 && (
+              <div>
+                <label className="block text-xs text-dark-500 mb-1">Quoted User</label>
+                <select
+                  value={quotedUserFilter}
+                  onChange={(e) => {
+                    setQuotedUserFilter(e.target.value)
+                    setPagination(prev => ({ ...prev, page: 1 }))
+                  }}
+                  className="px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500 min-w-[160px]"
+                >
+                  <option value="">All Users</option>
+                  {quotedUsers.map(u => (
+                    <option key={u.quoted_user_id} value={u.quoted_user_id}>
+                      {u.quoted_user_name || 'Unknown'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs text-dark-500 mb-1">Template</label>
               <select
@@ -237,12 +285,44 @@ export default function GalleryPage() {
               </select>
             </div>
 
-            {hasActiveFilters && (
+            {/* Sort Options */}
+            <div>
+              <label className="block text-xs text-dark-500 mb-1">Sort By</label>
+              <div className="flex gap-1">
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value)
+                    setPagination(prev => ({ ...prev, page: 1 }))
+                  }}
+                  className="px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                >
+                  <option value="created_at">Date</option>
+                  <option value="quoted_user_name">Quoted User</option>
+                </select>
+                <button
+                  onClick={() => {
+                    setSortDir(sortDir === 'desc' ? 'asc' : 'desc')
+                    setPagination(prev => ({ ...prev, page: 1 }))
+                  }}
+                  className="p-2 bg-dark-800 border border-dark-700 rounded-lg hover:bg-dark-700 transition-colors"
+                  title={sortDir === 'desc' ? 'Descending' : 'Ascending'}
+                >
+                  {sortDir === 'desc' ? (
+                    <ArrowDown className="w-4 h-4" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {(hasActiveFilters || hasNonDefaultSort) && (
               <button
                 onClick={clearFilters}
                 className="self-end px-3 py-2 text-sm text-dark-400 hover:text-white transition-colors"
               >
-                Clear filters
+                Clear all
               </button>
             )}
           </div>
