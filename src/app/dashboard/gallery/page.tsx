@@ -365,7 +365,8 @@ export default function GalleryPage() {
 }
 
 function QuoteCard({ quote, onClick }: { quote: Quote; onClick: () => void }) {
-  const displayName = quote.quoted_user_name || quote.author_name || 'Unknown'
+  const quoterName = quote.quoter_user_name || 'Unknown'
+  const quotedName = quote.quoted_user_name || quote.author_name || 'Unknown'
 
   return (
     <button
@@ -391,11 +392,12 @@ function QuoteCard({ quote, onClick }: { quote: Quote; onClick: () => void }) {
 
       {/* Info */}
       <div className="p-4">
+        {/* Quoter (who created the quote) */}
         <div className="flex items-center gap-2 mb-2">
-          {quote.quoted_user_avatar ? (
+          {quote.quoter_user_avatar ? (
             <Image
-              src={quote.quoted_user_avatar}
-              alt={displayName}
+              src={quote.quoter_user_avatar}
+              alt={quoterName}
               width={24}
               height={24}
               className="rounded-full"
@@ -405,14 +407,35 @@ function QuoteCard({ quote, onClick }: { quote: Quote; onClick: () => void }) {
               <User className="w-3 h-3 text-brand-400" />
             </div>
           )}
-          <span className="text-sm font-medium truncate">{displayName}</span>
+          <span className="text-sm font-medium truncate">{quoterName}</span>
         </div>
 
+        {/* Quote text with quoted user */}
         {quote.quote_text && (
           <p className="text-dark-400 text-sm line-clamp-2 mb-2">
             &ldquo;{quote.quote_text}&rdquo;
           </p>
         )}
+
+        {/* Quoted user (who was quoted) */}
+        <div className="flex items-center gap-1.5 mb-2 text-xs text-dark-500">
+          <MessageSquareQuote className="w-3 h-3" />
+          <span>Quoting</span>
+          {quote.quoted_user_avatar ? (
+            <Image
+              src={quote.quoted_user_avatar}
+              alt={quotedName}
+              width={16}
+              height={16}
+              className="rounded-full"
+            />
+          ) : (
+            <div className="w-4 h-4 bg-dark-700 rounded-full flex items-center justify-center">
+              <User className="w-2 h-2 text-dark-500" />
+            </div>
+          )}
+          <span className="font-medium text-dark-400 truncate">{quotedName}</span>
+        </div>
 
         <div className="flex items-center gap-3 text-xs text-dark-500">
           <span className="flex items-center gap-1">
@@ -437,7 +460,8 @@ function QuoteModal({
   onClose: () => void
   onDelete: () => void
 }) {
-  const displayName = quote.quoted_user_name || quote.author_name || 'Unknown'
+  const quoterName = quote.quoter_user_name || 'Unknown'
+  const quotedName = quote.quoted_user_name || quote.author_name || 'Unknown'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -471,11 +495,12 @@ function QuoteModal({
         {/* Details */}
         <div className="p-6">
           <div className="flex items-start justify-between gap-4 mb-4">
+            {/* Quoter info (who created this quote) */}
             <div className="flex items-center gap-3">
-              {quote.quoted_user_avatar ? (
+              {quote.quoter_user_avatar ? (
                 <Image
-                  src={quote.quoted_user_avatar}
-                  alt={displayName}
+                  src={quote.quoter_user_avatar}
+                  alt={quoterName}
                   width={48}
                   height={48}
                   className="rounded-full"
@@ -486,10 +511,8 @@ function QuoteModal({
                 </div>
               )}
               <div>
-                <h3 className="font-semibold">{displayName}</h3>
-                {quote.quoted_user_id && (
-                  <p className="text-xs text-dark-500">ID: {quote.quoted_user_id}</p>
-                )}
+                <h3 className="font-semibold">{quoterName}</h3>
+                <p className="text-xs text-dark-500">Created this quote</p>
               </div>
             </div>
 
@@ -521,14 +544,37 @@ function QuoteModal({
             </div>
           </div>
 
-          {quote.quote_text && (
-            <div className="mb-4 p-4 bg-dark-800/50 rounded-xl">
-              <div className="flex items-start gap-2">
-                <MessageSquareQuote className="w-4 h-4 text-brand-400 mt-0.5 flex-shrink-0" />
-                <p className="text-dark-300">&ldquo;{quote.quote_text}&rdquo;</p>
+          {/* Quoted user info (who was quoted) */}
+          <div className="mb-4 p-4 bg-dark-800/50 rounded-xl">
+            <div className="flex items-center gap-2 mb-2 text-xs text-dark-500">
+              <MessageSquareQuote className="w-4 h-4 text-brand-400" />
+              <span>Quoting</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {quote.quoted_user_avatar ? (
+                <Image
+                  src={quote.quoted_user_avatar}
+                  alt={quotedName}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-dark-700 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-dark-500" />
+                </div>
+              )}
+              <div>
+                <p className="font-medium text-dark-200">{quotedName}</p>
+                {quote.quoted_user_id && (
+                  <p className="text-xs text-dark-500">ID: {quote.quoted_user_id}</p>
+                )}
               </div>
             </div>
-          )}
+            {quote.quote_text && (
+              <p className="text-dark-300 mt-3 pl-11">&ldquo;{quote.quote_text}&rdquo;</p>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
@@ -548,14 +594,6 @@ function QuoteModal({
               <p className="font-medium">{new Date(quote.created_at).toLocaleDateString()}</p>
             </div>
           </div>
-
-          {quote.quoter_user_name && (
-            <div className="mt-4 pt-4 border-t border-dark-700">
-              <p className="text-xs text-dark-500">
-                Quoted by {quote.quoter_user_name}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
