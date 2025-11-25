@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       .from('profiles')
       .select('discord_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { discord_id: string } | null }
 
     console.log(`[Gallery API] Profile discord_id: ${profile?.discord_id || 'null'}`)
 
@@ -97,7 +97,7 @@ export async function GET(request: Request) {
       .from('subscriptions')
       .select('tier')
       .eq('discord_id', profile.discord_id)
-      .single()
+      .single() as { data: { tier: string } | null }
 
     const isPremium = subscription?.tier === 'premium'
     const maxQuotes = isPremium ? 1000 : 50
