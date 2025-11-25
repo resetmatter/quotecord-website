@@ -389,6 +389,24 @@ function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; us
     action()
   }
 
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const response = await fetch(quote.public_url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = quote.file_name
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Download failed:', err)
+    }
+  }
+
   return (
     <button
       onClick={onClick}
@@ -493,15 +511,16 @@ function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; us
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
-            <a
-              href={quote.public_url}
-              download={quote.file_name}
-              onClick={(e) => e.stopPropagation()}
-              className="p-1.5 text-dark-500 hover:text-white hover:bg-dark-700 rounded-md transition-colors"
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={handleDownload}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleDownload(e as unknown as React.MouseEvent) }}
+              className="p-1.5 text-dark-500 hover:text-white hover:bg-dark-700 rounded-md transition-colors cursor-pointer"
               title="Download"
             >
               <Download className="w-3.5 h-3.5" />
-            </a>
+            </span>
             <span
               role="button"
               tabIndex={0}
