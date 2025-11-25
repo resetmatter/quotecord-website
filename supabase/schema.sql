@@ -260,6 +260,9 @@ CREATE TABLE IF NOT EXISTS quote_gallery (
   -- Storage info
   public_url TEXT, -- Public URL for the quote image
 
+  -- Privacy mode ('public', 'anonymous', 'private', 'dmonly')
+  privacy_mode TEXT DEFAULT 'public',
+
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -287,6 +290,7 @@ CREATE INDEX IF NOT EXISTS idx_quote_gallery_discord_id ON quote_gallery(discord
 CREATE INDEX IF NOT EXISTS idx_quote_gallery_user_id ON quote_gallery(user_id);
 CREATE INDEX IF NOT EXISTS idx_quote_gallery_created_at ON quote_gallery(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_quote_gallery_quoted_user_id ON quote_gallery(quoted_user_id);
+CREATE INDEX IF NOT EXISTS idx_quote_gallery_privacy_mode ON quote_gallery(privacy_mode);
 
 -- ============================================
 -- BOT API KEY TABLE

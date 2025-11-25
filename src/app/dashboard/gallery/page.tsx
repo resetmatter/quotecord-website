@@ -44,6 +44,7 @@ interface Quote {
   created_at: string
   message_url: string | null
   message_urls: string[] | null
+  privacy_mode: string | null
 }
 
 interface UserProfile {
