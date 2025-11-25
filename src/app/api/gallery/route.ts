@@ -4,11 +4,15 @@ import { createRouteClient } from '@/lib/supabase-server'
 // GET /api/gallery - Get user's quote gallery
 export async function GET(request: Request) {
   try {
+    console.log('[Gallery API] Starting request')
     const supabase = await createRouteClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log(`[Gallery API] User: ${user?.id || 'null'}, Error: ${userError?.message || 'none'}`)
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      console.log('[Gallery API] No user found, returning 401')
+      return NextResponse.json({ error: 'Unauthorized', debug: userError?.message }, { status: 401 })
     }
 
     // Get query parameters for pagination and filtering
