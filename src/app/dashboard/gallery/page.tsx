@@ -389,6 +389,28 @@ function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; us
     action()
   }
 
+  const getDownloadFilename = () => {
+    const ext = quote.animated ? 'gif' : 'png'
+    if (quote.quote_text) {
+      // Take first ~40 chars of quote, sanitize for filename
+      const sanitized = quote.quote_text
+        .slice(0, 40)
+        .replace(/[^a-zA-Z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+      if (sanitized) {
+        return `${sanitized}.${ext}`
+      }
+    }
+    // Fallback to quoted user name or original filename
+    if (quote.quoted_user_name) {
+      const sanitized = quote.quoted_user_name.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase()
+      return `quote-${sanitized}.${ext}`
+    }
+    return quote.file_name
+  }
+
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
@@ -397,7 +419,7 @@ function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; us
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = quote.file_name
+      a.download = getDownloadFilename()
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
