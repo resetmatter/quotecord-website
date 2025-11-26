@@ -73,6 +73,8 @@ const config: Config = {
         'fade-in': 'fadeIn 0.5s ease-out',
         'scale-in': 'scaleIn 0.3s ease-out',
         'bounce-subtle': 'bounceSubtle 2s ease-in-out infinite',
+        'pulse-once': 'pulseOnce 2s ease-in-out',
+        'slide-in': 'slideIn 0.4s ease-out',
       },
       keyframes: {
         float: {
@@ -110,6 +112,15 @@ const config: Config = {
         bounceSubtle: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
+        },
+        pulseOnce: {
+          '0%': { opacity: '1', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.7)' },
+          '50%': { opacity: '1', boxShadow: '0 0 0 10px rgba(16, 185, 129, 0)' },
+          '100%': { opacity: '1', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0)' },
+        },
+        slideIn: {
+          '0%': { opacity: '0', transform: 'translateY(-10px) scale(0.98)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
       },
       boxShadow: {
