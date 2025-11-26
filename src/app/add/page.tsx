@@ -13,8 +13,8 @@ export default function AddBotPage() {
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Add Quotecord</h1>
-          <p className="text-gray-400">Choose how you want to use Quotecord</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Add quotecord</h1>
+          <p className="text-gray-400">Choose how you want to use quotecord</p>
         </div>
 
         <div className="space-y-4">
@@ -31,7 +31,7 @@ export default function AddBotPage() {
               </div>
               <div className="text-left">
                 <h2 className="text-lg font-semibold">Install as User App</h2>
-                <p className="text-indigo-200 text-sm">Use Quotecord anywhere on Discord, even in servers where it&apos;s not installed</p>
+                <p className="text-indigo-200 text-sm">Use quotecord anywhere on Discord, even in servers where it&apos;s not installed</p>
               </div>
             </div>
           </a>
@@ -49,7 +49,7 @@ export default function AddBotPage() {
               </div>
               <div className="text-left">
                 <h2 className="text-lg font-semibold">Add to Server</h2>
-                <p className="text-gray-400 text-sm">Install Quotecord to your server for all members to use</p>
+                <p className="text-gray-400 text-sm">Install quotecord to your server for all members to use</p>
               </div>
             </div>
           </a>

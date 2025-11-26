@@ -104,7 +104,7 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold mb-4">Data & Privacy</h2>
 
         <p className="text-gray-400 text-sm mb-4">
-          Your data is stored securely and is only used to provide the DisQuote service.
+          Your data is stored securely and is only used to provide the quotecord service.
           We never sell or share your data with third parties.
         </p>
 

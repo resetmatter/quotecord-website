@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################
-# DisQuote Health Check Script
+# quotecord Health Check Script
 # Validates installation and configuration
 #############################################
 
@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 echo -e "${BLUE}═══════════════════════════════════════════${NC}"
-echo -e "${BLUE}       DisQuote Health Check               ${NC}"
+echo -e "${BLUE}       quotecord Health Check              ${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════${NC}"
 echo ""
 

@@ -4,8 +4,8 @@ import { Footer } from '@/components/Footer'
 import { MessageCircle, Mail, Book, ExternalLink, ChevronRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'Support - Quotecord',
-  description: 'Get help with Quotecord or contact us for any questions.',
+  title: 'Support - quotecord',
+  description: 'Get help with quotecord or contact us for any questions.',
 }
 
 export default function SupportPage() {
@@ -21,7 +21,7 @@ export default function SupportPage() {
               <span className="gradient-text"> Support</span>
             </h1>
             <p className="text-dark-400 text-lg">
-              Get help with Quotecord or contact us for any questions
+              Get help with quotecord or contact us for any questions
             </p>
           </div>
 
@@ -80,8 +80,8 @@ export default function SupportPage() {
                 answer="Animated GIFs are a Pro feature. When you create a quote from a user with an animated avatar, the bot will automatically generate a GIF instead of a PNG. Upgrade to Pro to unlock this feature."
               />
               <FAQItem
-                question="Can I use Quotecord in DMs?"
-                answer="Yes! Quotecord supports both guild install and user install modes. You can add it to your user account to use in DMs and group chats."
+                question="Can I use quotecord in DMs?"
+                answer="Yes! quotecord supports both guild install and user install modes. You can add it to your user account to use in DMs and group chats."
               />
               <FAQItem
                 question="How do I cancel my subscription?"

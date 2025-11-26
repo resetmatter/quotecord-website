@@ -118,7 +118,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-dark-800/50">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-dark-500 text-sm">
-              &copy; {new Date().getFullYear()} Quotecord. All rights reserved.
+              &copy; {new Date().getFullYear()} quotecord. All rights reserved.
             </p>
             <p className="text-dark-500 text-sm flex items-center gap-1">
               Made with <Heart className="w-3.5 h-3.5 text-accent-pink" /> for the Discord community

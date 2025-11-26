@@ -365,7 +365,7 @@ export default function Home() {
                   Ready to create beautiful quotes?
                 </h2>
                 <p className="text-dark-400 text-lg mb-8 max-w-xl mx-auto">
-                  Join thousands of Discord users who trust Quotecord to capture their favorite moments.
+                  Join thousands of Discord users who trust quotecord to capture their favorite moments.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Link

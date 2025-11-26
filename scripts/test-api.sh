@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# API Endpoint Test Script for Quotecord
+# API Endpoint Test Script for quotecord
 # Usage: ./scripts/test-api.sh <base_url> <bot_api_key> [discord_id]
 #
 # Examples:
@@ -20,7 +20,7 @@ if [ -z "$BOT_API_KEY" ]; then
 fi
 
 echo "=========================================="
-echo "Testing Quotecord API Endpoints"
+echo "Testing quotecord API Endpoints"
 echo "=========================================="
 echo "Base URL: $BASE_URL"
 echo "Discord ID: $DISCORD_ID"

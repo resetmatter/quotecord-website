@@ -1,6 +1,6 @@
-# DisQuote Website
+# quotecord Website
 
-Marketing website with premium subscription management for the DisQuote Discord bot.
+Marketing website with premium subscription management for the quotecord Discord bot.
 
 ## Quick Start
 
@@ -202,7 +202,7 @@ CMD ["npm", "start"]
 
 ```bash
 npm run build
-pm2 start npm --name "disquote" -- start
+pm2 start npm --name "quotecord" -- start
 ```
 
 ## API Endpoints

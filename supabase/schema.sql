@@ -1,4 +1,4 @@
--- DisQuote Database Schema for Supabase
+-- quotecord Database Schema for Supabase
 -- Run this SQL in your Supabase SQL Editor to set up the database
 
 -- ============================================
