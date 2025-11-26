@@ -22,8 +22,11 @@ import {
   Check,
   Users,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
+import { useRealtimeQuotes, RealtimeQuote } from '@/hooks/useRealtimeQuotes'
 
 interface Quote {
   id: string
@@ -127,6 +130,78 @@ export default function GalleryPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<Quote | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Real-time state
+  const [realtimeConnected, setRealtimeConnected] = useState(false)
+  const [newQuoteIds, setNewQuoteIds] = useState<Set<string>>(new Set())
+
+  // Real-time quote updates
+  const handleRealtimeInsert = useCallback((newQuote: RealtimeQuote) => {
+    // Only add to view if on first page with default sorting (newest first) and no filters
+    const isOnFirstPage = pagination.page === 1
+    const isDefaultSort = sortBy === 'created_at' && sortDir === 'desc'
+    const hasNoFilters = !searchQuery && !templateFilter && !animatedFilter && !quotedUserFilter
+
+    if (isOnFirstPage && isDefaultSort && hasNoFilters) {
+      // Add to beginning of list
+      setQuotes(prev => {
+        // Avoid duplicates
+        if (prev.some(q => q.id === newQuote.id)) return prev
+        return [newQuote as Quote, ...prev]
+      })
+      // Mark as new for animation
+      setNewQuoteIds(prev => new Set(prev).add(newQuote.id))
+      // Remove highlight after animation
+      setTimeout(() => {
+        setNewQuoteIds(prev => {
+          const next = new Set(prev)
+          next.delete(newQuote.id)
+          return next
+        })
+      }, 3000)
+    }
+    // Update quota
+    setQuota(prev => ({
+      ...prev,
+      used: prev.used + 1,
+      remaining: Math.max(0, prev.remaining - 1)
+    }))
+    // Refresh quoted users list
+    fetchQuotedUsers()
+  }, [pagination.page, sortBy, sortDir, searchQuery, templateFilter, animatedFilter, quotedUserFilter])
+
+  const handleRealtimeDelete = useCallback((deletedId: string) => {
+    // Remove from current view
+    setQuotes(prev => prev.filter(q => q.id !== deletedId))
+    // Update quota
+    setQuota(prev => ({
+      ...prev,
+      used: Math.max(0, prev.used - 1),
+      remaining: prev.remaining + 1
+    }))
+    // Close modals if the deleted quote was open
+    setSelectedQuote(prev => prev?.id === deletedId ? null : prev)
+    setDeleteConfirm(prev => prev?.id === deletedId ? null : prev)
+  }, [])
+
+  // Initialize real-time subscription
+  useRealtimeQuotes({
+    discordId: userProfile?.discordId ?? null,
+    onInsert: handleRealtimeInsert,
+    onDelete: handleRealtimeDelete,
+    enabled: !!userProfile?.discordId
+  })
+
+  // Track real-time connection status (simple approach using userProfile availability)
+  useEffect(() => {
+    if (userProfile?.discordId) {
+      // Small delay to let subscription establish
+      const timer = setTimeout(() => setRealtimeConnected(true), 1000)
+      return () => clearTimeout(timer)
+    } else {
+      setRealtimeConnected(false)
+    }
+  }, [userProfile?.discordId])
+
   const fetchQuotes = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -212,6 +287,19 @@ export default function GalleryPage() {
 
   const handleDelete = async (quote: Quote) => {
     setDeleting(true)
+
+    // Optimistic update: remove from UI immediately
+    const previousQuotes = quotes
+    const previousQuota = quota
+    setQuotes(prev => prev.filter(q => q.id !== quote.id))
+    setQuota(prev => ({
+      ...prev,
+      used: Math.max(0, prev.used - 1),
+      remaining: prev.remaining + 1
+    }))
+    setDeleteConfirm(null)
+    setSelectedQuote(null)
+
     try {
       const response = await fetch(`/api/gallery/${quote.id}`, {
         method: 'DELETE'
@@ -220,11 +308,11 @@ export default function GalleryPage() {
       if (!response.ok) {
         throw new Error('Failed to delete quote')
       }
-
-      setDeleteConfirm(null)
-      setSelectedQuote(null)
-      fetchQuotes()
+      // Success - the real-time handler will also fire but we've already updated
     } catch (err) {
+      // Rollback on error
+      setQuotes(previousQuotes)
+      setQuota(previousQuota)
       setError(err instanceof Error ? err.message : 'Failed to delete quote')
     } finally {
       setDeleting(false)
@@ -257,7 +345,15 @@ export default function GalleryPage() {
     <div className="max-w-6xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Quote Gallery</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">Quote Gallery</h1>
+            {realtimeConnected && (
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-success/10 border border-success/30 rounded-full" title="Real-time updates active">
+                <Wifi className="w-3 h-3 text-success" />
+                <span className="text-xs text-success font-medium">Live</span>
+              </div>
+            )}
+          </div>
           <p className="text-dark-400 text-sm mt-1">
             {quota.used} / {quota.max} quotes used
           </p>
@@ -662,6 +758,7 @@ export default function GalleryPage() {
                 userProfile={userProfile}
                 onClick={() => setSelectedQuote(quote)}
                 onDelete={() => setDeleteConfirm(quote)}
+                isNew={newQuoteIds.has(quote.id)}
               />
             ))}
           </div>
@@ -716,7 +813,7 @@ export default function GalleryPage() {
   )
 }
 
-function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; userProfile: UserProfile | null; onClick: () => void; onDelete: () => void }) {
+function QuoteCard({ quote, userProfile, onClick, onDelete, isNew = false }: { quote: Quote; userProfile: UserProfile | null; onClick: () => void; onDelete: () => void; isNew?: boolean }) {
   // Use quote's quoter info, fallback to user's profile (since this is their gallery)
   const quoterName = quote.quoter_user_name || userProfile?.username || 'Unknown'
   const quoterAvatar = quote.quoter_user_avatar || userProfile?.avatar
@@ -770,7 +867,9 @@ function QuoteCard({ quote, userProfile, onClick, onDelete }: { quote: Quote; us
   return (
     <button
       onClick={onClick}
-      className="group glass rounded-xl overflow-hidden text-left hover:ring-2 hover:ring-brand-500/50 transition-all"
+      className={`group glass rounded-xl overflow-hidden text-left hover:ring-2 hover:ring-brand-500/50 transition-all ${
+        isNew ? 'ring-2 ring-success/50 animate-pulse-once' : ''
+      }`}
     >
       {/* Image */}
       <div className="relative aspect-video bg-dark-800">
