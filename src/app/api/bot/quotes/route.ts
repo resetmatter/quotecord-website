@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyBotApiKey } from '@/lib/bot-auth'
+import { broadcastQuoteCreated } from '@/lib/realtime-broadcast'
 
 interface QuoteUploadRequest {
   discordId: string
@@ -209,6 +210,9 @@ export async function POST(request: Request) {
         orientation,
         animated
       })
+
+    // Broadcast to connected clients for real-time updates
+    await broadcastQuoteCreated(discordId, quote)
 
     return NextResponse.json({
       success: true,

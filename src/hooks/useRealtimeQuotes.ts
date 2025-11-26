@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface RealtimeQuote {
   id: string
@@ -31,11 +31,17 @@ export interface RealtimeQuote {
   privacy_mode: string | null
 }
 
+interface BroadcastPayload {
+  type: 'quote_created' | 'quote_deleted'
+  quote?: RealtimeQuote
+  quoteId?: string
+  discordId: string
+}
+
 interface UseRealtimeQuotesOptions {
   discordId: string | null
   onInsert?: (quote: RealtimeQuote) => void
   onDelete?: (quoteId: string) => void
-  onUpdate?: (quote: RealtimeQuote) => void
   enabled?: boolean
 }
 
@@ -45,16 +51,16 @@ interface UseRealtimeQuotesReturn {
 }
 
 /**
- * Hook for subscribing to real-time quote updates via Supabase
+ * Hook for subscribing to real-time quote updates via Supabase Broadcast
  *
- * Subscribes to INSERT, DELETE, and UPDATE events on the quote_gallery table.
- * RLS ensures users only receive events for their own quotes.
+ * Uses Supabase's broadcast feature (pub/sub) which doesn't require
+ * database replication to be enabled. The bot API broadcasts messages
+ * when quotes are created/deleted.
  */
 export function useRealtimeQuotes({
   discordId,
   onInsert,
   onDelete,
-  onUpdate,
   enabled = true
 }: UseRealtimeQuotesOptions): UseRealtimeQuotesReturn {
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -63,16 +69,13 @@ export function useRealtimeQuotes({
   // Store callbacks in refs to avoid re-subscribing when they change
   const onInsertRef = useRef(onInsert)
   const onDeleteRef = useRef(onDelete)
-  const onUpdateRef = useRef(onUpdate)
   const discordIdRef = useRef(discordId)
 
-  // Update refs when callbacks change
   useEffect(() => {
     onInsertRef.current = onInsert
     onDeleteRef.current = onDelete
-    onUpdateRef.current = onUpdate
     discordIdRef.current = discordId
-  }, [onInsert, onDelete, onUpdate, discordId])
+  }, [onInsert, onDelete, discordId])
 
   useEffect(() => {
     if (!enabled || !discordId) {
@@ -80,76 +83,35 @@ export function useRealtimeQuotes({
       return
     }
 
-    // Create a unique channel name for this user session
-    const channelName = `quotes-realtime-${discordId}`
+    // Subscribe to a broadcast channel specific to this user
+    const channelName = `quotes:${discordId}`
+    console.log('[Realtime] Subscribing to broadcast channel:', channelName)
 
-    console.log('[Realtime] Setting up subscription for discordId:', discordId)
-
-    // Subscribe to real-time changes on quote_gallery table
-    // We don't filter server-side - RLS handles security, and we filter client-side by discord_id
     const channel = supabase
       .channel(channelName)
-      .on<RealtimeQuote>(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'quote_gallery'
-        },
-        (payload: RealtimePostgresChangesPayload<RealtimeQuote>) => {
-          const newQuote = payload.new as RealtimeQuote
-          console.log('[Realtime] INSERT event received:', newQuote?.id)
+      .on('broadcast', { event: 'quote_update' }, (payload) => {
+        const data = payload.payload as BroadcastPayload
+        console.log('[Realtime] Received broadcast:', data.type)
 
-          // Client-side filter by discord_id
-          if (newQuote && newQuote.discord_id === discordIdRef.current) {
-            console.log('[Realtime] Quote matches user, calling onInsert')
-            onInsertRef.current?.(newQuote)
-          } else {
-            console.log('[Realtime] Quote does not match user discord_id, ignoring')
-          }
+        // Verify this message is for this user
+        if (data.discordId !== discordIdRef.current) {
+          console.log('[Realtime] Message not for this user, ignoring')
+          return
         }
-      )
-      .on<RealtimeQuote>(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'quote_gallery'
-        },
-        (payload: RealtimePostgresChangesPayload<RealtimeQuote>) => {
-          const oldQuote = payload.old as RealtimeQuote
-          console.log('[Realtime] DELETE event received:', oldQuote?.id)
 
-          // Client-side filter by discord_id
-          if (oldQuote && oldQuote.discord_id === discordIdRef.current) {
-            console.log('[Realtime] Deleted quote matches user, calling onDelete')
-            onDeleteRef.current?.(oldQuote.id)
-          }
+        if (data.type === 'quote_created' && data.quote) {
+          console.log('[Realtime] New quote received:', data.quote.id)
+          onInsertRef.current?.(data.quote)
+        } else if (data.type === 'quote_deleted' && data.quoteId) {
+          console.log('[Realtime] Quote deleted:', data.quoteId)
+          onDeleteRef.current?.(data.quoteId)
         }
-      )
-      .on<RealtimeQuote>(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'quote_gallery'
-        },
-        (payload: RealtimePostgresChangesPayload<RealtimeQuote>) => {
-          const updatedQuote = payload.new as RealtimeQuote
-          console.log('[Realtime] UPDATE event received:', updatedQuote?.id)
-
-          // Client-side filter by discord_id
-          if (updatedQuote && updatedQuote.discord_id === discordIdRef.current) {
-            console.log('[Realtime] Updated quote matches user, calling onUpdate')
-            onUpdateRef.current?.(updatedQuote)
-          }
-        }
-      )
+      })
       .subscribe((status, err) => {
         console.log('[Realtime] Subscription status:', status, err ? `Error: ${err.message}` : '')
 
         if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] Successfully connected to quote updates')
+          console.log('[Realtime] Connected to broadcast channel')
           setIsConnected(true)
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[Realtime] Channel error:', err)
@@ -165,10 +127,9 @@ export function useRealtimeQuotes({
 
     channelRef.current = channel
 
-    // Cleanup on unmount or when dependencies change
     return () => {
       if (channelRef.current) {
-        console.log('[Realtime] Unsubscribing from quote updates')
+        console.log('[Realtime] Unsubscribing from broadcast channel')
         setIsConnected(false)
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
@@ -176,7 +137,6 @@ export function useRealtimeQuotes({
     }
   }, [discordId, enabled])
 
-  // Manual reconnect function if needed
   const reconnect = useCallback(() => {
     if (channelRef.current) {
       console.log('[Realtime] Manually reconnecting...')
