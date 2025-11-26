@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createRouteClient, createServiceClient } from '@/lib/supabase-server'
+import { broadcastQuoteDeleted } from '@/lib/realtime-broadcast'
 
 // GET /api/gallery/[quoteId] - Get a single quote
 export async function GET(
@@ -58,10 +59,10 @@ export async function DELETE(
     // First, get the quote to check ownership and get file path
     const { data: quote, error: fetchError } = await supabase
       .from('quote_gallery')
-      .select('id, file_path, user_id')
+      .select('id, file_path, user_id, discord_id')
       .eq('id', quoteId)
       .eq('user_id', user.id)
-      .single() as { data: { id: string; file_path: string; user_id: string } | null; error: any }
+      .single() as { data: { id: string; file_path: string; user_id: string; discord_id: string } | null; error: any }
 
     if (fetchError || !quote) {
       return NextResponse.json(
@@ -95,6 +96,9 @@ export async function DELETE(
         { status: 500 }
       )
     }
+
+    // Broadcast deletion to connected clients
+    await broadcastQuoteDeleted(quote.discord_id, quoteId)
 
     return NextResponse.json({
       success: true,

@@ -131,7 +131,6 @@ export default function GalleryPage() {
   const [deleting, setDeleting] = useState(false)
 
   // Real-time state
-  const [realtimeConnected, setRealtimeConnected] = useState(false)
   const [newQuoteIds, setNewQuoteIds] = useState<Set<string>>(new Set())
 
   // Real-time quote updates
@@ -184,23 +183,12 @@ export default function GalleryPage() {
   }, [])
 
   // Initialize real-time subscription
-  useRealtimeQuotes({
+  const { isConnected: realtimeConnected } = useRealtimeQuotes({
     discordId: userProfile?.discordId ?? null,
     onInsert: handleRealtimeInsert,
     onDelete: handleRealtimeDelete,
     enabled: !!userProfile?.discordId
   })
-
-  // Track real-time connection status (simple approach using userProfile availability)
-  useEffect(() => {
-    if (userProfile?.discordId) {
-      // Small delay to let subscription establish
-      const timer = setTimeout(() => setRealtimeConnected(true), 1000)
-      return () => clearTimeout(timer)
-    } else {
-      setRealtimeConnected(false)
-    }
-  }, [userProfile?.discordId])
 
   const fetchQuotes = useCallback(async () => {
     setLoading(true)

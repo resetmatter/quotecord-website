@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface RealtimeQuote {
   id: string
@@ -31,121 +31,118 @@ export interface RealtimeQuote {
   privacy_mode: string | null
 }
 
+interface BroadcastPayload {
+  type: 'quote_created' | 'quote_deleted'
+  quote?: RealtimeQuote
+  quoteId?: string
+  discordId: string
+}
+
 interface UseRealtimeQuotesOptions {
   discordId: string | null
   onInsert?: (quote: RealtimeQuote) => void
   onDelete?: (quoteId: string) => void
-  onUpdate?: (quote: RealtimeQuote) => void
   enabled?: boolean
 }
 
+interface UseRealtimeQuotesReturn {
+  isConnected: boolean
+  reconnect: () => void
+}
+
 /**
- * Hook for subscribing to real-time quote updates via Supabase
+ * Hook for subscribing to real-time quote updates via Supabase Broadcast
  *
- * Subscribes to INSERT, DELETE, and UPDATE events on the quote_gallery table
- * filtered by the user's discord_id
+ * Uses Supabase's broadcast feature (pub/sub) which doesn't require
+ * database replication to be enabled. The bot API broadcasts messages
+ * when quotes are created/deleted.
  */
 export function useRealtimeQuotes({
   discordId,
   onInsert,
   onDelete,
-  onUpdate,
   enabled = true
-}: UseRealtimeQuotesOptions) {
+}: UseRealtimeQuotesOptions): UseRealtimeQuotesReturn {
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   // Store callbacks in refs to avoid re-subscribing when they change
   const onInsertRef = useRef(onInsert)
   const onDeleteRef = useRef(onDelete)
-  const onUpdateRef = useRef(onUpdate)
+  const discordIdRef = useRef(discordId)
 
-  // Update refs when callbacks change
   useEffect(() => {
     onInsertRef.current = onInsert
     onDeleteRef.current = onDelete
-    onUpdateRef.current = onUpdate
-  }, [onInsert, onDelete, onUpdate])
+    discordIdRef.current = discordId
+  }, [onInsert, onDelete, discordId])
 
   useEffect(() => {
     if (!enabled || !discordId) {
+      console.log('[Realtime] Disabled or no discordId, skipping subscription')
       return
     }
 
-    // Create a unique channel name for this user
-    const channelName = `quotes-${discordId}-${Date.now()}`
+    // Subscribe to a broadcast channel specific to this user
+    const channelName = `quotes:${discordId}`
+    console.log('[Realtime] Subscribing to broadcast channel:', channelName)
 
-    // Subscribe to real-time changes on quote_gallery table
     const channel = supabase
       .channel(channelName)
-      .on<RealtimeQuote>(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'quote_gallery',
-          filter: `discord_id=eq.${discordId}`
-        },
-        (payload: RealtimePostgresChangesPayload<RealtimeQuote>) => {
-          if (payload.new && onInsertRef.current) {
-            onInsertRef.current(payload.new as RealtimeQuote)
-          }
+      .on('broadcast', { event: 'quote_update' }, (payload) => {
+        const data = payload.payload as BroadcastPayload
+        console.log('[Realtime] Received broadcast:', data.type)
+
+        // Verify this message is for this user
+        if (data.discordId !== discordIdRef.current) {
+          console.log('[Realtime] Message not for this user, ignoring')
+          return
         }
-      )
-      .on<RealtimeQuote>(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'quote_gallery',
-          filter: `discord_id=eq.${discordId}`
-        },
-        (payload: RealtimePostgresChangesPayload<RealtimeQuote>) => {
-          if (payload.old && onDeleteRef.current) {
-            // For DELETE, the old record contains the deleted row's data
-            onDeleteRef.current((payload.old as RealtimeQuote).id)
-          }
+
+        if (data.type === 'quote_created' && data.quote) {
+          console.log('[Realtime] New quote received:', data.quote.id)
+          onInsertRef.current?.(data.quote)
+        } else if (data.type === 'quote_deleted' && data.quoteId) {
+          console.log('[Realtime] Quote deleted:', data.quoteId)
+          onDeleteRef.current?.(data.quoteId)
         }
-      )
-      .on<RealtimeQuote>(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'quote_gallery',
-          filter: `discord_id=eq.${discordId}`
-        },
-        (payload: RealtimePostgresChangesPayload<RealtimeQuote>) => {
-          if (payload.new && onUpdateRef.current) {
-            onUpdateRef.current(payload.new as RealtimeQuote)
-          }
-        }
-      )
-      .subscribe((status) => {
+      })
+      .subscribe((status, err) => {
+        console.log('[Realtime] Subscription status:', status, err ? `Error: ${err.message}` : '')
+
         if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] Connected to quote updates')
+          console.log('[Realtime] Connected to broadcast channel')
+          setIsConnected(true)
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[Realtime] Failed to connect to quote updates')
+          console.error('[Realtime] Channel error:', err)
+          setIsConnected(false)
+        } else if (status === 'TIMED_OUT') {
+          console.error('[Realtime] Connection timed out')
+          setIsConnected(false)
+        } else if (status === 'CLOSED') {
+          console.log('[Realtime] Channel closed')
+          setIsConnected(false)
         }
       })
 
     channelRef.current = channel
 
-    // Cleanup on unmount or when dependencies change
     return () => {
       if (channelRef.current) {
-        console.log('[Realtime] Unsubscribing from quote updates')
+        console.log('[Realtime] Unsubscribing from broadcast channel')
+        setIsConnected(false)
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
       }
     }
   }, [discordId, enabled])
 
-  // Manual reconnect function if needed
   const reconnect = useCallback(() => {
     if (channelRef.current) {
+      console.log('[Realtime] Manually reconnecting...')
       channelRef.current.subscribe()
     }
   }, [])
 
-  return { reconnect }
+  return { isConnected, reconnect }
 }
