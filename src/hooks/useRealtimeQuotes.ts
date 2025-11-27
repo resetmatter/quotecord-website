@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface RealtimeQuote {
   id: string
@@ -31,18 +29,12 @@ export interface RealtimeQuote {
   privacy_mode: string | null
 }
 
-interface BroadcastPayload {
-  type: 'quote_created' | 'quote_deleted'
-  quote?: RealtimeQuote
-  quoteId?: string
-  discordId: string
-}
-
 interface UseRealtimeQuotesOptions {
   discordId: string | null
   onInsert?: (quote: RealtimeQuote) => void
   onDelete?: (quoteId: string) => void
   enabled?: boolean
+  pollInterval?: number
 }
 
 interface UseRealtimeQuotesReturn {
@@ -51,98 +43,143 @@ interface UseRealtimeQuotesReturn {
 }
 
 /**
- * Hook for subscribing to real-time quote updates via Supabase Broadcast
+ * Hook for detecting quote changes via smart polling
  *
- * Uses Supabase's broadcast feature (pub/sub) which doesn't require
- * database replication to be enabled. The bot API broadcasts messages
- * when quotes are created/deleted.
+ * Polls the server periodically to check for new quotes.
+ * Only polls when the tab is visible to save resources.
  */
 export function useRealtimeQuotes({
   discordId,
   onInsert,
   onDelete,
-  enabled = true
+  enabled = true,
+  pollInterval = 5000 // 5 seconds - responsive but not too aggressive
 }: UseRealtimeQuotesOptions): UseRealtimeQuotesReturn {
-  const channelRef = useRef<RealtimeChannel | null>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isVisibleRef = useRef(true)
+  const knownQuoteIdsRef = useRef<Set<string>>(new Set())
+  const lastQuoteCountRef = useRef<number>(0)
+  const isFirstFetchRef = useRef(true)
 
-  // Store callbacks in refs to avoid re-subscribing when they change
+  // Store callbacks in refs
   const onInsertRef = useRef(onInsert)
   const onDeleteRef = useRef(onDelete)
-  const discordIdRef = useRef(discordId)
 
   useEffect(() => {
     onInsertRef.current = onInsert
     onDeleteRef.current = onDelete
-    discordIdRef.current = discordId
-  }, [onInsert, onDelete, discordId])
+  }, [onInsert, onDelete])
 
+  const checkForUpdates = useCallback(async () => {
+    if (!discordId || !isVisibleRef.current) return
+
+    try {
+      // Fetch latest quotes (first page, sorted by newest)
+      const response = await fetch('/api/gallery?page=1&limit=20&sortBy=created_at&sortDir=desc')
+      if (!response.ok) return
+
+      const data = await response.json()
+      const serverQuotes: RealtimeQuote[] = data.quotes || []
+      const serverQuoteCount = data.quota?.used ?? 0
+
+      // On first fetch, just initialize our tracking state
+      if (isFirstFetchRef.current) {
+        knownQuoteIdsRef.current = new Set(serverQuotes.map(q => q.id))
+        lastQuoteCountRef.current = serverQuoteCount
+        isFirstFetchRef.current = false
+        setIsConnected(true)
+        console.log('[Polling] Initialized with', serverQuotes.length, 'quotes')
+        return
+      }
+
+      // Detect new quotes (in server response but not in our known set)
+      const newQuotes = serverQuotes.filter(q => !knownQuoteIdsRef.current.has(q.id))
+
+      // Detect if quotes were deleted (count decreased)
+      const quotesDeleted = serverQuoteCount < lastQuoteCountRef.current
+
+      // Handle new quotes
+      if (newQuotes.length > 0) {
+        console.log('[Polling] Found', newQuotes.length, 'new quote(s)')
+        // Call onInsert for each new quote (newest first)
+        for (const quote of newQuotes) {
+          onInsertRef.current?.(quote)
+          knownQuoteIdsRef.current.add(quote.id)
+        }
+      }
+
+      // Handle deletions - we can't know exactly which were deleted,
+      // but the gallery page handles this via optimistic updates
+      if (quotesDeleted) {
+        console.log('[Polling] Quote count decreased from', lastQuoteCountRef.current, 'to', serverQuoteCount)
+        // Update our known IDs to match server
+        knownQuoteIdsRef.current = new Set(serverQuotes.map(q => q.id))
+      }
+
+      lastQuoteCountRef.current = serverQuoteCount
+    } catch (err) {
+      console.error('[Polling] Error checking for updates:', err)
+    }
+  }, [discordId])
+
+  // Handle visibility change - check immediately when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const wasHidden = !isVisibleRef.current
+      isVisibleRef.current = document.visibilityState === 'visible'
+
+      if (isVisibleRef.current && wasHidden && enabled && discordId) {
+        console.log('[Polling] Tab became visible, checking for updates')
+        checkForUpdates()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [checkForUpdates, enabled, discordId])
+
+  // Set up polling interval
   useEffect(() => {
     if (!enabled || !discordId) {
-      console.log('[Realtime] Disabled or no discordId, skipping subscription')
+      setIsConnected(false)
+      isFirstFetchRef.current = true
+      knownQuoteIdsRef.current.clear()
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
       return
     }
 
-    // Subscribe to a broadcast channel specific to this user
-    const channelName = `quotes:${discordId}`
-    console.log('[Realtime] Subscribing to broadcast channel:', channelName)
+    console.log('[Polling] Starting with interval:', pollInterval, 'ms')
 
-    const channel = supabase
-      .channel(channelName)
-      .on('broadcast', { event: 'quote_update' }, (payload) => {
-        const data = payload.payload as BroadcastPayload
-        console.log('[Realtime] Received broadcast:', data.type)
+    // Initial check after a short delay (let the main fetch complete first)
+    const initialTimeout = setTimeout(() => {
+      checkForUpdates()
+    }, 1500)
 
-        // Verify this message is for this user
-        if (data.discordId !== discordIdRef.current) {
-          console.log('[Realtime] Message not for this user, ignoring')
-          return
-        }
-
-        if (data.type === 'quote_created' && data.quote) {
-          console.log('[Realtime] New quote received:', data.quote.id)
-          onInsertRef.current?.(data.quote)
-        } else if (data.type === 'quote_deleted' && data.quoteId) {
-          console.log('[Realtime] Quote deleted:', data.quoteId)
-          onDeleteRef.current?.(data.quoteId)
-        }
-      })
-      .subscribe((status, err) => {
-        console.log('[Realtime] Subscription status:', status, err ? `Error: ${err.message}` : '')
-
-        if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] Connected to broadcast channel')
-          setIsConnected(true)
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('[Realtime] Channel error:', err)
-          setIsConnected(false)
-        } else if (status === 'TIMED_OUT') {
-          console.error('[Realtime] Connection timed out')
-          setIsConnected(false)
-        } else if (status === 'CLOSED') {
-          console.log('[Realtime] Channel closed')
-          setIsConnected(false)
-        }
-      })
-
-    channelRef.current = channel
+    // Set up regular polling
+    intervalRef.current = setInterval(() => {
+      if (isVisibleRef.current) {
+        checkForUpdates()
+      }
+    }, pollInterval)
 
     return () => {
-      if (channelRef.current) {
-        console.log('[Realtime] Unsubscribing from broadcast channel')
-        setIsConnected(false)
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
+      clearTimeout(initialTimeout)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
+      setIsConnected(false)
     }
-  }, [discordId, enabled])
+  }, [enabled, discordId, pollInterval, checkForUpdates])
 
   const reconnect = useCallback(() => {
-    if (channelRef.current) {
-      console.log('[Realtime] Manually reconnecting...')
-      channelRef.current.subscribe()
-    }
-  }, [])
+    console.log('[Polling] Manual refresh triggered')
+    checkForUpdates()
+  }, [checkForUpdates])
 
   return { isConnected, reconnect }
 }
