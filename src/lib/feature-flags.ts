@@ -1,0 +1,241 @@
+import { createServiceClient } from './supabase-server'
+import { FeatureKey } from './bot-auth'
+
+export interface FeatureFlags {
+  premiumOverride: boolean | null
+  overrideAnimatedGifs: boolean | null
+  overridePreview: boolean | null
+  overrideMultiMessage: boolean | null
+  overrideAvatarChoice: boolean | null
+  overridePresets: boolean | null
+  overrideNoWatermark: boolean | null
+  overrideMaxGallerySize: number | null
+  reason: string | null
+  expiresAt: string | null
+}
+
+export interface FeatureFlagInput {
+  discordId: string
+  premiumOverride?: boolean | null
+  overrideAnimatedGifs?: boolean | null
+  overridePreview?: boolean | null
+  overrideMultiMessage?: boolean | null
+  overrideAvatarChoice?: boolean | null
+  overridePresets?: boolean | null
+  overrideNoWatermark?: boolean | null
+  overrideMaxGallerySize?: number | null
+  reason?: string
+  createdBy?: string
+  expiresAt?: string | null
+}
+
+// Get feature flags for a user by Discord ID
+export async function getFeatureFlags(discordId: string): Promise<FeatureFlags | null> {
+  const supabase = createServiceClient()
+
+  const { data, error } = await supabase
+    .from('feature_flags')
+    .select('*')
+    .eq('discord_id', discordId)
+    .or('expires_at.is.null,expires_at.gt.now()')
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return {
+    premiumOverride: data.premium_override,
+    overrideAnimatedGifs: data.override_animated_gifs,
+    overridePreview: data.override_preview,
+    overrideMultiMessage: data.override_multi_message,
+    overrideAvatarChoice: data.override_avatar_choice,
+    overridePresets: data.override_presets,
+    overrideNoWatermark: data.override_no_watermark,
+    overrideMaxGallerySize: data.override_max_gallery_size,
+    reason: data.reason,
+    expiresAt: data.expires_at
+  }
+}
+
+// Check if a user has premium access (either via subscription or feature flag)
+export async function hasPremiumAccess(discordId: string): Promise<boolean> {
+  const supabase = createServiceClient()
+
+  // Use the database function which already checks feature flags
+  const { data: isPremium } = await (supabase as any)
+    .rpc('is_premium_user', { discord_user_id: discordId })
+
+  return isPremium === true
+}
+
+// Get effective feature access for a user, considering both subscription and feature flags
+export async function getEffectiveFeatures(discordId: string): Promise<{
+  isPremium: boolean
+  features: {
+    animatedGifs: boolean
+    preview: boolean
+    multiMessage: boolean
+    avatarChoice: boolean
+    presets: boolean
+    noWatermark: boolean
+    galleryStorage: boolean
+    maxGallerySize: number
+  }
+  hasOverrides: boolean
+}> {
+  const supabase = createServiceClient()
+
+  // Get subscription status
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('tier, status, current_period_end')
+    .eq('discord_id', discordId)
+    .single()
+
+  // Check if user has valid premium subscription
+  const hasActiveSubscription = subscription &&
+    subscription.tier === 'premium' &&
+    subscription.status === 'active' &&
+    (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
+
+  // Get feature flags
+  const flags = await getFeatureFlags(discordId)
+
+  // Determine effective premium status
+  // If flags exist and premiumOverride is explicitly set (not null), use it; otherwise use subscription
+  const isPremium = (flags !== null && flags.premiumOverride !== null)
+    ? flags.premiumOverride === true
+    : !!hasActiveSubscription
+
+  // Calculate effective feature access
+  // For each feature: use override if set, otherwise use premium status
+  const features = {
+    animatedGifs: flags?.overrideAnimatedGifs ?? isPremium,
+    preview: flags?.overridePreview ?? isPremium,
+    multiMessage: flags?.overrideMultiMessage ?? isPremium,
+    avatarChoice: flags?.overrideAvatarChoice ?? isPremium,
+    presets: flags?.overridePresets ?? isPremium,
+    noWatermark: flags?.overrideNoWatermark ?? isPremium,
+    galleryStorage: true, // Always available
+    maxGallerySize: flags?.overrideMaxGallerySize ?? (isPremium ? 1000 : 50)
+  }
+
+  return {
+    isPremium,
+    features,
+    hasOverrides: flags !== null
+  }
+}
+
+// Check if a specific feature is enabled for a user
+export async function isFeatureEnabled(
+  discordId: string,
+  feature: FeatureKey
+): Promise<boolean> {
+  const { features } = await getEffectiveFeatures(discordId)
+
+  switch (feature) {
+    case 'animatedGifs':
+      return features.animatedGifs
+    case 'preview':
+      return features.preview
+    case 'multiMessage':
+      return features.multiMessage
+    case 'avatarChoice':
+      return features.avatarChoice
+    case 'presets':
+      return features.presets
+    case 'noWatermark':
+      return features.noWatermark
+    case 'galleryStorage':
+      return features.galleryStorage
+    default:
+      return false
+  }
+}
+
+// Set feature flags for a user (admin function)
+export async function setFeatureFlags(input: FeatureFlagInput): Promise<{ success: boolean; error?: string }> {
+  const supabase = createServiceClient()
+
+  const { data, error } = await supabase
+    .from('feature_flags')
+    .upsert({
+      discord_id: input.discordId,
+      premium_override: input.premiumOverride,
+      override_animated_gifs: input.overrideAnimatedGifs,
+      override_preview: input.overridePreview,
+      override_multi_message: input.overrideMultiMessage,
+      override_avatar_choice: input.overrideAvatarChoice,
+      override_presets: input.overridePresets,
+      override_no_watermark: input.overrideNoWatermark,
+      override_max_gallery_size: input.overrideMaxGallerySize,
+      reason: input.reason,
+      created_by: input.createdBy,
+      expires_at: input.expiresAt,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'discord_id'
+    })
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
+// Remove feature flags for a user (admin function)
+export async function removeFeatureFlags(discordId: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = createServiceClient()
+
+  const { error } = await supabase
+    .from('feature_flags')
+    .delete()
+    .eq('discord_id', discordId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
+// List all active feature flags (admin function)
+export async function listActiveFeatureFlags(): Promise<Array<{
+  discordId: string
+  premiumOverride: boolean | null
+  reason: string | null
+  createdBy: string | null
+  expiresAt: string | null
+  createdAt: string
+}>> {
+  const supabase = createServiceClient()
+
+  const { data, error } = await supabase
+    .from('feature_flags')
+    .select('discord_id, premium_override, reason, created_by, expires_at, created_at')
+    .or('expires_at.is.null,expires_at.gt.now()')
+    .order('created_at', { ascending: false })
+
+  if (error || !data) {
+    return []
+  }
+
+  return data.map((row: {
+    discord_id: string
+    premium_override: boolean | null
+    reason: string | null
+    created_by: string | null
+    expires_at: string | null
+    created_at: string
+  }) => ({
+    discordId: row.discord_id,
+    premiumOverride: row.premium_override,
+    reason: row.reason,
+    createdBy: row.created_by,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at
+  }))
+}

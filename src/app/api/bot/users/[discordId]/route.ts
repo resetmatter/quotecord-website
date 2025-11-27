@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyBotApiKey, PREMIUM_FEATURES, FeatureKey } from '@/lib/bot-auth'
+import { getEffectiveFeatures, getFeatureFlags } from '@/lib/feature-flags'
 
 // GET /api/bot/users/[discordId] - Get user's subscription tier and info
 export async function GET(
@@ -24,54 +25,52 @@ export async function GET(
       .eq('discord_id', discordId)
       .single() as { data: { tier: string; status: string; current_period_end: string | null } | null; error: any }
 
-    if (error || !subscription) {
-      // User doesn't have an account yet - return free tier
-      return NextResponse.json({
-        discordId,
-        tier: 'free',
-        status: 'active',
-        hasAccount: false,
-        isPremium: false,
-        features: {
-          animatedGifs: false,
-          preview: false,
-          multiMessage: false,
-          avatarChoice: false,
-          presets: false,
-          noWatermark: false,
-          galleryStorage: true,
-          maxGallerySize: 50
-        }
-      })
-    }
-
-    // Check if premium is valid (active and not expired)
-    const isPremium = subscription.tier === 'premium' &&
-      subscription.status === 'active' &&
-      (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
+    // Get effective features (includes feature flag overrides)
+    const { isPremium, features, hasOverrides } = await getEffectiveFeatures(discordId)
 
     // Get quote count for quota info
     const { data: quoteCount } = await (supabase as any)
       .rpc('get_user_quote_count', { discord_user_id: discordId })
 
+    // Get feature flag info if any overrides exist
+    const flags = hasOverrides ? await getFeatureFlags(discordId) : null
+
+    if (error || !subscription) {
+      // User doesn't have an account yet - but may have feature flags
+      return NextResponse.json({
+        discordId,
+        tier: hasOverrides && isPremium ? 'premium' : 'free',
+        status: 'active',
+        hasAccount: false,
+        isPremium,
+        features,
+        quoteCount: quoteCount || 0,
+        ...(hasOverrides && {
+          featureFlags: {
+            hasOverrides: true,
+            reason: flags?.reason || null,
+            expiresAt: flags?.expiresAt || null
+          }
+        })
+      })
+    }
+
     return NextResponse.json({
       discordId,
-      tier: subscription.tier,
+      tier: isPremium ? 'premium' : subscription.tier,
       status: subscription.status,
       hasAccount: true,
       isPremium,
       currentPeriodEnd: subscription.current_period_end,
-      features: {
-        animatedGifs: isPremium,
-        preview: isPremium,
-        multiMessage: isPremium,
-        avatarChoice: isPremium,
-        presets: isPremium,
-        noWatermark: isPremium,
-        galleryStorage: true,
-        maxGallerySize: isPremium ? 1000 : 50
-      },
-      quoteCount: quoteCount || 0
+      features,
+      quoteCount: quoteCount || 0,
+      ...(hasOverrides && {
+        featureFlags: {
+          hasOverrides: true,
+          reason: flags?.reason || null,
+          expiresAt: flags?.expiresAt || null
+        }
+      })
     })
   } catch (error) {
     console.error('Error fetching user tier:', error)
@@ -106,7 +105,6 @@ export async function POST(
     }
 
     const featureConfig = PREMIUM_FEATURES[feature]
-    const supabase = createServiceClient()
 
     // If feature doesn't require premium, allow it
     if (!featureConfig.requiresPremium) {
@@ -117,19 +115,33 @@ export async function POST(
       })
     }
 
-    // Check premium status
-    const { data: isPremium } = await (supabase as any)
-      .rpc('is_premium_user', { discord_user_id: discordId })
+    // Get effective features including any overrides
+    const { isPremium, features, hasOverrides } = await getEffectiveFeatures(discordId)
 
-    if (isPremium) {
+    // Check if this specific feature is enabled (considering individual overrides)
+    const featureEnabled = (() => {
+      switch (feature) {
+        case 'animatedGifs': return features.animatedGifs
+        case 'preview': return features.preview
+        case 'multiMessage': return features.multiMessage
+        case 'avatarChoice': return features.avatarChoice
+        case 'presets': return features.presets
+        case 'noWatermark': return features.noWatermark
+        case 'galleryStorage': return features.galleryStorage
+        default: return isPremium
+      }
+    })()
+
+    if (featureEnabled) {
       return NextResponse.json({
         feature,
         allowed: true,
-        reason: null
+        reason: null,
+        ...(hasOverrides && { hasOverride: true })
       })
     }
 
-    // User is not premium
+    // Feature is not enabled
     return NextResponse.json({
       feature,
       allowed: false,
