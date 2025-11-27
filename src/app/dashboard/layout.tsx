@@ -13,7 +13,8 @@ import {
   Crown,
   Menu,
   X,
-  Images
+  Images,
+  Shield
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 import { logout, supabase } from '@/lib/supabase'
@@ -75,11 +76,12 @@ export default function DashboardLayout({
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
 
-  const navItems = [
+  const navItems: Array<{ href: string; label: string; icon: typeof Home; admin?: boolean }> = [
     { href: '/dashboard', label: 'Overview', icon: Home },
     { href: '/dashboard/gallery', label: 'Gallery', icon: Images },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Shield, admin: true },
   ]
 
   if (loading) {
@@ -148,7 +150,7 @@ export default function DashboardLayout({
           {/* Navigation */}
           <nav className="flex-1 p-4">
             <ul className="space-y-1">
-              {navItems.map(item => (
+              {navItems.filter(item => !item.admin).map(item => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
@@ -165,6 +167,29 @@ export default function DashboardLayout({
                 </li>
               ))}
             </ul>
+
+            {/* Admin Section */}
+            <div className="mt-6 pt-4 border-t border-dark-700">
+              <p className="px-4 mb-2 text-xs font-medium text-dark-500 uppercase tracking-wider">Admin</p>
+              <ul className="space-y-1">
+                {navItems.filter(item => item.admin).map(item => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                        pathname === item.href || pathname?.startsWith(item.href)
+                          ? 'bg-brand-500 text-white shadow-glow'
+                          : 'text-dark-400 hover:text-white hover:bg-dark-800/50'
+                      }`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </nav>
 
           {/* User */}
