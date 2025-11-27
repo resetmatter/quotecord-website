@@ -63,9 +63,18 @@ export async function isPremiumUser(): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
 
-  const { subscription } = user
-  return subscription.tier === 'premium' &&
-         subscription.status === 'active' &&
-         (!subscription.current_period_end ||
-          new Date(subscription.current_period_end) > new Date())
+  // Use the database function which checks both subscription AND feature flags
+  const { data: isPremium } = await (supabase as any)
+    .rpc('is_premium_user', { discord_user_id: user.discord_id })
+
+  // If the RPC call fails, fall back to local subscription check
+  if (isPremium === null || isPremium === undefined) {
+    const { subscription } = user
+    return subscription.tier === 'premium' &&
+           subscription.status === 'active' &&
+           (!subscription.current_period_end ||
+            new Date(subscription.current_period_end) > new Date())
+  }
+
+  return isPremium === true
 }

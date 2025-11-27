@@ -240,6 +240,59 @@ export interface Database {
           created_at?: string
         }
       }
+      feature_flags: {
+        Row: {
+          id: string
+          discord_id: string
+          premium_override: boolean | null
+          override_animated_gifs: boolean | null
+          override_preview: boolean | null
+          override_multi_message: boolean | null
+          override_avatar_choice: boolean | null
+          override_presets: boolean | null
+          override_no_watermark: boolean | null
+          override_max_gallery_size: number | null
+          reason: string | null
+          created_by: string | null
+          expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          discord_id: string
+          premium_override?: boolean | null
+          override_animated_gifs?: boolean | null
+          override_preview?: boolean | null
+          override_multi_message?: boolean | null
+          override_avatar_choice?: boolean | null
+          override_presets?: boolean | null
+          override_no_watermark?: boolean | null
+          override_max_gallery_size?: number | null
+          reason?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          discord_id?: string
+          premium_override?: boolean | null
+          override_animated_gifs?: boolean | null
+          override_preview?: boolean | null
+          override_multi_message?: boolean | null
+          override_avatar_choice?: boolean | null
+          override_presets?: boolean | null
+          override_no_watermark?: boolean | null
+          override_max_gallery_size?: number | null
+          reason?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -264,6 +317,21 @@ export interface Database {
       check_storage_quota: {
         Args: { discord_user_id: string }
         Returns: boolean
+      }
+      get_feature_flags: {
+        Args: { discord_user_id: string }
+        Returns: {
+          premium_override: boolean | null
+          override_animated_gifs: boolean | null
+          override_preview: boolean | null
+          override_multi_message: boolean | null
+          override_avatar_choice: boolean | null
+          override_presets: boolean | null
+          override_no_watermark: boolean | null
+          override_max_gallery_size: number | null
+          reason: string | null
+          expires_at: string | null
+        }[]
       }
     }
     Enums: {
