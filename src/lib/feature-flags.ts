@@ -14,6 +14,25 @@ export interface FeatureFlags {
   expiresAt: string | null
 }
 
+// Database row type for feature_flags table
+interface FeatureFlagRow {
+  id: string
+  discord_id: string
+  premium_override: boolean | null
+  override_animated_gifs: boolean | null
+  override_preview: boolean | null
+  override_multi_message: boolean | null
+  override_avatar_choice: boolean | null
+  override_presets: boolean | null
+  override_no_watermark: boolean | null
+  override_max_gallery_size: number | null
+  reason: string | null
+  created_by: string | null
+  expires_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface FeatureFlagInput {
   discordId: string
   premiumOverride?: boolean | null
@@ -38,7 +57,7 @@ export async function getFeatureFlags(discordId: string): Promise<FeatureFlags |
     .select('*')
     .eq('discord_id', discordId)
     .or('expires_at.is.null,expires_at.gt.now()')
-    .single()
+    .single() as { data: FeatureFlagRow | null; error: any }
 
   if (error || !data) {
     return null
@@ -159,7 +178,7 @@ export async function isFeatureEnabled(
 export async function setFeatureFlags(input: FeatureFlagInput): Promise<{ success: boolean; error?: string }> {
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
+  const { error } = await (supabase as any)
     .from('feature_flags')
     .upsert({
       discord_id: input.discordId,
@@ -190,7 +209,7 @@ export async function setFeatureFlags(input: FeatureFlagInput): Promise<{ succes
 export async function removeFeatureFlags(discordId: string): Promise<{ success: boolean; error?: string }> {
   const supabase = createServiceClient()
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('feature_flags')
     .delete()
     .eq('discord_id', discordId)
@@ -200,6 +219,16 @@ export async function removeFeatureFlags(discordId: string): Promise<{ success: 
   }
 
   return { success: true }
+}
+
+// Type for list query result
+interface FeatureFlagListRow {
+  discord_id: string
+  premium_override: boolean | null
+  reason: string | null
+  created_by: string | null
+  expires_at: string | null
+  created_at: string
 }
 
 // List all active feature flags (admin function)
@@ -213,24 +242,17 @@ export async function listActiveFeatureFlags(): Promise<Array<{
 }>> {
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('feature_flags')
     .select('discord_id, premium_override, reason, created_by, expires_at, created_at')
     .or('expires_at.is.null,expires_at.gt.now()')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) as { data: FeatureFlagListRow[] | null; error: any }
 
   if (error || !data) {
     return []
   }
 
-  return data.map((row: {
-    discord_id: string
-    premium_override: boolean | null
-    reason: string | null
-    created_by: string | null
-    expires_at: string | null
-    created_at: string
-  }) => ({
+  return data.map((row) => ({
     discordId: row.discord_id,
     premiumOverride: row.premium_override,
     reason: row.reason,
