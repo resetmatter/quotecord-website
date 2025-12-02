@@ -1,5 +1,6 @@
 import { createServiceClient } from './supabase-server'
 import { FeatureKey } from './bot-auth'
+import { getGlobalFeatureFlags, GlobalFeatureFlags } from './admin'
 
 export interface FeatureFlags {
   premiumOverride: boolean | null
@@ -13,6 +14,9 @@ export interface FeatureFlags {
   reason: string | null
   expiresAt: string | null
 }
+
+// Re-export GlobalFeatureFlags for convenience
+export type { GlobalFeatureFlags }
 
 // Database row type for feature_flags table
 interface FeatureFlagRow {
@@ -88,7 +92,8 @@ export async function hasPremiumAccess(discordId: string): Promise<boolean> {
   return isPremium === true
 }
 
-// Get effective feature access for a user, considering both subscription and feature flags
+// Get effective feature access for a user, considering global flags, individual flags, and subscription
+// Priority: Global flags > Individual flags > Subscription status
 export async function getEffectiveFeatures(discordId: string): Promise<{
   isPremium: boolean
   features: {
@@ -102,8 +107,12 @@ export async function getEffectiveFeatures(discordId: string): Promise<{
     maxGallerySize: number
   }
   hasOverrides: boolean
+  hasGlobalOverrides: boolean
 }> {
   const supabase = createServiceClient()
+
+  // Get global feature flags first (highest priority)
+  const globalFlags = await getGlobalFeatureFlags()
 
   // Get subscription status
   const { data: subscription } = await supabase
@@ -118,32 +127,49 @@ export async function getEffectiveFeatures(discordId: string): Promise<{
     subscription.status === 'active' &&
     (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
 
-  // Get feature flags
+  // Get individual feature flags
   const flags = await getFeatureFlags(discordId)
 
   // Determine effective premium status
-  // If flags exist and premiumOverride is explicitly set (not null), use it; otherwise use subscription
-  const isPremium = (flags !== null && flags.premiumOverride !== null)
-    ? flags.premiumOverride === true
-    : !!hasActiveSubscription
+  // Priority: Global > Individual > Subscription
+  let isPremium: boolean
+  if (globalFlags.globalPremiumOverride !== null) {
+    isPremium = globalFlags.globalPremiumOverride
+  } else if (flags !== null && flags.premiumOverride !== null) {
+    isPremium = flags.premiumOverride === true
+  } else {
+    isPremium = !!hasActiveSubscription
+  }
 
   // Calculate effective feature access
-  // For each feature: use override if set, otherwise use premium status
+  // For each feature: check global first, then individual, then premium status
   const features = {
-    animatedGifs: flags?.overrideAnimatedGifs ?? isPremium,
-    preview: flags?.overridePreview ?? isPremium,
-    multiMessage: flags?.overrideMultiMessage ?? isPremium,
-    avatarChoice: flags?.overrideAvatarChoice ?? isPremium,
-    presets: flags?.overridePresets ?? isPremium,
-    noWatermark: flags?.overrideNoWatermark ?? isPremium,
+    animatedGifs: globalFlags.globalAnimatedGifs ?? flags?.overrideAnimatedGifs ?? isPremium,
+    preview: globalFlags.globalPreview ?? flags?.overridePreview ?? isPremium,
+    multiMessage: globalFlags.globalMultiMessage ?? flags?.overrideMultiMessage ?? isPremium,
+    avatarChoice: globalFlags.globalAvatarChoice ?? flags?.overrideAvatarChoice ?? isPremium,
+    presets: globalFlags.globalPresets ?? flags?.overridePresets ?? isPremium,
+    noWatermark: globalFlags.globalNoWatermark ?? flags?.overrideNoWatermark ?? isPremium,
     galleryStorage: true, // Always available
-    maxGallerySize: flags?.overrideMaxGallerySize ?? (isPremium ? 1000 : 50)
+    maxGallerySize: globalFlags.globalMaxGallerySize ?? flags?.overrideMaxGallerySize ?? (isPremium ? 1000 : 50)
   }
+
+  // Check if any global overrides are active
+  const hasGlobalOverrides =
+    globalFlags.globalPremiumOverride !== null ||
+    globalFlags.globalAnimatedGifs !== null ||
+    globalFlags.globalPreview !== null ||
+    globalFlags.globalMultiMessage !== null ||
+    globalFlags.globalAvatarChoice !== null ||
+    globalFlags.globalPresets !== null ||
+    globalFlags.globalNoWatermark !== null ||
+    globalFlags.globalMaxGallerySize !== null
 
   return {
     isPremium,
     features,
-    hasOverrides: flags !== null
+    hasOverrides: flags !== null,
+    hasGlobalOverrides
   }
 }
 
