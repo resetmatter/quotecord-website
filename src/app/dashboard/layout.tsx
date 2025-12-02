@@ -14,7 +14,9 @@ import {
   Menu,
   X,
   Images,
-  Shield
+  Shield,
+  Globe,
+  Users
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 import { logout, supabase } from '@/lib/supabase'
@@ -27,6 +29,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -52,6 +55,23 @@ export default function DashboardLayout({
       const userData = await getCurrentUser()
       setUser(userData)
       setLoading(false)
+
+      // Check if user is an admin
+      if (userData?.discord_id) {
+        try {
+          const response = await fetch('/api/admin/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discordId: userData.discord_id })
+          })
+          if (response.ok) {
+            const { isAdmin: adminStatus } = await response.json()
+            setIsAdmin(adminStatus)
+          }
+        } catch (e) {
+          // Silently fail - user just won't see admin section
+        }
+      }
     }
 
     initSession()
@@ -81,7 +101,12 @@ export default function DashboardLayout({
     { href: '/dashboard/gallery', label: 'Gallery', icon: Images },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
-    { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Shield, admin: true },
+  ]
+
+  const adminNavItems: Array<{ href: string; label: string; icon: typeof Home }> = [
+    { href: '/dashboard/admin/global-flags', label: 'Global Flags', icon: Globe },
+    { href: '/dashboard/admin/feature-flags', label: 'User Flags', icon: Shield },
+    { href: '/dashboard/admin/users', label: 'Admin Users', icon: Users },
   ]
 
   if (loading) {
@@ -150,7 +175,7 @@ export default function DashboardLayout({
           {/* Navigation */}
           <nav className="flex-1 p-4">
             <ul className="space-y-1">
-              {navItems.filter(item => !item.admin).map(item => (
+              {navItems.map(item => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
@@ -168,28 +193,30 @@ export default function DashboardLayout({
               ))}
             </ul>
 
-            {/* Admin Section */}
-            <div className="mt-6 pt-4 border-t border-dark-700">
-              <p className="px-4 mb-2 text-xs font-medium text-dark-500 uppercase tracking-wider">Admin</p>
-              <ul className="space-y-1">
-                {navItems.filter(item => item.admin).map(item => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                        pathname === item.href || pathname?.startsWith(item.href)
-                          ? 'bg-brand-500 text-white shadow-glow'
-                          : 'text-dark-400 hover:text-white hover:bg-dark-800/50'
-                      }`}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Admin Section - Only shown to admins */}
+            {isAdmin && (
+              <div className="mt-6 pt-4 border-t border-dark-700">
+                <p className="px-4 mb-2 text-xs font-medium text-dark-500 uppercase tracking-wider">Admin</p>
+                <ul className="space-y-1">
+                  {adminNavItems.map(item => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                          pathname === item.href || pathname?.startsWith(item.href + '/')
+                            ? 'bg-brand-500 text-white shadow-glow'
+                            : 'text-dark-400 hover:text-white hover:bg-dark-800/50'
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </nav>
 
           {/* User */}

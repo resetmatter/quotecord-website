@@ -93,6 +93,11 @@ export function Footer() {
                   Dashboard
                 </Link>
               </li>
+              <li>
+                <Link href="/dashboard/admin/global-flags" className="text-dark-500 hover:text-dark-400 text-sm transition-colors">
+                  Admin
+                </Link>
+              </li>
             </ul>
           </div>
 
