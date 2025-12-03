@@ -237,7 +237,7 @@ export default function SettingsPage() {
     localStorage.setItem('quotecord_defaults', JSON.stringify(newSettings))
 
     // Sync to Supabase profiles table
-    await supabase
+    await (supabase as any)
       .from('profiles')
       .update({
         default_template: newSettings.template,
@@ -262,7 +262,7 @@ export default function SettingsPage() {
     localStorage.setItem('quotecord_defaults', JSON.stringify(defaultSettings))
 
     // Sync to Supabase profiles table
-    await supabase
+    await (supabase as any)
       .from('profiles')
       .update({
         default_template: defaultSettings.template,
