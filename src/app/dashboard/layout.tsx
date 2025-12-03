@@ -13,7 +13,9 @@ import {
   Crown,
   Menu,
   X,
-  Images
+  Images,
+  Shield,
+  Users
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 import { logout, supabase } from '@/lib/supabase'
