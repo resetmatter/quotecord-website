@@ -209,6 +209,24 @@ export default function SettingsPage() {
     setDeletingPresetId(null)
   }
 
+  // Track which preset was just applied for visual feedback
+  const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null)
+
+  const applyPreset = (preset: Preset) => {
+    const newSettings = {
+      template: preset.template,
+      font: preset.font,
+      theme: preset.theme,
+      orientation: preset.orientation || 'landscape'
+    }
+    setDefaultSettings(newSettings)
+    localStorage.setItem('quotecord_defaults', JSON.stringify(newSettings))
+
+    // Show visual feedback
+    setAppliedPresetId(preset.id)
+    setTimeout(() => setAppliedPresetId(null), 2000)
+  }
+
   const saveDefaultSettings = () => {
     localStorage.setItem('quotecord_defaults', JSON.stringify(defaultSettings))
     setSavedDefaults(true)
@@ -662,11 +680,21 @@ export default function SettingsPage() {
                     {presets.map((preset) => (
                       <div
                         key={preset.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-dark-800/50 border border-gray-700/50 hover:border-gray-600 transition-colors group"
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-all group ${
+                          appliedPresetId === preset.id
+                            ? 'bg-green-500/10 border-green-500/50'
+                            : 'bg-dark-800/50 border-gray-700/50 hover:border-gray-600'
+                        }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-lg icon-bg flex items-center justify-center flex-shrink-0">
-                            <Palette className="w-4 h-4 text-brand-400" />
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            appliedPresetId === preset.id ? 'bg-green-500/20' : 'icon-bg'
+                          }`}>
+                            {appliedPresetId === preset.id ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Palette className="w-4 h-4 text-brand-400" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-white truncate">{preset.name}</p>
@@ -679,17 +707,29 @@ export default function SettingsPage() {
                             </div>
                           </div>
                         </div>
-                        <button
-                          onClick={() => deletePreset(preset.id)}
-                          disabled={deletingPresetId === preset.id}
-                          className="p-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          {deletingPresetId === preset.id ? (
-                            <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => applyPreset(preset)}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                              appliedPresetId === preset.id
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-brand-500/20 text-brand-400 hover:bg-brand-500/30 opacity-0 group-hover:opacity-100'
+                            }`}
+                          >
+                            {appliedPresetId === preset.id ? 'Applied!' : 'Apply'}
+                          </button>
+                          <button
+                            onClick={() => deletePreset(preset.id)}
+                            disabled={deletingPresetId === preset.id}
+                            className="p-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            {deletingPresetId === preset.id ? (
+                              <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
 
