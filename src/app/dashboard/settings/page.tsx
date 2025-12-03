@@ -18,7 +18,8 @@ import {
   Lock,
   Crown,
   RotateCcw,
-  MonitorSmartphone
+  MonitorSmartphone,
+  Loader2
 } from 'lucide-react'
 import { getCurrentUser, UserProfile, isPremiumUser } from '@/lib/user'
 import { supabase } from '@/lib/supabase'
@@ -133,7 +134,7 @@ export default function SettingsPage() {
   // Show all fonts toggle
   const [showAllFonts, setShowAllFonts] = useState(false)
 
-  // Default settings (stored locally for now)
+  // Default settings (synced with Supabase)
   const [defaultSettings, setDefaultSettings] = useState<DefaultSettings>({
     template: 'classic',
     font: 'Raleway',
@@ -141,6 +142,7 @@ export default function SettingsPage() {
     orientation: 'landscape'
   })
   const [savedDefaults, setSavedDefaults] = useState(false)
+  const [savingDefaults, setSavingDefaults] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -162,10 +164,20 @@ export default function SettingsPage() {
           setPresets(presetsData)
         }
 
-        // Load defaults from localStorage
-        const savedDefaults = localStorage.getItem('quotecord_defaults')
-        if (savedDefaults) {
-          setDefaultSettings(JSON.parse(savedDefaults))
+        // Load defaults from Supabase profiles table
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('default_template, default_font, default_theme, default_orientation')
+          .eq('id', userData.id)
+          .single()
+
+        if (profileData) {
+          setDefaultSettings({
+            template: profileData.default_template || 'classic',
+            font: profileData.default_font || 'Raleway',
+            theme: profileData.default_theme || 'dark',
+            orientation: profileData.default_orientation || 'landscape'
+          })
         }
       }
       setLoadingPresets(false)
@@ -212,7 +224,9 @@ export default function SettingsPage() {
   // Track which preset was just applied for visual feedback
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null)
 
-  const applyPreset = (preset: Preset) => {
+  const applyPreset = async (preset: Preset) => {
+    if (!user) return
+
     const newSettings = {
       template: preset.template,
       font: preset.font,
@@ -222,13 +236,44 @@ export default function SettingsPage() {
     setDefaultSettings(newSettings)
     localStorage.setItem('quotecord_defaults', JSON.stringify(newSettings))
 
+    // Sync to Supabase profiles table
+    await supabase
+      .from('profiles')
+      .update({
+        default_template: newSettings.template,
+        default_font: newSettings.font,
+        default_theme: newSettings.theme,
+        default_orientation: newSettings.orientation,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id)
+
     // Show visual feedback
     setAppliedPresetId(preset.id)
     setTimeout(() => setAppliedPresetId(null), 2000)
   }
 
-  const saveDefaultSettings = () => {
+  const saveDefaultSettings = async () => {
+    if (!user) return
+
+    setSavingDefaults(true)
+
+    // Save to localStorage as backup
     localStorage.setItem('quotecord_defaults', JSON.stringify(defaultSettings))
+
+    // Sync to Supabase profiles table
+    await supabase
+      .from('profiles')
+      .update({
+        default_template: defaultSettings.template,
+        default_font: defaultSettings.font,
+        default_theme: defaultSettings.theme,
+        default_orientation: defaultSettings.orientation,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id)
+
+    setSavingDefaults(false)
     setSavedDefaults(true)
     setTimeout(() => setSavedDefaults(false), 2000)
   }
@@ -537,9 +582,12 @@ export default function SettingsPage() {
 
             <button
               onClick={saveDefaultSettings}
+              disabled={savingDefaults}
               className={`w-full py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                 savedDefaults
                   ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                  : savingDefaults
+                  ? 'bg-brand-500/50 text-white/70 cursor-not-allowed'
                   : 'bg-brand-500 hover:bg-brand-600 text-white'
               }`}
             >
@@ -547,6 +595,11 @@ export default function SettingsPage() {
                 <>
                   <Check className="w-4 h-4" />
                   Saved!
+                </>
+              ) : savingDefaults ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
                 </>
               ) : (
                 'Save Defaults'
