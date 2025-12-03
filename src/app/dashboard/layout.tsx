@@ -15,7 +15,6 @@ import {
   X,
   Images,
   Shield,
-  Globe,
   Users
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
@@ -104,8 +103,7 @@ export default function DashboardLayout({
   ]
 
   const adminNavItems: Array<{ href: string; label: string; icon: typeof Home }> = [
-    { href: '/dashboard/admin/global-flags', label: 'Global Flags', icon: Globe },
-    { href: '/dashboard/admin/feature-flags', label: 'User Flags', icon: Shield },
+    { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Shield },
     { href: '/dashboard/admin/users', label: 'Admin Users', icon: Users },
   ]
 
