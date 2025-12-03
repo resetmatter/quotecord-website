@@ -169,7 +169,7 @@ export default function SettingsPage() {
           .from('profiles')
           .select('default_template, default_font, default_theme, default_orientation')
           .eq('id', userData.id)
-          .single()
+          .single() as { data: { default_template: string | null; default_font: string | null; default_theme: string | null; default_orientation: string | null } | null }
 
         if (profileData) {
           setDefaultSettings({
