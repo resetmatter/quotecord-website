@@ -24,19 +24,65 @@ import { getCurrentUser, UserProfile, isPremiumUser } from '@/lib/user'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
-// Bot feature options based on the DisQuote bot
+// Bot feature options based on the DisQuote bot (from actual repository)
 const TEMPLATES = [
-  { id: 'minimal', name: 'Minimal', description: 'Clean and streamlined', icon: '✨' },
-  { id: 'modern', name: 'Modern', description: 'Contemporary styling', icon: '🎨' },
-  { id: 'bold', name: 'Bold', description: 'High-contrast and prominent', icon: '💥' },
+  { id: 'classic', name: 'Classic', description: 'Beautiful gradient design', icon: '🎨' },
+  { id: 'discord', name: 'Discord', description: 'Pixel-perfect message replica', icon: '💬' },
+  { id: 'profile', name: 'Profile', description: 'Avatar as background', icon: '👤' },
 ]
 
-const FONTS = [
-  { id: 'inter', name: 'Inter' },
-  { id: 'roboto', name: 'Roboto' },
-  { id: 'open-sans', name: 'Open Sans' },
-  { id: 'montserrat', name: 'Montserrat' },
-  { id: 'playfair', name: 'Playfair Display' },
+// Font categories from the bot (23 fonts total)
+const FONT_CATEGORIES = {
+  'Modern Sans-Serif': [
+    { id: 'Inter', name: 'Inter' },
+    { id: 'Poppins', name: 'Poppins' },
+    { id: 'Lato', name: 'Lato' },
+    { id: 'Raleway', name: 'Raleway' },
+    { id: 'Roboto', name: 'Roboto' },
+    { id: 'Open Sans', name: 'Open Sans' },
+    { id: 'Source Sans Pro', name: 'Source Sans Pro' },
+    { id: 'Montserrat', name: 'Montserrat' },
+  ],
+  'Rounded & Friendly': [
+    { id: 'Nunito', name: 'Nunito' },
+    { id: 'Comfortaa', name: 'Comfortaa' },
+  ],
+  'Display & Bold': [
+    { id: 'Bebas Neue', name: 'Bebas Neue' },
+    { id: 'Righteous', name: 'Righteous' },
+  ],
+  'Monospace': [
+    { id: 'JetBrains Mono', name: 'JetBrains Mono' },
+  ],
+  'Script & Handwriting': [
+    { id: 'Pacifico', name: 'Pacifico' },
+    { id: 'Patrick Hand', name: 'Patrick Hand' },
+    { id: 'Indie Flower', name: 'Indie Flower' },
+  ],
+  'Serif': [
+    { id: 'Playfair Display', name: 'Playfair Display' },
+  ],
+  'Playful & Fun': [
+    { id: 'Bangers', name: 'Bangers' },
+    { id: 'Varela Round', name: 'Varela Round' },
+    { id: 'Chewy', name: 'Chewy' },
+    { id: 'Permanent Marker', name: 'Permanent Marker' },
+    { id: 'Comic Neue', name: 'Comic Neue' },
+    { id: 'Luckiest Guy', name: 'Luckiest Guy' },
+  ],
+}
+
+// Flat list of all fonts for dropdowns
+const ALL_FONTS = Object.values(FONT_CATEGORIES).flat()
+
+// Popular fonts for quick selection (subset of most commonly used)
+const POPULAR_FONTS = [
+  { id: 'Raleway', name: 'Raleway' },
+  { id: 'Inter', name: 'Inter' },
+  { id: 'Poppins', name: 'Poppins' },
+  { id: 'Montserrat', name: 'Montserrat' },
+  { id: 'Roboto', name: 'Roboto' },
+  { id: 'Playfair Display', name: 'Playfair Display' },
 ]
 
 const THEMES = [
@@ -45,8 +91,8 @@ const THEMES = [
 ]
 
 const ORIENTATIONS = [
-  { id: 'portrait', name: 'Portrait' },
   { id: 'landscape', name: 'Landscape' },
+  { id: 'portrait', name: 'Portrait' },
 ]
 
 interface Preset {
@@ -79,17 +125,20 @@ export default function SettingsPage() {
   // New preset form
   const [showNewPreset, setShowNewPreset] = useState(false)
   const [newPresetName, setNewPresetName] = useState('')
-  const [newPresetTemplate, setNewPresetTemplate] = useState('modern')
-  const [newPresetFont, setNewPresetFont] = useState('inter')
+  const [newPresetTemplate, setNewPresetTemplate] = useState('classic')
+  const [newPresetFont, setNewPresetFont] = useState('Raleway')
   const [newPresetTheme, setNewPresetTheme] = useState('dark')
-  const [newPresetOrientation, setNewPresetOrientation] = useState('portrait')
+  const [newPresetOrientation, setNewPresetOrientation] = useState('landscape')
+
+  // Show all fonts toggle
+  const [showAllFonts, setShowAllFonts] = useState(false)
 
   // Default settings (stored locally for now)
   const [defaultSettings, setDefaultSettings] = useState<DefaultSettings>({
-    template: 'modern',
-    font: 'inter',
+    template: 'classic',
+    font: 'Raleway',
     theme: 'dark',
-    orientation: 'portrait'
+    orientation: 'landscape'
   })
   const [savedDefaults, setSavedDefaults] = useState(false)
 
@@ -168,10 +217,10 @@ export default function SettingsPage() {
 
   const resetDefaults = () => {
     const defaults = {
-      template: 'modern',
-      font: 'inter',
+      template: 'classic',
+      font: 'Raleway',
       theme: 'dark',
-      orientation: 'portrait'
+      orientation: 'landscape'
     }
     setDefaultSettings(defaults)
     localStorage.setItem('quotecord_defaults', JSON.stringify(defaults))
@@ -395,22 +444,56 @@ export default function SettingsPage() {
 
             {/* Font Selection */}
             <div className="mb-4">
-              <label className="text-xs text-gray-500 mb-2 block">Font</label>
-              <div className="flex flex-wrap gap-2">
-                {FONTS.map((font) => (
-                  <button
-                    key={font.id}
-                    onClick={() => setDefaultSettings({ ...defaultSettings, font: font.id })}
-                    className={`px-3 py-2 rounded-lg border text-sm transition-all ${
-                      defaultSettings.font === font.id
-                        ? 'border-brand-500 bg-brand-500/10 text-white'
-                        : 'border-gray-700 hover:border-gray-600 bg-dark-800/50 text-gray-400'
-                    }`}
-                  >
-                    {font.name}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs text-gray-500">Font</label>
+                <button
+                  onClick={() => setShowAllFonts(!showAllFonts)}
+                  className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                >
+                  {showAllFonts ? 'Show less' : `Show all 23 fonts`}
+                </button>
               </div>
+
+              {!showAllFonts ? (
+                <div className="flex flex-wrap gap-2">
+                  {POPULAR_FONTS.map((font) => (
+                    <button
+                      key={font.id}
+                      onClick={() => setDefaultSettings({ ...defaultSettings, font: font.id })}
+                      className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                        defaultSettings.font === font.id
+                          ? 'border-brand-500 bg-brand-500/10 text-white'
+                          : 'border-gray-700 hover:border-gray-600 bg-dark-800/50 text-gray-400'
+                      }`}
+                    >
+                      {font.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                  {Object.entries(FONT_CATEGORIES).map(([category, fonts]) => (
+                    <div key={category}>
+                      <p className="text-xs text-gray-600 mb-1.5">{category}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {fonts.map((font) => (
+                          <button
+                            key={font.id}
+                            onClick={() => setDefaultSettings({ ...defaultSettings, font: font.id })}
+                            className={`px-2.5 py-1.5 rounded-md border text-xs transition-all ${
+                              defaultSettings.font === font.id
+                                ? 'border-brand-500 bg-brand-500/10 text-white'
+                                : 'border-gray-700 hover:border-gray-600 bg-dark-800/50 text-gray-400'
+                            }`}
+                          >
+                            {font.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Orientation Selection */}
@@ -521,7 +604,7 @@ export default function SettingsPage() {
                         onChange={(e) => setNewPresetFont(e.target.value)}
                         className="px-3 py-2 rounded-lg bg-dark-900 border border-gray-700 text-white text-sm focus:border-brand-500 focus:outline-none"
                       >
-                        {FONTS.map((f) => (
+                        {ALL_FONTS.map((f) => (
                           <option key={f.id} value={f.id}>{f.name}</option>
                         ))}
                       </select>
