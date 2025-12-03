@@ -112,7 +112,7 @@ export default function BillingPage() {
 
       {/* Upgrade Section (for free users) */}
       {!isPremium && (
-        <div className="relative glass rounded-2xl p-6 border-gradient-pro overflow-hidden">
+        <div className="relative glass rounded-2xl p-6 border-gradient-pro">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pro-amber to-pro-gold text-dark-900 text-sm font-bold rounded-full shadow-glow-pro">
               <Star className="w-4 h-4" />
