@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       .from('quote_gallery')
       .select('id, file_path, user_id, discord_id')
       .in('id', quoteIds)
-      .eq('user_id', user.id)
+      .eq('user_id', user.id) as { data: { id: string; file_path: string; user_id: string; discord_id: string }[] | null; error: unknown }
 
     if (fetchError) {
       console.error('Bulk fetch error:', fetchError)
