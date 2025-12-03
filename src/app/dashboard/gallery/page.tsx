@@ -24,7 +24,10 @@ import {
   ArrowUp,
   ArrowDown,
   Wifi,
-  WifiOff
+  WifiOff,
+  CheckSquare,
+  Square,
+  XCircle
 } from 'lucide-react'
 import { useRealtimeQuotes, RealtimeQuote } from '@/hooks/useRealtimeQuotes'
 
@@ -129,6 +132,12 @@ export default function GalleryPage() {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Quote | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Selection mode state
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedQuotes, setSelectedQuotes] = useState<Set<string>>(new Set())
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   // Real-time state
   const [newQuoteIds, setNewQuoteIds] = useState<Set<string>>(new Set())
@@ -307,6 +316,74 @@ export default function GalleryPage() {
     }
   }
 
+  const handleBulkDelete = async () => {
+    if (selectedQuotes.size === 0) return
+
+    setBulkDeleting(true)
+    const quoteIdsToDelete = Array.from(selectedQuotes)
+
+    // Optimistic update: remove selected quotes from UI immediately
+    const previousQuotes = quotes
+    const previousQuota = quota
+    const deleteCount = quoteIdsToDelete.length
+
+    setQuotes(prev => prev.filter(q => !selectedQuotes.has(q.id)))
+    setQuota(prev => ({
+      ...prev,
+      used: Math.max(0, prev.used - deleteCount),
+      remaining: prev.remaining + deleteCount
+    }))
+    setBulkDeleteConfirm(false)
+    setSelectedQuotes(new Set())
+    setSelectionMode(false)
+
+    try {
+      const response = await fetch('/api/gallery/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quoteIds: quoteIdsToDelete })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete quotes')
+      }
+    } catch (err) {
+      // Rollback on error
+      setQuotes(previousQuotes)
+      setQuota(previousQuota)
+      setSelectedQuotes(new Set(quoteIdsToDelete))
+      setSelectionMode(true)
+      setError(err instanceof Error ? err.message : 'Failed to delete quotes')
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
+  const toggleQuoteSelection = (quoteId: string) => {
+    setSelectedQuotes(prev => {
+      const next = new Set(prev)
+      if (next.has(quoteId)) {
+        next.delete(quoteId)
+      } else {
+        next.add(quoteId)
+      }
+      return next
+    })
+  }
+
+  const selectAllOnPage = () => {
+    setSelectedQuotes(new Set(quotes.map(q => q.id)))
+  }
+
+  const clearSelection = () => {
+    setSelectedQuotes(new Set())
+  }
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false)
+    setSelectedQuotes(new Set())
+  }
+
   const clearFilters = () => {
     setSearchQuery('')
     setTemplateFilter('')
@@ -347,30 +424,71 @@ export default function GalleryPage() {
           </p>
         </div>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
-            <input
-              type="text"
-              placeholder="Search quotes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 w-full sm:w-64"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-xl border transition-all ${
-              showFilters || hasActiveFilters
-                ? 'bg-brand-500 border-brand-500 text-white'
-                : 'bg-dark-800/50 border-dark-700 text-dark-400 hover:text-white'
-            }`}
-          >
-            <Filter className="w-5 h-5" />
-          </button>
-        </form>
+        {/* Search and Selection Toggle */}
+        <div className="flex items-center gap-2">
+          {selectionMode ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAllOnPage}
+                className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
+              >
+                Select All
+              </button>
+              {selectedQuotes.size > 0 && (
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={exitSelectionMode}
+                className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
+                title="Exit selection mode"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                <input
+                  type="text"
+                  placeholder="Search quotes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 w-full sm:w-64"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`p-2 rounded-xl border transition-all ${
+                  showFilters || hasActiveFilters
+                    ? 'bg-brand-500 border-brand-500 text-white'
+                    : 'bg-dark-800/50 border-dark-700 text-dark-400 hover:text-white'
+                }`}
+              >
+                <Filter className="w-5 h-5" />
+              </button>
+              {quotes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectionMode(true)}
+                  className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
+                  title="Select multiple quotes"
+                >
+                  <CheckSquare className="w-5 h-5" />
+                </button>
+              )}
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Filters Panel */}
@@ -744,9 +862,12 @@ export default function GalleryPage() {
                 key={quote.id}
                 quote={quote}
                 userProfile={userProfile}
-                onClick={() => setSelectedQuote(quote)}
+                onClick={() => selectionMode ? toggleQuoteSelection(quote.id) : setSelectedQuote(quote)}
                 onDelete={() => setDeleteConfirm(quote)}
                 isNew={newQuoteIds.has(quote.id)}
+                selectionMode={selectionMode}
+                isSelected={selectedQuotes.has(quote.id)}
+                onToggleSelect={() => toggleQuoteSelection(quote.id)}
               />
             ))}
           </div>
@@ -797,11 +918,68 @@ export default function GalleryPage() {
           onCancel={() => setDeleteConfirm(null)}
         />
       )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteConfirm && (
+        <BulkDeleteConfirmModal
+          count={selectedQuotes.size}
+          deleting={bulkDeleting}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkDeleteConfirm(false)}
+        />
+      )}
+
+      {/* Selection Action Bar */}
+      {selectionMode && selectedQuotes.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+          <div className="glass rounded-2xl px-6 py-4 flex items-center gap-4 shadow-xl border border-dark-600">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="w-5 h-5 text-brand-400" />
+              <span className="font-medium">
+                {selectedQuotes.size} selected
+              </span>
+            </div>
+            <div className="w-px h-6 bg-dark-600" />
+            <button
+              onClick={() => setBulkDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-error hover:bg-error/90 rounded-xl font-medium transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected
+            </button>
+            <button
+              onClick={exitSelectionMode}
+              className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"
+              title="Cancel"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function QuoteCard({ quote, userProfile, onClick, onDelete, isNew = false }: { quote: Quote; userProfile: UserProfile | null; onClick: () => void; onDelete: () => void; isNew?: boolean }) {
+function QuoteCard({
+  quote,
+  userProfile,
+  onClick,
+  onDelete,
+  isNew = false,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelect
+}: {
+  quote: Quote
+  userProfile: UserProfile | null
+  onClick: () => void
+  onDelete: () => void
+  isNew?: boolean
+  selectionMode?: boolean
+  isSelected?: boolean
+  onToggleSelect?: () => void
+}) {
   // Use quote's quoter info, fallback to user's profile (since this is their gallery)
   const quoterName = quote.quoter_user_name || userProfile?.username || 'Unknown'
   const quoterAvatar = quote.quoter_user_avatar || userProfile?.avatar
@@ -810,6 +988,11 @@ function QuoteCard({ quote, userProfile, onClick, onDelete, isNew = false }: { q
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation()
     action()
+  }
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onToggleSelect?.()
   }
 
   const getDownloadFilename = () => {
@@ -855,8 +1038,14 @@ function QuoteCard({ quote, userProfile, onClick, onDelete, isNew = false }: { q
   return (
     <button
       onClick={onClick}
-      className={`group glass rounded-xl overflow-hidden text-left hover:ring-2 hover:ring-brand-500/50 transition-all ${
+      className={`group glass rounded-xl overflow-hidden text-left transition-all ${
         isNew ? 'ring-2 ring-success/50 animate-pulse-once' : ''
+      } ${
+        selectionMode && isSelected
+          ? 'ring-2 ring-brand-500 bg-brand-500/10'
+          : 'hover:ring-2 hover:ring-brand-500/50'
+      } ${
+        selectionMode ? 'cursor-pointer' : ''
       }`}
     >
       {/* Image */}
@@ -868,8 +1057,25 @@ function QuoteCard({ quote, userProfile, onClick, onDelete, isNew = false }: { q
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
+        {/* Selection checkbox */}
+        {selectionMode && (
+          <div
+            onClick={handleCheckboxClick}
+            className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer ${
+              isSelected
+                ? 'bg-brand-500 text-white'
+                : 'bg-dark-900/80 border border-dark-600 text-dark-400 hover:border-brand-500'
+            }`}
+          >
+            {isSelected ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Square className="w-4 h-4" />
+            )}
+          </div>
+        )}
         {quote.animated && (
-          <div className="absolute top-2 right-2 px-2 py-1 bg-brand-500 text-white text-xs font-medium rounded-md flex items-center gap-1">
+          <div className={`absolute top-2 ${selectionMode ? 'right-2' : 'right-2'} px-2 py-1 bg-brand-500 text-white text-xs font-medium rounded-md flex items-center gap-1`}>
             <Film className="w-3 h-3" />
             GIF
           </div>
@@ -1238,6 +1444,79 @@ function DeleteConfirmModal({
               </>
             ) : (
               'Delete'
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BulkDeleteConfirmModal({
+  count,
+  deleting,
+  onConfirm,
+  onCancel
+}: {
+  count: number
+  deleting: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} />
+
+      {/* Modal */}
+      <div className="relative glass rounded-2xl max-w-md w-full p-6 animate-scale-in">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 bg-error/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <Trash2 className="w-6 h-6 text-error" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">Delete {count} Quote{count !== 1 ? 's' : ''}?</h3>
+            <p className="text-dark-400 text-sm">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        {/* Warning message */}
+        <div className="bg-error/10 border border-error/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="text-error font-medium mb-1">Warning</p>
+              <p className="text-dark-300">
+                You are about to permanently delete <span className="font-semibold text-white">{count}</span> quote{count !== 1 ? 's' : ''}.
+                This will remove them from your gallery and free up your storage quota.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 px-4 py-2.5 bg-dark-800 hover:bg-dark-700 rounded-xl font-medium transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 px-4 py-2.5 bg-error hover:bg-error/90 rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {deleting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4" />
+                Delete {count} Quote{count !== 1 ? 's' : ''}
+              </>
             )}
           </button>
         </div>
