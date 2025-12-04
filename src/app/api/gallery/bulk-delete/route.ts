@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import { createRouteClient, createServiceClient } from '@/lib/supabase-server'
 import { broadcastQuoteDeleted } from '@/lib/realtime-broadcast'
 
+interface QuoteRecord {
+  id: string
+  file_path: string
+  user_id: string
+  discord_id: string
+}
+
 // POST /api/gallery/bulk-delete - Delete multiple quotes at once
 export async function POST(request: Request) {
   try {
@@ -31,11 +38,11 @@ export async function POST(request: Request) {
     }
 
     // Fetch all quotes to check ownership and get file paths
-    const { data: quotes, error: fetchError } = await supabase
+    const { data, error: fetchError } = await supabase
       .from('quote_gallery')
       .select('id, file_path, user_id, discord_id')
       .in('id', quoteIds)
-      .eq('user_id', user.id) as { data: { id: string; file_path: string; user_id: string; discord_id: string }[] | null; error: unknown }
+      .eq('user_id', user.id)
 
     if (fetchError) {
       console.error('Bulk fetch error:', fetchError)
@@ -45,6 +52,8 @@ export async function POST(request: Request) {
       )
     }
 
+    const quotes = data as QuoteRecord[] | null
+
     if (!quotes || quotes.length === 0) {
       return NextResponse.json(
         { error: 'No quotes found or access denied' },
@@ -53,9 +62,9 @@ export async function POST(request: Request) {
     }
 
     // Get file paths for storage deletion
-    const filePaths = quotes.map(q => q.file_path)
+    const filePaths = quotes.map((q: QuoteRecord) => q.file_path)
     const discordId = quotes[0].discord_id
-    const deletedIds = quotes.map(q => q.id)
+    const deletedIds = quotes.map((q: QuoteRecord) => q.id)
 
     // Delete from storage using service client
     const serviceClient = createServiceClient()
