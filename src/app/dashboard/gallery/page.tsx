@@ -408,92 +408,94 @@ export default function GalleryPage() {
 
   return (
     <div className="max-w-6xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Quote Gallery</h1>
-            {realtimeConnected && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-success/10 border border-success/30 rounded-full" title="Real-time updates active">
-                <Wifi className="w-3 h-3 text-success" />
-                <span className="text-xs text-success font-medium">Live</span>
-              </div>
-            )}
-          </div>
-          <p className="text-dark-400 text-sm mt-1">
-            {quota.used} / {quota.max} quotes used
-          </p>
-        </div>
-
-        {/* Search and Selection Toggle */}
-        <div className="flex items-center gap-2">
-          {selectionMode ? (
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-30 bg-dark-900/95 backdrop-blur-sm -mx-4 px-4 pt-4 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={selectAllOnPage}
-                className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
-              >
-                Select All
-              </button>
-              {selectedQuotes.size > 0 && (
+              <h1 className="text-2xl font-bold">Quote Gallery</h1>
+              {realtimeConnected && (
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-success/10 border border-success/30 rounded-full" title="Real-time updates active">
+                  <Wifi className="w-3 h-3 text-success" />
+                  <span className="text-xs text-success font-medium">Live</span>
+                </div>
+              )}
+            </div>
+            <p className="text-dark-400 text-sm mt-1">
+              {quota.used} / {quota.max} quotes used
+            </p>
+          </div>
+
+          {/* Search and Selection Toggle */}
+          <div className="flex items-center gap-2">
+            {selectionMode ? (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={clearSelection}
+                  onClick={selectAllOnPage}
                   className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
                 >
-                  Clear
+                  Select All
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={exitSelectionMode}
-                className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
-                title="Exit selection mode"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
-                <input
-                  type="text"
-                  placeholder="Search quotes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 w-full sm:w-64"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFilters(!showFilters)}
-                className={`p-2 rounded-xl border transition-all ${
-                  showFilters || hasActiveFilters
-                    ? 'bg-brand-500 border-brand-500 text-white'
-                    : 'bg-dark-800/50 border-dark-700 text-dark-400 hover:text-white'
-                }`}
-              >
-                <Filter className="w-5 h-5" />
-              </button>
-              {quotes.length > 0 && (
+                {selectedQuotes.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => setSelectionMode(true)}
+                  onClick={exitSelectionMode}
                   className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
-                  title="Select multiple quotes"
+                  title="Exit selection mode"
                 >
-                  <CheckSquare className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </button>
-              )}
-            </form>
-          )}
+              </div>
+            ) : (
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                  <input
+                    type="text"
+                    placeholder="Search quotes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 w-full sm:w-64"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`p-2 rounded-xl border transition-all ${
+                    showFilters || hasActiveFilters
+                      ? 'bg-brand-500 border-brand-500 text-white'
+                      : 'bg-dark-800/50 border-dark-700 text-dark-400 hover:text-white'
+                  }`}
+                >
+                  <Filter className="w-5 h-5" />
+                </button>
+                {quotes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectionMode(true)}
+                    className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
+                    title="Select multiple quotes"
+                  >
+                    <CheckSquare className="w-5 h-5" />
+                  </button>
+                )}
+              </form>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="glass rounded-xl p-4 mb-6 animate-slide-down relative z-20">
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="glass rounded-xl p-4 mb-2 animate-slide-down relative z-20">
           <div className="flex flex-wrap gap-4">
             <div>
               <label className="block text-xs text-dark-500 mb-1">Template</label>
@@ -786,8 +788,9 @@ export default function GalleryPage() {
               </button>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Quota Warning */}
       {quota.remaining <= 5 && quota.remaining > 0 && (
