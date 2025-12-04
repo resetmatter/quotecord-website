@@ -1,19 +1,35 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, AlertCircle, Clock } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 
 export default function BillingPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual')
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     getCurrentUser().then(setUser)
-  }, [])
+
+    // Check for period parameter from pricing page
+    const periodParam = searchParams.get('period')
+    if (periodParam === 'monthly' || periodParam === 'annual') {
+      setBillingPeriod(periodParam)
+    }
+  }, [searchParams])
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
+  const isCancelled = user?.subscription?.status === 'cancelled'
+  const isPastDue = user?.subscription?.status === 'past_due'
+
+  // Check if user still has access (premium tier with valid period or active status)
+  const hasActiveAccess = user?.subscription?.tier === 'premium' && (
+    user?.subscription?.status === 'active' ||
+    (isCancelled && user?.subscription?.current_period_end && new Date(user.subscription.current_period_end) > new Date())
+  )
 
   const handleUpgrade = async () => {
     try {
@@ -28,12 +44,16 @@ export default function BillingPage() {
 
       if (data.url) {
         window.location.href = data.url
+      } else if (data.code === 'ALREADY_SUBSCRIBED') {
+        // User already has active subscription, redirect to billing portal
+        alert('You already have an active Pro subscription. Redirecting to subscription management...')
+        handleManageSubscription()
       } else {
         throw new Error(data.error || 'Failed to create checkout session')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error)
-      alert('Failed to start checkout. Please try again.')
+      alert(error.message || 'Failed to start checkout. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -70,19 +90,37 @@ export default function BillingPage() {
         <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
 
         <div className="flex items-center gap-3 mb-4">
-          {isPremium ? (
+          {hasActiveAccess ? (
             <>
               <div className="w-12 h-12 rounded-xl icon-bg-pro flex items-center justify-center">
                 <Crown className="w-6 h-6 text-pro-gold" />
               </div>
               <div>
                 <p className="font-semibold gradient-text-pro">Pro</p>
-                <p className="text-sm text-dark-400">
-                  {user?.subscription?.current_period_end
-                    ? `Renews ${new Date(user.subscription.current_period_end).toLocaleDateString()}`
-                    : 'Active subscription'
-                  }
-                </p>
+                {isCancelled ? (
+                  <p className="text-sm text-warning">
+                    Cancelled - Access until {user?.subscription?.current_period_end
+                      ? new Date(user.subscription.current_period_end).toLocaleDateString()
+                      : 'end of period'}
+                  </p>
+                ) : (
+                  <p className="text-sm text-dark-400">
+                    {user?.subscription?.current_period_end
+                      ? `Renews ${new Date(user.subscription.current_period_end).toLocaleDateString()}`
+                      : 'Active subscription'
+                    }
+                  </p>
+                )}
+              </div>
+            </>
+          ) : isPastDue ? (
+            <>
+              <div className="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-warning" />
+              </div>
+              <div>
+                <p className="font-semibold text-warning">Payment Issue</p>
+                <p className="text-sm text-dark-400">Please update your payment method</p>
               </div>
             </>
           ) : (
@@ -98,29 +136,49 @@ export default function BillingPage() {
           )}
         </div>
 
-        {isPremium && (
+        {(isPremium || isPastDue) && (
           <button
             onClick={handleManageSubscription}
             disabled={loading}
             className="text-sm text-brand-400 hover:text-brand-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
           >
-            Manage Subscription
+            {isPastDue ? 'Update Payment Method' : 'Manage Subscription'}
             <ExternalLink className="w-3 h-3" />
           </button>
         )}
       </div>
 
-      {/* Upgrade Section (for free users) */}
-      {!isPremium && (
+      {/* Cancelled Notice */}
+      {isCancelled && hasActiveAccess && (
+        <div className="glass rounded-xl p-4 mb-6 border border-warning/30 bg-warning/5">
+          <div className="flex items-start gap-3">
+            <Clock className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-warning">Subscription Cancelled</p>
+              <p className="text-sm text-dark-400 mt-1">
+                Your Pro features will remain active until {user?.subscription?.current_period_end
+                  ? new Date(user.subscription.current_period_end).toLocaleDateString()
+                  : 'the end of your billing period'}.
+                Resubscribe below to keep your Pro access.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Section (for free users or cancelled users who want to resubscribe) */}
+      {(!isPremium || isCancelled || isPastDue) && (
         <div className="relative glass rounded-2xl p-6 border-gradient-pro">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pro-amber to-pro-gold text-dark-900 text-sm font-bold rounded-full shadow-glow-pro">
               <Star className="w-4 h-4" />
-              UPGRADE
+              {isCancelled || isPastDue ? 'RESUBSCRIBE' : 'UPGRADE'}
             </span>
           </div>
 
-          <h2 className="text-lg font-semibold mb-4 mt-2">Upgrade to Pro</h2>
+          <h2 className="text-lg font-semibold mb-4 mt-2">
+            {isCancelled ? 'Resubscribe to Pro' : isPastDue ? 'Restore Your Pro Access' : 'Upgrade to Pro'}
+          </h2>
 
           <ul className="space-y-2 mb-6">
             {[
@@ -182,7 +240,7 @@ export default function BillingPage() {
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                Upgrade Now
+                {isCancelled || isPastDue ? 'Resubscribe Now' : 'Upgrade Now'}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </>
             )}

@@ -1,16 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Check, X, Sparkles, ChevronDown, Crown, Star, ArrowRight, Zap } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 type BillingPeriod = 'monthly' | 'annual'
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session)
+    })
+  }, [])
+
+  const handleGetPro = async () => {
+    if (isLoggedIn) {
+      // User is logged in, redirect to billing with the selected period
+      router.push(`/dashboard/billing?period=${billingPeriod}`)
+    } else {
+      // User is not logged in, redirect to login
+      router.push('/login')
+    }
+  }
 
   return (
     <>
@@ -156,14 +177,21 @@ export default function PricingPage() {
                 <PricingItem included premium>No watermark</PricingItem>
               </ul>
 
-              <Link
-                href="/login"
-                className="group flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber text-dark-900 font-bold py-3 px-6 rounded-xl transition-all shadow-glow-pro"
+              <button
+                onClick={handleGetPro}
+                disabled={isLoading}
+                className="group flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pro-amber to-pro-gold hover:from-pro-gold hover:to-pro-amber disabled:opacity-50 disabled:cursor-not-allowed text-dark-900 font-bold py-3 px-6 rounded-xl transition-all shadow-glow-pro"
               >
-                <Sparkles className="w-5 h-5" />
-                Get Pro
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-dark-900/30 border-t-dark-900 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    {isLoggedIn ? 'Upgrade Now' : 'Get Pro'}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
             </div>
           </div>
 

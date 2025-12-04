@@ -40,19 +40,30 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session
         const discordId = session.metadata?.discord_id
 
-        if (discordId) {
-          // Upgrade to premium
-          await supabase
+        if (discordId && session.subscription) {
+          // Retrieve the subscription to get billing period dates
+          const subscription = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          )
+
+          // Upgrade to premium with billing period info
+          const { error } = await supabase
             .from('subscriptions')
             .update({
               tier: 'premium',
               status: 'active',
-              stripe_subscription_id: session.subscription as string,
+              stripe_subscription_id: subscription.id,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
               updated_at: new Date().toISOString()
             })
             .eq('discord_id', discordId)
 
-          console.log(`Upgraded user ${discordId} to premium`)
+          if (error) {
+            console.error(`Failed to upgrade user ${discordId}:`, error)
+          } else {
+            console.log(`Upgraded user ${discordId} to premium (period ends: ${new Date(subscription.current_period_end * 1000).toISOString()})`)
+          }
         }
         break
       }
@@ -77,25 +88,52 @@ export async function POST(req: Request) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
 
-        // Downgrade to free
-        await supabase
-          .from('subscriptions')
-          .update({
-            tier: 'free',
-            status: 'cancelled',
-            current_period_end: null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('stripe_subscription_id', subscription.id)
+        // When subscription is deleted, check if there's remaining time
+        // If cancelled mid-period, keep premium until period_end
+        const periodEnd = new Date(subscription.current_period_end * 1000)
+        const now = new Date()
 
-        console.log(`Cancelled subscription ${subscription.id}`)
+        if (periodEnd > now) {
+          // Keep premium access until period ends, but mark as cancelled
+          const { error } = await supabase
+            .from('subscriptions')
+            .update({
+              status: 'cancelled',
+              current_period_end: periodEnd.toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_subscription_id', subscription.id)
+
+          if (error) {
+            console.error(`Failed to update cancelled subscription ${subscription.id}:`, error)
+          } else {
+            console.log(`Subscription ${subscription.id} cancelled - access until ${periodEnd.toISOString()}`)
+          }
+        } else {
+          // Period has ended, downgrade to free immediately
+          const { error } = await supabase
+            .from('subscriptions')
+            .update({
+              tier: 'free',
+              status: 'cancelled',
+              current_period_end: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_subscription_id', subscription.id)
+
+          if (error) {
+            console.error(`Failed to downgrade subscription ${subscription.id}:`, error)
+          } else {
+            console.log(`Subscription ${subscription.id} cancelled and downgraded to free`)
+          }
+        }
         break
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
 
-        await supabase
+        const { error } = await supabase
           .from('subscriptions')
           .update({
             status: 'past_due',
@@ -103,7 +141,11 @@ export async function POST(req: Request) {
           })
           .eq('stripe_customer_id', invoice.customer as string)
 
-        console.log(`Payment failed for customer ${invoice.customer}`)
+        if (error) {
+          console.error(`Failed to update past_due status for customer ${invoice.customer}:`, error)
+        } else {
+          console.log(`Payment failed for customer ${invoice.customer} - status set to past_due`)
+        }
         break
       }
 
