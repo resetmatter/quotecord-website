@@ -125,6 +125,15 @@ export async function GET(request: Request) {
     const isPremium = subscription?.tier === 'premium'
     const maxQuotes = isPremium ? 1000 : 50
 
+    // Get the TOTAL quote count for quota (separate from filtered count)
+    // This ensures quota shows accurate total regardless of filters applied
+    const { count: totalQuoteCount } = await serviceClient
+      .from('quote_gallery')
+      .select('*', { count: 'exact', head: true })
+      .eq('discord_id', profile.discord_id)
+
+    const quotaUsed = totalQuoteCount || 0
+
     return NextResponse.json({
       quotes: quotes || [],
       pagination: {
@@ -134,9 +143,9 @@ export async function GET(request: Request) {
         totalPages: Math.ceil((count || 0) / limit)
       },
       quota: {
-        used: count || 0,
+        used: quotaUsed,
         max: maxQuotes,
-        remaining: maxQuotes - (count || 0)
+        remaining: maxQuotes - quotaUsed
       },
       // Include user profile for fallback when quoter info is missing
       userProfile: {
