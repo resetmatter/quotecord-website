@@ -142,6 +142,10 @@ export default function GalleryPage() {
   // Real-time state
   const [newQuoteIds, setNewQuoteIds] = useState<Set<string>>(new Set())
 
+  // Track pending deletions to avoid double-counting with realtime events
+  // Using a ref to avoid stale closure issues in callbacks
+  const pendingDeletionsRef = useRef<Set<string>>(new Set())
+
   // Real-time quote updates
   const handleRealtimeInsert = useCallback((newQuote: RealtimeQuote) => {
     // Only add to view if on first page with default sorting (newest first) and no filters
@@ -178,6 +182,17 @@ export default function GalleryPage() {
   }, [pagination.page, sortBy, sortDir, searchQuery, templateFilter, animatedFilter, quotedUserFilter])
 
   const handleRealtimeDelete = useCallback((deletedId: string) => {
+    // Check if this deletion was initiated locally (optimistic update already applied)
+    // If so, just clean up and skip the quota update to avoid double-decrementing
+    if (pendingDeletionsRef.current.has(deletedId)) {
+      pendingDeletionsRef.current.delete(deletedId)
+      // Still close modals if needed, but don't update quota again
+      setSelectedQuote(prev => prev?.id === deletedId ? null : prev)
+      setDeleteConfirm(prev => prev?.id === deletedId ? null : prev)
+      return
+    }
+
+    // This is a delete from another session/device - apply full update
     // Remove from current view
     setQuotes(prev => prev.filter(q => q.id !== deletedId))
     // Update quota
@@ -285,6 +300,10 @@ export default function GalleryPage() {
   const handleDelete = async (quote: Quote) => {
     setDeleting(true)
 
+    // Register this as a pending deletion to prevent double-decrementing
+    // when the realtime event fires after optimistic update
+    pendingDeletionsRef.current.add(quote.id)
+
     // Optimistic update: remove from UI immediately
     const previousQuotes = quotes
     const previousQuota = quota
@@ -305,9 +324,11 @@ export default function GalleryPage() {
       if (!response.ok) {
         throw new Error('Failed to delete quote')
       }
-      // Success - the real-time handler will also fire but we've already updated
+      // Success - the real-time handler will fire but will skip quota update
+      // since this ID is in pendingDeletionsRef
     } catch (err) {
-      // Rollback on error
+      // Rollback on error - also remove from pending deletions
+      pendingDeletionsRef.current.delete(quote.id)
       setQuotes(previousQuotes)
       setQuota(previousQuota)
       setError(err instanceof Error ? err.message : 'Failed to delete quote')
@@ -321,6 +342,12 @@ export default function GalleryPage() {
 
     setBulkDeleting(true)
     const quoteIdsToDelete = Array.from(selectedQuotes)
+
+    // Register all as pending deletions to prevent double-decrementing
+    // when the realtime events fire after optimistic update
+    for (const id of quoteIdsToDelete) {
+      pendingDeletionsRef.current.add(id)
+    }
 
     // Optimistic update: remove selected quotes from UI immediately
     const previousQuotes = quotes
@@ -347,8 +374,13 @@ export default function GalleryPage() {
       if (!response.ok) {
         throw new Error('Failed to delete quotes')
       }
+      // Success - realtime handlers will fire but will skip quota updates
+      // since these IDs are in pendingDeletionsRef
     } catch (err) {
-      // Rollback on error
+      // Rollback on error - also remove from pending deletions
+      for (const id of quoteIdsToDelete) {
+        pendingDeletionsRef.current.delete(id)
+      }
       setQuotes(previousQuotes)
       setQuota(previousQuota)
       setSelectedQuotes(new Set(quoteIdsToDelete))
