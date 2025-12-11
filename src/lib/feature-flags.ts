@@ -257,6 +257,88 @@ interface FeatureFlagListRow {
   created_at: string
 }
 
+// Constants for quota limits
+export const FREE_TIER_MAX_QUOTES = 50
+export const PREMIUM_TIER_MAX_QUOTES = 1000
+
+// Quota information returned by getUserQuotaInfo
+export interface UserQuotaInfo {
+  isPremium: boolean
+  maxQuotes: number
+  currentCount: number
+  hasCapacity: boolean
+  remaining: number
+}
+
+// Get comprehensive quota information for a user
+// Priority: Global flags > Individual flags > Subscription
+export async function getUserQuotaInfo(discordId: string): Promise<UserQuotaInfo> {
+  const supabase = createServiceClient()
+
+  // Get global feature flags first (highest priority)
+  const globalFlags = await getGlobalFeatureFlags()
+
+  // Get individual feature flags
+  const flags = await getFeatureFlags(discordId)
+
+  // Get subscription status
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('tier, status, current_period_end')
+    .eq('discord_id', discordId)
+    .single() as { data: { tier: string; status: string; current_period_end: string | null } | null; error: any }
+
+  // Check if user has valid premium subscription
+  const hasActiveSubscription = subscription &&
+    subscription.tier === 'premium' &&
+    subscription.status === 'active' &&
+    (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date())
+
+  // Determine effective premium status
+  // Priority: Global > Individual > Subscription
+  let isPremium: boolean
+  if (globalFlags.globalPremiumOverride !== null) {
+    isPremium = globalFlags.globalPremiumOverride
+  } else if (flags !== null && flags.premiumOverride !== null) {
+    isPremium = flags.premiumOverride === true
+  } else {
+    isPremium = !!hasActiveSubscription
+  }
+
+  // Determine max quotes
+  // Priority: Global override > Individual override > Premium status
+  let maxQuotes: number
+  if (globalFlags.globalMaxGallerySize !== null) {
+    maxQuotes = globalFlags.globalMaxGallerySize
+  } else if (flags?.overrideMaxGallerySize !== null && flags?.overrideMaxGallerySize !== undefined) {
+    maxQuotes = flags.overrideMaxGallerySize
+  } else {
+    maxQuotes = isPremium ? PREMIUM_TIER_MAX_QUOTES : FREE_TIER_MAX_QUOTES
+  }
+
+  // Get current quote count
+  const { count: quoteCount, error: countError } = await supabase
+    .from('quote_gallery')
+    .select('*', { count: 'exact', head: true })
+    .eq('discord_id', discordId)
+
+  if (countError) {
+    console.error('Error counting quotes for quota check:', countError)
+  }
+
+  const currentCount = quoteCount ?? 0
+  const remaining = Math.max(0, maxQuotes - currentCount)
+  const hasCapacity = currentCount < maxQuotes
+
+  return {
+    isPremium,
+    maxQuotes,
+    currentCount,
+    hasCapacity,
+    remaining
+  }
+}
+
 // List all active feature flags (admin function)
 export async function listActiveFeatureFlags(): Promise<Array<{
   discordId: string

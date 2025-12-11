@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { verifyBotApiKey } from '@/lib/bot-auth'
 import { broadcastQuoteCreated } from '@/lib/realtime-broadcast'
+import { getUserQuotaInfo } from '@/lib/feature-flags'
 
 interface QuoteUploadRequest {
   discordId: string
@@ -79,34 +80,14 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient()
 
-    // Check subscription tier first
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('tier')
-      .eq('discord_id', discordId)
-      .single() as { data: { tier: string } | null }
+    // Check quota using the comprehensive quota info function
+    // This properly checks: Global flags > Individual flags > Subscription
+    const quotaInfo = await getUserQuotaInfo(discordId)
+    const { isPremium, maxQuotes, currentCount, hasCapacity } = quotaInfo
 
-    const isPremium = subscription?.tier === 'premium'
-    const maxQuotes = isPremium ? 1000 : 50
+    console.log(`Quota check for ${discordId}: ${currentCount}/${maxQuotes} quotes (premium: ${isPremium}, hasCapacity: ${hasCapacity})`)
 
-    // Get current quote count directly from quote_gallery
-    const { count: quoteCount, error: countError } = await supabase
-      .from('quote_gallery')
-      .select('*', { count: 'exact', head: true })
-      .eq('discord_id', discordId)
-
-    if (countError) {
-      console.error('Error counting quotes:', countError)
-      return NextResponse.json(
-        { error: 'Failed to check quota' },
-        { status: 500 }
-      )
-    }
-
-    const currentCount = quoteCount ?? 0
-    console.log(`Quota check for ${discordId}: ${currentCount}/${maxQuotes} quotes (premium: ${isPremium})`)
-
-    if (currentCount >= maxQuotes) {
+    if (!hasCapacity) {
       return NextResponse.json({
         error: 'Storage quota exceeded',
         message: isPremium
@@ -253,26 +234,25 @@ export async function GET(request: Request) {
   try {
     const supabase = createServiceClient()
 
-    // Get quote count
-    const { data: quoteCount } = await (supabase as any)
-      .rpc('get_user_quote_count', { discord_user_id: discordId })
+    // Get comprehensive quota info using the proper function
+    // This checks: Global flags > Individual flags > Subscription
+    const quotaInfo = await getUserQuotaInfo(discordId)
+    const { isPremium, maxQuotes, currentCount, remaining } = quotaInfo
 
-    // Check if user has account and get their quota
+    // Check if user has an account (subscription record exists)
     const { data: subscription } = await supabase
       .from('subscriptions')
-      .select('tier')
+      .select('id')
       .eq('discord_id', discordId)
-      .single() as { data: { tier: string } | null }
-
-    const isPremium = subscription?.tier === 'premium'
-    const maxQuotes = isPremium ? 1000 : 50
+      .single()
 
     return NextResponse.json({
       discordId,
-      quoteCount: quoteCount || 0,
+      quoteCount: currentCount,
       maxQuotes,
+      isPremium,
       hasAccount: !!subscription,
-      quotaRemaining: maxQuotes - (quoteCount || 0)
+      quotaRemaining: remaining
     })
   } catch (error) {
     console.error('Error fetching quote stats:', error)
