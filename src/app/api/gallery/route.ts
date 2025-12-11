@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createRouteClient, createServiceClient } from '@/lib/supabase-server'
+import { getUserQuotaInfo } from '@/lib/feature-flags'
 
 // GET /api/gallery - Get user's quote gallery
 export async function GET(request: Request) {
@@ -115,24 +116,10 @@ export async function GET(request: Request) {
 
     console.log(`[Gallery API] Found ${count} quotes for discord_id ${profile.discord_id}`)
 
-    // Get user's subscription for quota info
-    const { data: subscription } = await serviceClient
-      .from('subscriptions')
-      .select('tier')
-      .eq('discord_id', profile.discord_id)
-      .single() as { data: { tier: string } | null }
-
-    const isPremium = subscription?.tier === 'premium'
-    const maxQuotes = isPremium ? 1000 : 50
-
-    // Get the TOTAL quote count for quota (separate from filtered count)
-    // This ensures quota shows accurate total regardless of filters applied
-    const { count: totalQuoteCount } = await serviceClient
-      .from('quote_gallery')
-      .select('*', { count: 'exact', head: true })
-      .eq('discord_id', profile.discord_id)
-
-    const quotaUsed = totalQuoteCount || 0
+    // Get comprehensive quota info using the proper function
+    // This checks: Global flags > Individual flags > Subscription
+    const quotaInfo = await getUserQuotaInfo(profile.discord_id)
+    const { maxQuotes, currentCount: quotaUsed, remaining } = quotaInfo
 
     return NextResponse.json({
       quotes: quotes || [],
@@ -145,7 +132,7 @@ export async function GET(request: Request) {
       quota: {
         used: quotaUsed,
         max: maxQuotes,
-        remaining: maxQuotes - quotaUsed
+        remaining: remaining
       },
       // Include user profile for fallback when quoter info is missing
       userProfile: {
