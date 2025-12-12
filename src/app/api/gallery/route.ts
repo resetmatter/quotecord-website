@@ -119,7 +119,7 @@ export async function GET(request: Request) {
     // Get comprehensive quota info using the proper function
     // This checks: Global flags > Individual flags > Subscription
     const quotaInfo = await getUserQuotaInfo(profile.discord_id)
-    const { maxQuotes, currentCount: quotaUsed, remaining } = quotaInfo
+    const { maxQuotes, currentCount: quotaUsed, remaining, isUnlimited } = quotaInfo
 
     return NextResponse.json({
       quotes: quotes || [],
@@ -131,8 +131,10 @@ export async function GET(request: Request) {
       },
       quota: {
         used: quotaUsed,
-        max: maxQuotes,
-        remaining: remaining
+        // Use null for unlimited to signal "no limit" to frontend (JSON doesn't support Infinity)
+        max: isUnlimited ? null : maxQuotes,
+        remaining: isUnlimited ? null : remaining,
+        isUnlimited
       },
       // Include user profile for fallback when quoter info is missing
       userProfile: {
