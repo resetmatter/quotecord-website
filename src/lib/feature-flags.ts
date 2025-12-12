@@ -259,15 +259,16 @@ interface FeatureFlagListRow {
 
 // Constants for quota limits
 export const FREE_TIER_MAX_QUOTES = 50
-export const PREMIUM_TIER_MAX_QUOTES = 1000
+export const PREMIUM_TIER_MAX_QUOTES = Infinity // Pro users have unlimited storage
 
 // Quota information returned by getUserQuotaInfo
 export interface UserQuotaInfo {
   isPremium: boolean
-  maxQuotes: number
+  maxQuotes: number // Infinity for pro users
   currentCount: number
   hasCapacity: boolean
-  remaining: number
+  remaining: number // Infinity for pro users
+  isUnlimited: boolean // true if user has no quota limit
 }
 
 // Get comprehensive quota information for a user
@@ -327,15 +328,17 @@ export async function getUserQuotaInfo(discordId: string): Promise<UserQuotaInfo
   }
 
   const currentCount = quoteCount ?? 0
-  const remaining = Math.max(0, maxQuotes - currentCount)
-  const hasCapacity = currentCount < maxQuotes
+  const isUnlimited = !isFinite(maxQuotes)
+  const remaining = isUnlimited ? Infinity : Math.max(0, maxQuotes - currentCount)
+  const hasCapacity = isUnlimited || currentCount < maxQuotes
 
   return {
     isPremium,
     maxQuotes,
     currentCount,
     hasCapacity,
-    remaining
+    remaining,
+    isUnlimited
   }
 }
 

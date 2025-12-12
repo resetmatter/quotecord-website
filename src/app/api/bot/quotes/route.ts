@@ -237,7 +237,7 @@ export async function GET(request: Request) {
     // Get comprehensive quota info using the proper function
     // This checks: Global flags > Individual flags > Subscription
     const quotaInfo = await getUserQuotaInfo(discordId)
-    const { isPremium, maxQuotes, currentCount, remaining } = quotaInfo
+    const { isPremium, maxQuotes, currentCount, remaining, isUnlimited } = quotaInfo
 
     // Check if user has an account (subscription record exists)
     const { data: subscription } = await supabase
@@ -249,10 +249,12 @@ export async function GET(request: Request) {
     return NextResponse.json({
       discordId,
       quoteCount: currentCount,
-      maxQuotes,
+      // Use null for unlimited (JSON doesn't support Infinity)
+      maxQuotes: isUnlimited ? null : maxQuotes,
       isPremium,
       hasAccount: !!subscription,
-      quotaRemaining: remaining
+      quotaRemaining: isUnlimited ? null : remaining,
+      isUnlimited
     })
   } catch (error) {
     console.error('Error fetching quote stats:', error)
