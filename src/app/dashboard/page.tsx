@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Crown, Sparkles, ArrowRight, CheckCircle, Zap } from 'lucide-react'
+import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 
 export default function DashboardPage() {
@@ -143,6 +143,18 @@ export default function DashboardPage() {
             <span>Add quotecord to Another Server</span>
             <ArrowRight className="w-4 h-4 text-dark-400 group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
           </Link>
+          <a
+            href="https://discord.com/oauth2/authorize?client_id=1439621877285785711&integration_type=1&scope=applications.commands"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
+          >
+            <span className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-brand-400" />
+              Install as User App
+            </span>
+            <ArrowRight className="w-4 h-4 text-dark-400 group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
+          </a>
           <Link
             href="/support"
             className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
