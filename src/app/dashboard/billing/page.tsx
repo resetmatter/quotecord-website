@@ -33,7 +33,8 @@ export default function BillingPage() {
       }
     } catch (error) {
       console.error('Checkout error:', error)
-      alert('Failed to start checkout. Please try again.')
+      const message = error instanceof Error ? error.message : 'Failed to start checkout. Please try again.'
+      alert(message)
     } finally {
       setLoading(false)
     }
