@@ -61,7 +61,7 @@ quotecord is a Discord bot that transforms messages into beautiful, shareable qu
 | **Single Message Quotes** | One message per quote |
 | **Watermark/Ad** | Small "Made with quotecord" branding |
 
-### PREMIUM TIER ($1.99/month or $14.99/year)
+### PREMIUM TIER ($1.99/month or $19.99/year)
 
 | Feature | Description |
 |---------|-------------|
@@ -87,7 +87,7 @@ FREE TIER
 
 PREMIUM TIER
 ├── Monthly: $1.99/month
-├── Annual: $14.99/year (37% savings)
+├── Annual: $19.99/year (2 months free)
 ├── Target: Power users, content creators
 └── Goal: Individual monetization
 ```
@@ -1018,7 +1018,7 @@ export async function POST() {
         $1.99/month
       </Button>
       <Button onClick={() => handleUpgrade('annual')} variant="primary">
-        $14.99/year (Save 37%)
+        $19.99/year (2 months free)
       </Button>
     </div>
   </DialogContent>
