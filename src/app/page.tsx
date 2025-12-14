@@ -172,7 +172,7 @@ export default function Home() {
                 Everything you need, nothing you don&apos;t
               </h2>
               <p className="text-dark-400 text-lg max-w-2xl mx-auto">
-                Powerful features for everyone. Premium upgrades for power users.
+                Powerful features for everyone. Pro upgrades for power users.
               </p>
             </div>
 
