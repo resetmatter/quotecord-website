@@ -9,6 +9,7 @@ export interface UserProfile {
   subscription: {
     tier: string
     status: string
+    current_period_start: string | null
     current_period_end: string | null
   }
 }
@@ -22,8 +23,21 @@ interface ProfileWithSubscription {
   subscriptions: Array<{
     tier: string
     status: string
+    current_period_start: string | null
     current_period_end: string | null
   }>
+}
+
+// Helper to determine billing period from subscription dates
+export function getBillingPeriod(subscription: { current_period_start: string | null; current_period_end: string | null }): 'monthly' | 'annual' | null {
+  if (!subscription.current_period_start || !subscription.current_period_end) {
+    return null
+  }
+  const start = new Date(subscription.current_period_start)
+  const end = new Date(subscription.current_period_end)
+  const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  // Annual is typically 365 days, monthly is ~30 days
+  return days > 60 ? 'annual' : 'monthly'
 }
 
 export async function getCurrentUser(): Promise<UserProfile | null> {
@@ -39,6 +53,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
       subscriptions (
         tier,
         status,
+        current_period_start,
         current_period_end
       )
     `)
@@ -55,7 +70,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     discord_username: typedProfile.discord_username,
     discord_avatar: typedProfile.discord_avatar,
     email: typedProfile.email,
-    subscription: typedProfile.subscriptions?.[0] || { tier: 'free', status: 'active', current_period_end: null }
+    subscription: typedProfile.subscriptions?.[0] || { tier: 'free', status: 'active', current_period_start: null, current_period_end: null }
   }
 }
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus, Server, HelpCircle } from 'lucide-react'
-import { getCurrentUser, UserProfile } from '@/lib/user'
+import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -21,6 +21,7 @@ export default function DashboardPage() {
   }, [searchParams])
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
+  const currentBillingPeriod = user?.subscription ? getBillingPeriod(user.subscription) : null
 
   return (
     <div className="max-w-4xl">
@@ -48,6 +49,15 @@ export default function DashboardPage() {
                     <Crown className="w-4 h-4 text-pro-gold" />
                   </div>
                   <span className="gradient-text-pro font-semibold">Pro</span>
+                  {currentBillingPeriod && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      currentBillingPeriod === 'annual'
+                        ? 'bg-success/20 text-success'
+                        : 'bg-dark-700 text-dark-300'
+                    }`}>
+                      {currentBillingPeriod === 'annual' ? 'Annual' : 'Monthly'}
+                    </span>
+                  )}
                 </>
               ) : (
                 <>

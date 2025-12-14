@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight } from 'lucide-react'
-import { getCurrentUser, UserProfile } from '@/lib/user'
+import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar } from 'lucide-react'
+import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function BillingPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -14,6 +14,8 @@ export default function BillingPage() {
   }, [])
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
+  const currentBillingPeriod = user?.subscription ? getBillingPeriod(user.subscription) : null
+  const isMonthlySubscriber = isPremium && currentBillingPeriod === 'monthly'
 
   const handleUpgrade = async () => {
     try {
@@ -77,7 +79,18 @@ export default function BillingPage() {
                 <Crown className="w-6 h-6 text-pro-gold" />
               </div>
               <div>
-                <p className="font-semibold gradient-text-pro">Pro</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold gradient-text-pro">Pro</p>
+                  {currentBillingPeriod && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      currentBillingPeriod === 'annual'
+                        ? 'bg-success/20 text-success'
+                        : 'bg-dark-700 text-dark-300'
+                    }`}>
+                      {currentBillingPeriod === 'annual' ? 'Annual' : 'Monthly'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-dark-400">
                   {user?.subscription?.current_period_end
                     ? `Renews ${new Date(user.subscription.current_period_end).toLocaleDateString()}`
@@ -110,6 +123,31 @@ export default function BillingPage() {
           </button>
         )}
       </div>
+
+      {/* Upgrade to Annual (for monthly subscribers) */}
+      {isMonthlySubscriber && (
+        <div className="glass rounded-2xl p-6 mb-6 border border-success/30">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-5 h-5 text-success" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold mb-1">Save 37% with Annual</h3>
+              <p className="text-sm text-dark-400 mb-3">
+                Switch to annual billing for just $14.99/year (instead of $23.88/year on monthly).
+                Your unused monthly balance will be credited.
+              </p>
+              <button
+                onClick={handleManageSubscription}
+                disabled={loading}
+                className="text-sm bg-success/20 hover:bg-success/30 text-success font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Switch to Annual in Billing Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upgrade Section (for free users) */}
       {!isPremium && (
