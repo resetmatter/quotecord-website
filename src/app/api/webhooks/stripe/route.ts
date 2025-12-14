@@ -41,12 +41,13 @@ export async function POST(req: Request) {
         const discordId = session.metadata?.discord_id
 
         if (discordId) {
-          // Upgrade to premium
+          // Upgrade to premium and save customer ID
           await supabase
             .from('subscriptions')
             .update({
               tier: 'premium',
               status: 'active',
+              stripe_customer_id: session.customer as string,
               stripe_subscription_id: session.subscription as string,
               updated_at: new Date().toISOString()
             })
@@ -60,14 +61,25 @@ export async function POST(req: Request) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
 
+        // Safely convert timestamps
+        const periodStart = subscription.current_period_start
+          ? new Date(subscription.current_period_start * 1000).toISOString()
+          : null
+        const periodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : null
+
+        const updateData: Record<string, any> = {
+          status: subscription.status === 'active' ? 'active' : 'past_due',
+          updated_at: new Date().toISOString()
+        }
+
+        if (periodStart) updateData.current_period_start = periodStart
+        if (periodEnd) updateData.current_period_end = periodEnd
+
         await supabase
           .from('subscriptions')
-          .update({
-            status: subscription.status === 'active' ? 'active' : 'past_due',
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('stripe_subscription_id', subscription.id)
 
         console.log(`Updated subscription ${subscription.id}`)
