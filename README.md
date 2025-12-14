@@ -142,7 +142,7 @@ npm run lint         # Run linter
 - Avatar choice
 - Multi-message quotes
 - Saved presets
-- No watermark
+- No ads
 
 ## Troubleshooting
 

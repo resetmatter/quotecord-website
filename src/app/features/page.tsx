@@ -135,8 +135,8 @@ export default function FeaturesPage() {
               />
               <FeatureCard
                 icon={<Star className="w-6 h-6" />}
-                title="No Watermark"
-                description="Export clean images without any branding or watermarks. Professional quality for any use."
+                title="No Ads"
+                description="Enjoy a clean, ad-free experience. Professional quality for any use."
                 premium
               />
             </div>

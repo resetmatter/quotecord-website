@@ -327,7 +327,7 @@ export default function Home() {
                     'Multi-message quotes (up to 5)',
                     'Save presets (up to 10)',
                     'Server avatar selection',
-                    'No watermark'
+                    'No ads'
                   ].map((item, index) => (
                     <li key={index} className="flex items-center gap-3 text-dark-300">
                       <Check className="w-5 h-5 text-pro-gold flex-shrink-0" />

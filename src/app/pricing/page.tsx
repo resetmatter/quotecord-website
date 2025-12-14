@@ -24,7 +24,7 @@ export default function PricingPage() {
               <span className="gradient-text-pro"> pricing</span>
             </h1>
             <p className="text-dark-400 text-lg max-w-2xl mx-auto">
-              Start creating beautiful quotes for free. Upgrade to Pro for advanced features and no watermarks.
+              Start creating beautiful quotes for free. Upgrade to Pro for advanced features and no ads.
             </p>
 
             {/* Billing Toggle */}
@@ -87,7 +87,7 @@ export default function PricingPage() {
                 <PricingItem>Server avatar choice</PricingItem>
                 <PricingItem>Multi-message quotes</PricingItem>
                 <PricingItem>Saved presets</PricingItem>
-                <PricingItem>No watermark</PricingItem>
+                <PricingItem>No ads</PricingItem>
               </ul>
 
               <Link
@@ -153,7 +153,7 @@ export default function PricingPage() {
                 <PricingItem included premium>Server avatar choice</PricingItem>
                 <PricingItem included premium>Multi-message quotes (up to 5)</PricingItem>
                 <PricingItem included premium>Saved presets (up to 10)</PricingItem>
-                <PricingItem included premium>No watermark</PricingItem>
+                <PricingItem included premium>No ads</PricingItem>
               </ul>
 
               <Link
@@ -193,7 +193,7 @@ export default function PricingPage() {
                   <ComparisonRow feature="Messages per Quote" free="1" premium="Up to 5" />
                   <ComparisonRow feature="Preview Mode" free={false} premium={true} />
                   <ComparisonRow feature="Saved Presets" free="0" premium="Up to 10" />
-                  <ComparisonRow feature="Watermark" free="Yes" premium="No" />
+                  <ComparisonRow feature="Ads" free="Yes" premium="No" />
                 </tbody>
               </table>
             </div>

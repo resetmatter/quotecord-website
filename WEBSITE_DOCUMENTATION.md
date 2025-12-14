@@ -59,7 +59,7 @@ quotecord is a Discord bot that transforms messages into beautiful, shareable qu
 | **Static PNG Export** | High-quality PNG images |
 | **Default Avatar** | Uses global Discord avatar (no choice) |
 | **Single Message Quotes** | One message per quote |
-| **Watermark/Ad** | Small "Made with quotecord" branding |
+| **Ads** | Small promotional content shown |
 
 ### PREMIUM TIER ($1.99/month or $19.99/year)
 
@@ -71,7 +71,7 @@ quotecord is a Discord bot that transforms messages into beautiful, shareable qu
 | **Avatar Choice** | Choose between default and server avatar |
 | **Multi-Message Quotes** | Combine multiple messages into one quote (up to 5) |
 | **Save Presets** | Save favorite configurations (up to 10) |
-| **No Watermark** | Clean exports without branding |
+| **No Ads** | Ad-free experience |
 
 ---
 
@@ -1010,8 +1010,8 @@ export async function POST() {
   <DialogContent>
     <h2>Unlock More with Premium</h2>
     <ComparisonTable
-      free={['Static PNG only', 'Watermark on images', 'Single messages']}
-      premium={['Animated GIF export', 'No watermark', 'Multi-message quotes', 'Preview mode']}
+      free={['Static PNG only', 'Ads shown', 'Single messages']}
+      premium={['Animated GIF export', 'No ads', 'Multi-message quotes', 'Preview mode']}
     />
     <div className="flex gap-2">
       <Button onClick={() => handleUpgrade('monthly')}>
@@ -1040,7 +1040,7 @@ export async function POST() {
 > Transform any Discord message into a beautiful, shareable quote in seconds. Right-click. Customize. Share.
 
 **Premium**
-> Serious about content? Go Premium. Animated exports, preview mode, multi-message quotes, and zero watermarks.
+> Serious about content? Go Premium. Animated exports, preview mode, multi-message quotes, and no ads.
 
 ---
 
