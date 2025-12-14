@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       .from('profiles')
       .select('discord_id, email')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { discord_id: string; email: string | null } | null; error: any }
 
     if (profileError || !profile) {
       console.error('Checkout failed: Profile not found', profileError)
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
-      .single()
+      .single() as { data: { stripe_customer_id: string | null } | null }
 
     let customerId = subscription?.stripe_customer_id
 
