@@ -3,16 +3,33 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus, Server, HelpCircle } from 'lucide-react'
+import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus, Server, HelpCircle, Calendar } from 'lucide-react'
 import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
+  const [subscriptionData, setSubscriptionData] = useState<{
+    current_period_start: string | null
+    current_period_end: string | null
+  } | null>(null)
   const searchParams = useSearchParams()
 
   useEffect(() => {
     getCurrentUser().then(setUser)
+
+    // Fetch subscription data from API (which fetches from Stripe if dates are missing)
+    fetch('/api/subscription')
+      .then(res => res.json())
+      .then(data => {
+        if (data.current_period_start && data.current_period_end) {
+          setSubscriptionData({
+            current_period_start: data.current_period_start,
+            current_period_end: data.current_period_end
+          })
+        }
+      })
+      .catch(console.error)
 
     if (searchParams.get('upgraded') === 'true') {
       setShowUpgradeSuccess(true)
@@ -21,7 +38,9 @@ export default function DashboardPage() {
   }, [searchParams])
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
-  const currentBillingPeriod = user?.subscription ? getBillingPeriod(user.subscription) : null
+  const periodData = subscriptionData || user?.subscription
+  const currentBillingPeriod = periodData ? getBillingPeriod(periodData) : null
+  const isMonthlySubscriber = isPremium && currentBillingPeriod === 'monthly'
 
   return (
     <div className="max-w-4xl">
@@ -68,9 +87,9 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
-            {isPremium && user?.subscription?.current_period_end && (
+            {isPremium && periodData?.current_period_end && (
               <p className="text-sm text-dark-500">
-                Renews on {new Date(user.subscription.current_period_end).toLocaleDateString()}
+                Renews on {new Date(periodData.current_period_end).toLocaleDateString()}
               </p>
             )}
           </div>
@@ -92,6 +111,27 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Upgrade to Annual (for monthly subscribers) */}
+      {isMonthlySubscriber && (
+        <div className="glass rounded-2xl p-4 mb-6 border border-success/30">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-4 h-4 text-success" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Save 16% with Annual billing</p>
+              <p className="text-xs text-dark-400">$19.99/year instead of $23.88</p>
+            </div>
+            <Link
+              href="/dashboard/billing"
+              className="text-xs bg-success/20 hover:bg-success/30 text-success font-medium px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Switch
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Feature Access */}
       <div className="glass rounded-2xl p-6 mb-6">
