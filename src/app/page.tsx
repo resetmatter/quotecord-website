@@ -344,7 +344,7 @@ export default function Home() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <p className="text-center text-dark-400 text-sm mt-3">
-                  or $14.99/year (save 37%)
+                  or $19.99/year (save 16%)
                 </p>
               </div>
             </div>

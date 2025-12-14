@@ -151,9 +151,9 @@ export default function BillingPage() {
               <Calendar className="w-5 h-5 text-success" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold mb-1">Save 37% with Annual</h3>
+              <h3 className="font-semibold mb-1">Save 16% with Annual</h3>
               <p className="text-sm text-dark-400 mb-3">
-                Switch to annual billing for just $14.99/year (instead of $23.88/year on monthly).
+                Switch to annual billing for just $19.99/year (instead of $23.88/year on monthly).
                 Your unused monthly balance will be credited.
               </p>
               <button
@@ -221,10 +221,10 @@ export default function BillingPage() {
                 }`}
               >
                 <div className="absolute -top-2 right-2 bg-success text-dark-900 text-xs font-bold px-2 py-0.5 rounded">
-                  Save 37%
+                  Save 16%
                 </div>
                 <div className="font-semibold text-sm">Annual</div>
-                <div className="text-2xl font-bold">$14.99</div>
+                <div className="text-2xl font-bold">$19.99</div>
                 <div className="text-sm text-dark-400">/year</div>
               </button>
             </div>

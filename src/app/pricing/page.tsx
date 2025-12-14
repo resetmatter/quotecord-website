@@ -49,7 +49,7 @@ export default function PricingPage() {
               >
                 Annual
                 <span className="text-xs bg-success/20 text-success px-2 py-0.5 rounded font-semibold">
-                  -37%
+                  -16%
                 </span>
               </button>
             </div>
@@ -125,19 +125,19 @@ export default function PricingPage() {
                   </div>
                 ) : (
                   <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-bold gradient-text-pro">$14.99</span>
+                    <span className="text-5xl font-bold gradient-text-pro">$19.99</span>
                     <span className="text-dark-400">/year</span>
                   </div>
                 )}
               </div>
               {billingPeriod === 'annual' && (
                 <p className="text-sm text-success mb-6">
-                  That&apos;s only $1.25/month - save $9/year!
+                  That&apos;s only $1.67/month - save $4/year!
                 </p>
               )}
               {billingPeriod === 'monthly' && (
                 <p className="text-sm text-dark-400 mb-6">
-                  or $14.99/year (save 37%)
+                  or $19.99/year (save 16%)
                 </p>
               )}
 
