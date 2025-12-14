@@ -187,7 +187,7 @@ export default function BillingPage() {
               'Multi-message quotes',
               'Server avatar choice',
               'Save presets',
-              'No watermark'
+              'No ads'
             ].map((feature, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-dark-300">
                 <Check className="w-4 h-4 text-pro-gold flex-shrink-0" />
@@ -221,7 +221,7 @@ export default function BillingPage() {
                 }`}
               >
                 <div className="absolute -top-2 right-2 bg-success text-dark-900 text-xs font-bold px-2 py-0.5 rounded">
-                  Save 16%
+                  2 months free
                 </div>
                 <div className="font-semibold text-sm">Annual</div>
                 <div className="text-2xl font-bold">$19.99</div>

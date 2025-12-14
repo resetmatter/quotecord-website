@@ -136,13 +136,13 @@ npm run lint         # Run linter
 - Dark & Light themes
 - PNG export
 
-### Premium Tier ($1.99/mo or $14.99/yr)
+### Premium Tier ($1.99/mo or $19.99/yr)
 - Preview mode
 - Animated GIF export
 - Avatar choice
 - Multi-message quotes
 - Saved presets
-- No watermark
+- No ads
 
 ## Troubleshooting
 

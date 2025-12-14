@@ -174,7 +174,7 @@ export default function DashboardPage() {
             available={isPremium}
           />
           <FeatureStatus
-            name="Watermark"
+            name="Ads"
             status={isPremium ? 'Removed' : 'Enabled'}
             available={isPremium}
           />

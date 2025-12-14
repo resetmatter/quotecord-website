@@ -327,7 +327,7 @@ export default function Home() {
                     'Multi-message quotes (up to 5)',
                     'Save presets (up to 10)',
                     'Server avatar selection',
-                    'No watermark'
+                    'No ads'
                   ].map((item, index) => (
                     <li key={index} className="flex items-center gap-3 text-dark-300">
                       <Check className="w-5 h-5 text-pro-gold flex-shrink-0" />
@@ -344,7 +344,7 @@ export default function Home() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <p className="text-center text-dark-400 text-sm mt-3">
-                  or $19.99/year (save 16%)
+                  or $19.99/year (2 months free)
                 </p>
               </div>
             </div>
