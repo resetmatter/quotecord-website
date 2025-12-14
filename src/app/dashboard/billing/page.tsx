@@ -8,13 +8,32 @@ export default function BillingPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual')
+  const [subscriptionData, setSubscriptionData] = useState<{
+    current_period_start: string | null
+    current_period_end: string | null
+  } | null>(null)
 
   useEffect(() => {
     getCurrentUser().then(setUser)
+
+    // Fetch subscription data from API (which fetches from Stripe if dates are missing)
+    fetch('/api/subscription')
+      .then(res => res.json())
+      .then(data => {
+        if (data.current_period_start && data.current_period_end) {
+          setSubscriptionData({
+            current_period_start: data.current_period_start,
+            current_period_end: data.current_period_end
+          })
+        }
+      })
+      .catch(console.error)
   }, [])
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
-  const currentBillingPeriod = user?.subscription ? getBillingPeriod(user.subscription) : null
+  // Use subscriptionData from API if available (more up-to-date), otherwise fall back to user data
+  const periodData = subscriptionData || user?.subscription
+  const currentBillingPeriod = periodData ? getBillingPeriod(periodData) : null
   const isMonthlySubscriber = isPremium && currentBillingPeriod === 'monthly'
 
   const handleUpgrade = async () => {
@@ -92,8 +111,8 @@ export default function BillingPage() {
                   )}
                 </div>
                 <p className="text-sm text-dark-400">
-                  {user?.subscription?.current_period_end
-                    ? `Renews ${new Date(user.subscription.current_period_end).toLocaleDateString()}`
+                  {periodData?.current_period_end
+                    ? `Renews ${new Date(periodData.current_period_end).toLocaleDateString()}`
                     : 'Active subscription'
                   }
                 </p>
