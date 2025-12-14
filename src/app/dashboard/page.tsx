@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus } from 'lucide-react'
+import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus, Server, HelpCircle } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 
 export default function DashboardPage() {
@@ -140,7 +140,10 @@ export default function DashboardPage() {
             href="/add"
             className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
           >
-            <span>Add quotecord to Another Server</span>
+            <span className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-brand-400" />
+              Add quotecord to Another Server
+            </span>
             <ArrowRight className="w-4 h-4 text-dark-400 group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
           </Link>
           <a
@@ -159,7 +162,10 @@ export default function DashboardPage() {
             href="/support"
             className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
           >
-            <span>Get Help & Support</span>
+            <span className="flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-brand-400" />
+              Get Help & Support
+            </span>
             <ArrowRight className="w-4 h-4 text-dark-400 group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
           </Link>
         </div>
