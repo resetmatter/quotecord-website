@@ -1,6 +1,5 @@
 import Stripe from 'stripe'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createRouteClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -9,19 +8,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST() {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (!user) {
+      console.error('Portal failed: No user', userError?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
-      .eq('user_id', session.user.id)
-      .single() as { data: { stripe_customer_id: string | null } | null }
+      .eq('user_id', user.id)
+      .single()
 
     if (!subscription?.stripe_customer_id) {
       return NextResponse.json({ error: 'No subscription found' }, { status: 404 })

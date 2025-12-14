@@ -1,6 +1,5 @@
 import Stripe from 'stripe'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createRouteClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // Validate required environment variables
@@ -31,12 +30,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Payment plans not configured' }, { status: 500 })
     }
 
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      console.error('Checkout failed: No session')
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (!user) {
+      console.error('Checkout failed: No user', userError?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -47,7 +45,7 @@ export async function POST(req: Request) {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('discord_id, email')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
 
     if (profileError || !profile) {
@@ -59,18 +57,18 @@ export async function POST(req: Request) {
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single()
 
     let customerId = subscription?.stripe_customer_id
 
     if (!customerId) {
-      console.log('Creating new Stripe customer for user:', session.user.id)
+      console.log('Creating new Stripe customer for user:', user.id)
       const customer = await stripe.customers.create({
         email: profile.email || undefined,
         metadata: {
           discord_id: profile.discord_id,
-          supabase_user_id: session.user.id
+          supabase_user_id: user.id
         }
       })
       customerId = customer.id
@@ -79,7 +77,7 @@ export async function POST(req: Request) {
       const { error: upsertError } = await supabase
         .from('subscriptions')
         .upsert({
-          user_id: session.user.id,
+          user_id: user.id,
           discord_id: profile.discord_id,
           stripe_customer_id: customerId,
           tier: 'free',
@@ -108,7 +106,7 @@ export async function POST(req: Request) {
       }],
       metadata: {
         discord_id: profile.discord_id,
-        supabase_user_id: session.user.id
+        supabase_user_id: user.id
       },
       success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?upgraded=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/dashboard/billing`
