@@ -89,7 +89,7 @@ export default function SupportPage() {
               />
               <FAQItem
                 question="What happens when my subscription ends?"
-                answer="You'll be downgraded to the free tier. You'll keep access to all core features but lose Pro features like animated GIFs, preview mode, and watermark removal."
+                answer="You'll be downgraded to the free tier. You'll keep access to all core features but lose Pro features like animated GIFs, preview mode, and ad removal."
               />
               <FAQItem
                 question="Is there a refund policy?"

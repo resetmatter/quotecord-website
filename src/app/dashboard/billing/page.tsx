@@ -129,7 +129,7 @@ export default function BillingPage() {
               'Multi-message quotes',
               'Server avatar choice',
               'Save presets',
-              'No watermark'
+              'No ads'
             ].map((feature, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-dark-300">
                 <Check className="w-4 h-4 text-pro-gold flex-shrink-0" />
