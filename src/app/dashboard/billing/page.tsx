@@ -163,10 +163,10 @@ export default function BillingPage() {
                 }`}
               >
                 <div className="absolute -top-2 right-2 bg-success text-dark-900 text-xs font-bold px-2 py-0.5 rounded">
-                  Save 37%
+                  2 months free
                 </div>
                 <div className="font-semibold text-sm">Annual</div>
-                <div className="text-2xl font-bold">$14.99</div>
+                <div className="text-2xl font-bold">$19.99</div>
                 <div className="text-sm text-dark-400">/year</div>
               </button>
             </div>
