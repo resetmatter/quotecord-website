@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       customerId = customer.id
 
       // Upsert subscription record (create if doesn't exist, update if it does)
-      const { error: upsertError } = await supabase
+      const { error: upsertError } = await (supabase as any)
         .from('subscriptions')
         .upsert({
           user_id: user.id,
