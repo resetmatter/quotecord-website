@@ -104,6 +104,7 @@ export async function POST(req: Request) {
         price: priceId,
         quantity: 1
       }],
+      allow_promotion_codes: true,
       metadata: {
         discord_id: profile.discord_id,
         supabase_user_id: user.id
