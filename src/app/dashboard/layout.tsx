@@ -151,7 +151,7 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50
+        fixed lg:sticky inset-y-0 lg:top-0 left-0 z-50
         w-64 h-screen glass-darker
         transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
