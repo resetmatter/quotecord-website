@@ -92,10 +92,14 @@ export async function hasPremiumAccess(discordId: string): Promise<boolean> {
   return isPremium === true
 }
 
+// Premium source type for debugging
+export type PremiumSource = 'global_flag' | 'individual_flag' | 'subscription' | 'none'
+
 // Get effective feature access for a user, considering global flags, individual flags, and subscription
 // Priority: Global flags > Individual flags > Subscription status
 export async function getEffectiveFeatures(discordId: string): Promise<{
   isPremium: boolean
+  premiumSource: PremiumSource
   features: {
     animatedGifs: boolean
     preview: boolean
@@ -108,6 +112,14 @@ export async function getEffectiveFeatures(discordId: string): Promise<{
   }
   hasOverrides: boolean
   hasGlobalOverrides: boolean
+  debug: {
+    globalPremiumOverride: boolean | null
+    individualPremiumOverride: boolean | null
+    hasActiveSubscription: boolean
+    subscriptionTier: string | null
+    subscriptionStatus: string | null
+    subscriptionEndDate: string | null
+  }
 }> {
   const supabase = createServiceClient()
 
@@ -130,15 +142,19 @@ export async function getEffectiveFeatures(discordId: string): Promise<{
   // Get individual feature flags
   const flags = await getFeatureFlags(discordId)
 
-  // Determine effective premium status
+  // Determine effective premium status and track the source
   // Priority: Global > Individual > Subscription
   let isPremium: boolean
+  let premiumSource: PremiumSource
   if (globalFlags.globalPremiumOverride !== null) {
     isPremium = globalFlags.globalPremiumOverride
+    premiumSource = isPremium ? 'global_flag' : 'none'
   } else if (flags !== null && flags.premiumOverride !== null) {
     isPremium = flags.premiumOverride === true
+    premiumSource = isPremium ? 'individual_flag' : 'none'
   } else {
     isPremium = !!hasActiveSubscription
+    premiumSource = isPremium ? 'subscription' : 'none'
   }
 
   // Calculate effective feature access
@@ -167,9 +183,18 @@ export async function getEffectiveFeatures(discordId: string): Promise<{
 
   return {
     isPremium,
+    premiumSource,
     features,
     hasOverrides: flags !== null,
-    hasGlobalOverrides
+    hasGlobalOverrides,
+    debug: {
+      globalPremiumOverride: globalFlags.globalPremiumOverride,
+      individualPremiumOverride: flags?.premiumOverride ?? null,
+      hasActiveSubscription: !!hasActiveSubscription,
+      subscriptionTier: subscription?.tier ?? null,
+      subscriptionStatus: subscription?.status ?? null,
+      subscriptionEndDate: subscription?.current_period_end ?? null
+    }
   }
 }
 
