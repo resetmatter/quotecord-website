@@ -171,7 +171,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4">
+          <nav className="flex-1 min-h-0 overflow-y-auto p-4">
             <ul className="space-y-1">
               {navItems.map(item => (
                 <li key={item.href}>
