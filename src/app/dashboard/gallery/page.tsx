@@ -1304,30 +1304,32 @@ function QuoteModal({
         </div>
 
         {/* Details */}
-        <div className="p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="p-4 sm:p-6">
+          {/* Header: Quoter info + Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
             {/* Quoter info (who created this quote) */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               {quoterAvatar ? (
                 <Image
                   src={quoterAvatar}
                   alt={quoterName}
-                  width={48}
-                  height={48}
-                  className="rounded-full"
+                  width={40}
+                  height={40}
+                  className="rounded-full flex-shrink-0 sm:w-12 sm:h-12"
                 />
               ) : (
-                <div className="w-12 h-12 bg-brand-500/20 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-brand-400" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-brand-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-brand-400" />
                 </div>
               )}
-              <div>
-                <h3 className="font-semibold">{quoterName}</h3>
+              <div className="min-w-0">
+                <h3 className="font-semibold truncate">{quoterName}</h3>
                 <p className="text-xs text-dark-500">Created this quote</p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Action buttons */}
+            <div className="flex gap-1 sm:gap-2 flex-shrink-0">
               {quote.message_url && (
                 <a
                   href={quote.message_url}
@@ -1383,9 +1385,9 @@ function QuoteModal({
           </div>
 
           {/* Quoted user info (who was quoted) */}
-          <div className="mb-4 p-4 bg-dark-800/50 rounded-xl">
+          <div className="mb-4 p-3 sm:p-4 bg-dark-800/50 rounded-xl">
             <div className="flex items-center gap-2 mb-2 text-xs text-dark-500">
-              <MessageSquareQuote className="w-4 h-4 text-brand-400" />
+              <MessageSquareQuote className="w-4 h-4 text-brand-400 flex-shrink-0" />
               <span>Quoting</span>
             </div>
             <div className="flex items-center gap-3">
@@ -1395,22 +1397,22 @@ function QuoteModal({
                   alt={quotedName}
                   width={32}
                   height={32}
-                  className="rounded-full"
+                  className="rounded-full flex-shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 bg-dark-700 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-dark-700 rounded-full flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-dark-500" />
                 </div>
               )}
-              <div>
-                <p className="font-medium text-dark-200">{quotedName}</p>
+              <div className="min-w-0">
+                <p className="font-medium text-dark-200 truncate">{quotedName}</p>
                 {quote.quoted_user_id && (
-                  <p className="text-xs text-dark-500">ID: {quote.quoted_user_id}</p>
+                  <p className="text-xs text-dark-500 truncate">ID: {quote.quoted_user_id}</p>
                 )}
               </div>
             </div>
             {quote.quote_text && (
-              <p className="text-dark-300 mt-3 pl-11">&ldquo;{quote.quote_text}&rdquo;</p>
+              <p className="text-dark-300 mt-3 text-sm sm:text-base break-words">&ldquo;{quote.quote_text}&rdquo;</p>
             )}
             {/* Jump to original message link(s) */}
             {(quote.message_url || (quote.message_urls && quote.message_urls.length > 0)) && (
