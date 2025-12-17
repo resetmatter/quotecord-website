@@ -68,9 +68,9 @@ export const PREMIUM_FEATURES = {
     description: 'Save up to 10 custom style presets'
   },
   noWatermark: {
-    name: 'No Watermark',
+    name: 'Ad-Free',
     requiresPremium: true,
-    description: 'Remove watermark from generated quotes'
+    description: 'Remove ads from generated quotes'
   },
   galleryStorage: {
     name: 'Gallery Storage',

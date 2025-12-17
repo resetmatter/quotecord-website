@@ -151,7 +151,7 @@ export async function getEffectiveFeatures(discordId: string): Promise<{
     presets: globalFlags.globalPresets ?? flags?.overridePresets ?? isPremium,
     noWatermark: globalFlags.globalNoWatermark ?? flags?.overrideNoWatermark ?? isPremium,
     galleryStorage: true, // Always available
-    maxGallerySize: globalFlags.globalMaxGallerySize ?? flags?.overrideMaxGallerySize ?? (isPremium ? 1000 : 50)
+    maxGallerySize: globalFlags.globalMaxGallerySize ?? flags?.overrideMaxGallerySize ?? (isPremium ? Infinity : 50)
   }
 
   // Check if any global overrides are active

@@ -139,12 +139,13 @@ BEGIN
   -- Otherwise use default logic
   SELECT is_premium_user(discord_user_id) INTO is_premium;
 
+  -- Premium users have unlimited quota
   IF is_premium THEN
-    max_quotes := 1000;
-  ELSE
-    max_quotes := 50;
+    RETURN TRUE;
   END IF;
 
+  -- Free tier: 50 quotes max
+  max_quotes := 50;
   SELECT get_user_quote_count(discord_user_id) INTO quote_count;
 
   RETURN quote_count < max_quotes;
