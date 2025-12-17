@@ -77,7 +77,7 @@ const GLOBAL_FEATURE_OPTIONS = [
   { key: 'globalMultiMessage', label: 'Multi-Message', icon: MessageSquare, description: 'Combine up to 5 messages in one quote' },
   { key: 'globalAvatarChoice', label: 'Avatar Choice', icon: CircleUser, description: 'Choose between server and default avatar' },
   { key: 'globalPresets', label: 'Presets', icon: Palette, description: 'Save up to 10 custom style presets' },
-  { key: 'globalNoWatermark', label: 'No Watermark', icon: Droplet, description: 'Remove watermark from generated quotes' },
+  { key: 'globalNoWatermark', label: 'Ad-Free', icon: Droplet, description: 'Remove ads from generated quotes' },
 ] as const
 
 const USER_FEATURE_OPTIONS = [
@@ -86,7 +86,7 @@ const USER_FEATURE_OPTIONS = [
   { key: 'overrideMultiMessage', label: 'Multi-Message', icon: MessageSquare },
   { key: 'overrideAvatarChoice', label: 'Avatar Choice', icon: CircleUser },
   { key: 'overridePresets', label: 'Presets', icon: Palette },
-  { key: 'overrideNoWatermark', label: 'No Watermark', icon: Droplet },
+  { key: 'overrideNoWatermark', label: 'Ad-Free', icon: Droplet },
 ] as const
 
 export default function FeatureFlagsAdminPage() {

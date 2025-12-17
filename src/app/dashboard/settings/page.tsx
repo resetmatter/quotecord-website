@@ -25,7 +25,7 @@ import { getCurrentUser, UserProfile, isPremiumUser } from '@/lib/user'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
-// Bot feature options based on the DisQuote bot (from actual repository)
+// Bot feature options based on the QuoteCord bot
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', description: 'Beautiful gradient design', icon: '🎨' },
   { id: 'discord', name: 'Discord', description: 'Pixel-perfect message replica', icon: '💬' },

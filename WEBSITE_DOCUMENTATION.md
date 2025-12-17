@@ -106,7 +106,7 @@ const TIER_FEATURES = {
     preview: false,
     animatedGifs: false,
     avatarChoice: false, // Default avatar only
-    watermark: true,
+    showAds: true,
     presets: 0
   },
   premium: {
@@ -118,7 +118,7 @@ const TIER_FEATURES = {
     preview: true,
     animatedGifs: true,
     avatarChoice: true, // Can choose default or server avatar
-    watermark: false,
+    showAds: false,
     presets: 10
   }
 };
@@ -714,7 +714,7 @@ async function buildQuoteEmbed(discordId, quoteUrl) {
 
   if (!isPremium) {
     embed.setFooter({
-      text: 'Made with quotecord • Upgrade for no watermark!'
+      text: 'Made with QuoteCord • Upgrade to remove ads!'
     })
   }
 
