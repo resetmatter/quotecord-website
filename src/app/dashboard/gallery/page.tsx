@@ -119,7 +119,7 @@ export default function GalleryPage() {
   const [templateFilter, setTemplateFilter] = useState<string>('')
   const [animatedFilter, setAnimatedFilter] = useState<string>('')
   const [quotedUserFilter, setQuotedUserFilter] = useState<string>('')
-  const [showFilters, setShowFilters] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
 
   // Sorting
   const [sortBy, setSortBy] = useState<string>('created_at')
@@ -445,41 +445,43 @@ export default function GalleryPage() {
   return (
     <div className="max-w-6xl">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-30 bg-dark-900/95 backdrop-blur-sm -mx-4 px-4 pt-4 pb-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
+      <div className="sticky top-0 z-30 bg-dark-900/95 backdrop-blur-sm -mx-4 px-4 pt-2 sm:pt-4 pb-2">
+        <div className="flex items-center justify-between gap-2 sm:gap-4 mb-2 sm:mb-4">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">Quote Gallery</h1>
+              <h1 className="text-lg sm:text-2xl font-bold truncate">Quote Gallery</h1>
               {realtimeConnected && (
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-success/10 border border-success/30 rounded-full" title="Real-time updates active">
+                <div className="flex-shrink-0 flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-success/10 border border-success/30 rounded-full" title="Real-time updates active">
                   <Wifi className="w-3 h-3 text-success" />
-                  <span className="text-xs text-success font-medium">Live</span>
+                  <span className="text-xs text-success font-medium hidden sm:inline">Live</span>
                 </div>
               )}
             </div>
-            <p className="text-dark-400 text-sm mt-1">
+            <p className="text-dark-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
               {quota.isUnlimited
-                ? `${quota.used} quotes (Unlimited storage)`
-                : `${quota.used} / ${quota.max} quotes used`}
+                ? <span className="hidden sm:inline">{quota.used} quotes (Unlimited storage)</span>
+                : <><span className="sm:hidden">{quota.used}/{quota.max}</span><span className="hidden sm:inline">{quota.used} / {quota.max} quotes used</span></>}
+              {quota.isUnlimited && <span className="sm:hidden">{quota.used} quotes</span>}
             </p>
           </div>
 
           {/* Search and Selection Toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {selectionMode ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={selectAllOnPage}
-                  className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-dark-800/50 border border-dark-700 rounded-lg sm:rounded-xl text-xs sm:text-sm hover:bg-dark-700 transition-colors"
                 >
-                  Select All
+                  <span className="hidden sm:inline">Select All</span>
+                  <span className="sm:hidden">All</span>
                 </button>
                 {selectedQuotes.size > 0 && (
                   <button
                     type="button"
                     onClick={clearSelection}
-                    className="px-3 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm hover:bg-dark-700 transition-colors"
+                    className="px-2 sm:px-3 py-1.5 sm:py-2 bg-dark-800/50 border border-dark-700 rounded-lg sm:rounded-xl text-xs sm:text-sm hover:bg-dark-700 transition-colors"
                   >
                     Clear
                   </button>
@@ -487,43 +489,43 @@ export default function GalleryPage() {
                 <button
                   type="button"
                   onClick={exitSelectionMode}
-                  className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
+                  className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
                   title="Exit selection mode"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSearch} className="flex gap-2">
+              <form onSubmit={handleSearch} className="flex gap-1.5 sm:gap-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                  <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
                   <input
                     type="text"
-                    placeholder="Search quotes..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-dark-800/50 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 w-full sm:w-64"
+                    className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 bg-dark-800/50 border border-dark-700 rounded-lg sm:rounded-xl text-sm focus:outline-none focus:border-brand-500 w-32 sm:w-64"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`p-2 rounded-xl border transition-all ${
+                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl border transition-all ${
                     showFilters || hasActiveFilters
                       ? 'bg-brand-500 border-brand-500 text-white'
                       : 'bg-dark-800/50 border-dark-700 text-dark-400 hover:text-white'
                   }`}
                 >
-                  <Filter className="w-5 h-5" />
+                  <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 {quotes.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setSelectionMode(true)}
-                    className="p-2 rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
+                    className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl border border-dark-700 bg-dark-800/50 text-dark-400 hover:text-white hover:bg-dark-700 transition-colors"
                     title="Select multiple quotes"
                   >
-                    <CheckSquare className="w-5 h-5" />
+                    <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 )}
               </form>
@@ -533,17 +535,17 @@ export default function GalleryPage() {
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="glass rounded-xl p-4 mb-2 animate-slide-down relative z-20">
-          <div className="flex flex-wrap gap-4">
+          <div className="glass rounded-xl p-3 sm:p-4 mb-2 animate-slide-down relative z-20">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             <div>
-              <label className="block text-xs text-dark-500 mb-1">Template</label>
+              <label className="block text-xs text-dark-500 mb-1 hidden sm:block">Template</label>
               <select
                 value={templateFilter}
                 onChange={(e) => {
                   setTemplateFilter(e.target.value)
                   setPagination(prev => ({ ...prev, page: 1 }))
                 }}
-                className="px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 bg-dark-800 border border-dark-700 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-brand-500"
               >
                 <option value="">All Templates</option>
                 {TEMPLATES.map(t => (
@@ -553,24 +555,24 @@ export default function GalleryPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-dark-500 mb-1">Type</label>
+              <label className="block text-xs text-dark-500 mb-1 hidden sm:block">Type</label>
               <select
                 value={animatedFilter}
                 onChange={(e) => {
                   setAnimatedFilter(e.target.value)
                   setPagination(prev => ({ ...prev, page: 1 }))
                 }}
-                className="px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 bg-dark-800 border border-dark-700 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-brand-500"
               >
                 <option value="">All Types</option>
-                <option value="false">Static (PNG)</option>
-                <option value="true">Animated (GIF)</option>
+                <option value="false">PNG</option>
+                <option value="true">GIF</option>
               </select>
             </div>
 
             {/* Sort Options */}
             <div>
-              <label className="block text-xs text-dark-500 mb-1">Sort By</label>
+              <label className="block text-xs text-dark-500 mb-1 hidden sm:block">Sort By</label>
               <div className="flex gap-1">
                 <select
                   value={sortBy}
@@ -578,17 +580,17 @@ export default function GalleryPage() {
                     setSortBy(e.target.value)
                     setPagination(prev => ({ ...prev, page: 1 }))
                   }}
-                  className="px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-dark-800 border border-dark-700 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-brand-500"
                 >
                   <option value="created_at">Date</option>
-                  <option value="quoted_user_name">Quoted User</option>
+                  <option value="quoted_user_name">User</option>
                 </select>
                 <button
                   onClick={() => {
                     setSortDir(sortDir === 'desc' ? 'asc' : 'desc')
                     setPagination(prev => ({ ...prev, page: 1 }))
                   }}
-                  className="p-2 bg-dark-800 border border-dark-700 rounded-lg hover:bg-dark-700 transition-colors"
+                  className="p-1.5 sm:p-2 bg-dark-800 border border-dark-700 rounded-lg hover:bg-dark-700 transition-colors"
                   title={sortDir === 'desc' ? 'Descending' : 'Ascending'}
                 >
                   {sortDir === 'desc' ? (
@@ -602,11 +604,11 @@ export default function GalleryPage() {
 
             {/* Quoted User Filter - Searchable Dropdown */}
             <div className="relative" ref={userDropdownRef}>
-              <label className="block text-xs text-dark-500 mb-1">Quoted Person</label>
+              <label className="block text-xs text-dark-500 mb-1 hidden sm:block">Quoted Person</label>
               <button
                 type="button"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2 px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500 min-w-[180px]"
+                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-dark-800 border border-dark-700 rounded-lg text-xs sm:text-sm focus:outline-none focus:border-brand-500 min-w-[140px] sm:min-w-[180px]"
               >
                 {selectedUser ? (
                   <>
