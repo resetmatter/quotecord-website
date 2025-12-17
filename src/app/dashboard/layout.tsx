@@ -152,13 +152,13 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 glass-darker
+        w-64 h-screen glass-darker
         transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Logo */}
-          <div className="p-6 border-b border-dark-700">
+          <div className="flex-shrink-0 p-6 border-b border-dark-700">
             <Link href="/" className="flex items-center gap-2.5 group">
               <div className="relative">
                 <div className="absolute inset-0 bg-brand-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
@@ -218,7 +218,7 @@ export default function DashboardLayout({
           </nav>
 
           {/* User */}
-          <div className="p-4 border-t border-dark-700">
+          <div className="flex-shrink-0 p-4 border-t border-dark-700">
             <div className="flex items-center gap-3 mb-4">
               {user?.discord_avatar ? (
                 <Image
