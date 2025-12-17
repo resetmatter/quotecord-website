@@ -704,7 +704,7 @@ export default function FeatureFlagsAdminPage() {
                   <span className="text-sm text-dark-500">quotes</span>
                 </div>
                 <p className="text-xs text-dark-500 mt-2">
-                  Default: Free = 50 | Premium = 1000 | Leave empty to use individual limits
+                  Default: Free = 50 | Premium = Unlimited | Leave empty to use individual limits
                 </p>
               </div>
 
@@ -1044,7 +1044,7 @@ export default function FeatureFlagsAdminPage() {
                   <span className="text-sm text-dark-500">quotes</span>
                 </div>
                 <p className="text-xs text-dark-500 mt-2">
-                  Free: 50 | Premium: 1000 | Custom: any number
+                  Free: 50 | Premium: Unlimited | Custom: any number
                 </p>
               </div>
 

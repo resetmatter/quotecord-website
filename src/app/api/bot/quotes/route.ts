@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         error: 'Storage quota exceeded',
         message: isPremium
           ? `You've reached the maximum of ${maxQuotes} quotes. Please delete some to make room.`
-          : `You've reached the free tier limit of ${maxQuotes} quotes. Upgrade to Premium for up to 1000 quotes.`
+          : `You've reached the free tier limit of ${maxQuotes} quotes. Upgrade to Premium for unlimited quotes.`
       }, { status: 403 })
     }
 
