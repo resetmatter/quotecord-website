@@ -26,7 +26,7 @@ export async function GET(
       .single() as { data: { tier: string; status: string; current_period_end: string | null } | null; error: any }
 
     // Get effective features (includes feature flag overrides)
-    const { isPremium, features, hasOverrides } = await getEffectiveFeatures(discordId)
+    const { isPremium, premiumSource, features, hasOverrides, debug } = await getEffectiveFeatures(discordId)
 
     // Get quote count for quota info
     const { data: quoteCount } = await (supabase as any)
@@ -43,8 +43,10 @@ export async function GET(
         status: 'active',
         hasAccount: false,
         isPremium,
+        premiumSource,
         features,
         quoteCount: quoteCount || 0,
+        debug,
         ...(hasOverrides && {
           featureFlags: {
             hasOverrides: true,
@@ -61,9 +63,11 @@ export async function GET(
       status: subscription.status,
       hasAccount: true,
       isPremium,
+      premiumSource,
       currentPeriodEnd: subscription.current_period_end,
       features,
       quoteCount: quoteCount || 0,
+      debug,
       ...(hasOverrides && {
         featureFlags: {
           hasOverrides: true,
