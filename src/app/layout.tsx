@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: 'quotecord - Turn Discord Messages into Beautiful Quotes',
   description: 'Transform any Discord message into stunning, shareable quote images in seconds. The easiest way to create memorable quotes from your favorite Discord moments.',
   keywords: ['Discord', 'quote', 'bot', 'image', 'generator', 'message', 'quotecord', 'quote this'],
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: {
     title: 'quotecord - Turn Discord Messages into Beautiful Quotes',
     description: 'Transform any Discord message into stunning, shareable quote images in seconds.',
