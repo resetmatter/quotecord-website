@@ -148,8 +148,8 @@ export default function PrivacyPage() {
               </ul>
               <p className="text-dark-300 mb-4">
                 To exercise these rights, please contact us at{' '}
-                <a href="mailto:support@quotecord.app" className="text-brand-400 hover:text-brand-300 transition-colors">
-                  support@quotecord.app
+                <a href="mailto:support@quotecord.com" className="text-brand-400 hover:text-brand-300 transition-colors">
+                  support@quotecord.com
                 </a>.
               </p>
             </section>
@@ -189,8 +189,8 @@ export default function PrivacyPage() {
               </p>
               <p className="text-dark-300 mb-4">
                 Email:{' '}
-                <a href="mailto:support@quotecord.app" className="text-brand-400 hover:text-brand-300 transition-colors">
-                  support@quotecord.app
+                <a href="mailto:support@quotecord.com" className="text-brand-400 hover:text-brand-300 transition-colors">
+                  support@quotecord.com
                 </a>
               </p>
             </section>

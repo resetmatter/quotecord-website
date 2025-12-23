@@ -262,8 +262,8 @@ export default function BillingPage() {
           </p>
           <p>
             Need help with billing? Contact us at{' '}
-            <a href="mailto:support@quotecord.app" className="text-brand-400 hover:text-brand-300 transition-colors">
-              support@quotecord.app
+            <a href="mailto:support@quotecord.com" className="text-brand-400 hover:text-brand-300 transition-colors">
+              support@quotecord.com
             </a>
           </p>
         </div>
