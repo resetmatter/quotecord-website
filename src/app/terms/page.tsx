@@ -141,8 +141,8 @@ export default function TermsPage() {
               <h2 className="text-2xl font-semibold mb-4">13. Contact Us</h2>
               <p className="text-dark-300 mb-4">
                 If you have any questions about these Terms, please contact us at{' '}
-                <a href="mailto:support@quotecord.app" className="text-brand-400 hover:text-brand-300 transition-colors">
-                  support@quotecord.app
+                <a href="mailto:support@quotecord.com" className="text-brand-400 hover:text-brand-300 transition-colors">
+                  support@quotecord.com
                 </a>
               </p>
             </section>

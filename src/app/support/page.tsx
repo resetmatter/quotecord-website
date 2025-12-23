@@ -46,7 +46,7 @@ export default function SupportPage() {
             </a>
 
             <a
-              href="mailto:support@quotecord.app"
+              href="mailto:support@quotecord.com"
               className="glass rounded-2xl p-6 card-hover group"
             >
               <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -54,7 +54,7 @@ export default function SupportPage() {
               </div>
               <h2 className="text-lg font-semibold mb-2">Email Support</h2>
               <p className="text-dark-400 text-sm">
-                For billing issues or private inquiries, email us at support@quotecord.app
+                For billing issues or private inquiries, email us at support@quotecord.com
               </p>
             </a>
           </div>
@@ -93,7 +93,7 @@ export default function SupportPage() {
               />
               <FAQItem
                 question="Is there a refund policy?"
-                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@quotecord.app with your Discord username and we'll process your refund."
+                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@quotecord.com with your Discord username and we'll process your refund."
               />
             </div>
           </div>
