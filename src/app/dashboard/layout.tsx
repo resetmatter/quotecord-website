@@ -17,7 +17,8 @@ import {
   Shield,
   Users,
   UsersRound,
-  Receipt
+  Receipt,
+  Megaphone
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 import { logout, supabase } from '@/lib/supabase'
@@ -108,6 +109,7 @@ export default function DashboardLayout({
     { href: '/dashboard/admin/members', label: 'Members', icon: UsersRound },
     { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Shield },
     { href: '/dashboard/admin/billing', label: 'Billing Settings', icon: Receipt },
+    { href: '/dashboard/admin/ads', label: 'Ad Management', icon: Megaphone },
     { href: '/dashboard/admin/users', label: 'Admin Users', icon: Users },
   ]
 

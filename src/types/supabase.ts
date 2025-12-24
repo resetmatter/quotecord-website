@@ -293,6 +293,65 @@ export interface Database {
           updated_at?: string
         }
       }
+      ads: {
+        Row: {
+          id: string
+          text: string
+          short_text: string
+          name: string | null
+          description: string | null
+          url: string | null
+          enabled: boolean
+          is_active: boolean
+          priority: number
+          start_date: string | null
+          end_date: string | null
+          target_guilds: string[] | null
+          impressions: number
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          text: string
+          short_text: string
+          name?: string | null
+          description?: string | null
+          url?: string | null
+          enabled?: boolean
+          is_active?: boolean
+          priority?: number
+          start_date?: string | null
+          end_date?: string | null
+          target_guilds?: string[] | null
+          impressions?: number
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          text?: string
+          short_text?: string
+          name?: string | null
+          description?: string | null
+          url?: string | null
+          enabled?: boolean
+          is_active?: boolean
+          priority?: number
+          start_date?: string | null
+          end_date?: string | null
+          target_guilds?: string[] | null
+          impressions?: number
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -332,6 +391,23 @@ export interface Database {
           reason: string | null
           expires_at: string | null
         }[]
+      }
+      get_active_ad: {
+        Args: Record<string, never>
+        Returns: {
+          id: string
+          text: string
+          short_text: string
+          name: string | null
+          description: string | null
+          url: string | null
+          enabled: boolean
+          priority: number
+        }[]
+      }
+      increment_ad_impressions: {
+        Args: { ad_id: string }
+        Returns: void
       }
     }
     Enums: {
