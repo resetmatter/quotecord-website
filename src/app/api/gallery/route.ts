@@ -119,8 +119,7 @@ export async function GET(request: Request) {
     // Get comprehensive quota info using the proper function
     // This checks: Global flags > Individual flags > Subscription
     const quotaInfo = await getUserQuotaInfo(profile.discord_id)
-    const { maxQuotes, currentCount: quotaUsed, remaining, isUnlimited, isPremium } = quotaInfo
-    console.log(`[Gallery API] Quota info for ${profile.discord_id}: isPremium=${isPremium}, maxQuotes=${maxQuotes}, isUnlimited=${isUnlimited}`)
+    const { maxQuotes, currentCount: quotaUsed, remaining, isUnlimited } = quotaInfo
 
     return NextResponse.json({
       quotes: quotes || [],
