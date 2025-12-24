@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar, Tag, X, Loader2 } from 'lucide-react'
+import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar, Tag, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function BillingPage() {
@@ -24,6 +24,15 @@ export default function BillingPage() {
   } | null>(null)
   const [allowPromoCodes, setAllowPromoCodes] = useState(true)
   const [switchingPlan, setSwitchingPlan] = useState(false)
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  // Auto-dismiss toast after 5 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
 
   useEffect(() => {
     getCurrentUser().then(setUser)
@@ -106,7 +115,11 @@ export default function BillingPage() {
       const data = await res.json()
 
       if (data.success) {
-        // Refresh subscription data
+        // Refresh user data (for isPremium check)
+        const refreshedUser = await getCurrentUser()
+        setUser(refreshedUser)
+
+        // Refresh subscription data from Stripe
         const subRes = await fetch('/api/subscription')
         const subData = await subRes.json()
         setSubscriptionData({
@@ -115,13 +128,19 @@ export default function BillingPage() {
           billing_interval: subData.billing_interval,
           status: subData.stripe_status
         })
-        alert(`Successfully switched to ${newPeriod} billing!${isOnTrial ? ' Your trial has been preserved.' : ''}`)
+        setToast({
+          type: 'success',
+          message: `Successfully switched to ${newPeriod} billing!${isOnTrial ? ' Your trial has been preserved.' : ''}`
+        })
       } else {
         throw new Error(data.error || 'Failed to switch plan')
       }
     } catch (error) {
       console.error('Switch plan error:', error)
-      alert(error instanceof Error ? error.message : 'Failed to switch plan')
+      setToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to switch plan'
+      })
     } finally {
       setSwitchingPlan(false)
     }
@@ -148,8 +167,10 @@ export default function BillingPage() {
       }
     } catch (error) {
       console.error('Checkout error:', error)
-      const message = error instanceof Error ? error.message : 'Failed to start checkout. Please try again.'
-      alert(message)
+      setToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to start checkout. Please try again.'
+      })
     } finally {
       setLoading(false)
     }
@@ -171,7 +192,10 @@ export default function BillingPage() {
       }
     } catch (error) {
       console.error('Portal error:', error)
-      alert('Failed to open billing portal. Please try again.')
+      setToast({
+        type: 'error',
+        message: 'Failed to open billing portal. Please try again.'
+      })
     } finally {
       setLoading(false)
     }
@@ -179,6 +203,28 @@ export default function BillingPage() {
 
   return (
     <div className="max-w-2xl">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border backdrop-blur-sm animate-slide-in ${
+          toast.type === 'success'
+            ? 'bg-dark-900/90 border-success/30 text-success'
+            : 'bg-dark-900/90 border-error/30 text-error'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          )}
+          <p className="text-sm font-medium">{toast.message}</p>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-6">Billing</h1>
 
       {/* Current Plan */}
