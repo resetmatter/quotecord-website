@@ -16,7 +16,8 @@ import {
   Images,
   Shield,
   Users,
-  UsersRound
+  UsersRound,
+  Receipt
 } from 'lucide-react'
 import { getCurrentUser, UserProfile } from '@/lib/user'
 import { logout, supabase } from '@/lib/supabase'
@@ -106,6 +107,7 @@ export default function DashboardLayout({
   const adminNavItems: Array<{ href: string; label: string; icon: typeof Home }> = [
     { href: '/dashboard/admin/members', label: 'Members', icon: UsersRound },
     { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Shield },
+    { href: '/dashboard/admin/billing', label: 'Billing Settings', icon: Receipt },
     { href: '/dashboard/admin/users', label: 'Admin Users', icon: Users },
   ]
 
