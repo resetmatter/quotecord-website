@@ -117,49 +117,76 @@ export default function Home() {
         </section>
 
         {/* How It Works */}
-        <section className="py-24 relative">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-24 relative overflow-hidden">
+          {/* Background gradient accent */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-brand-500/5 via-accent-purple/5 to-brand-500/5 blur-3xl rounded-full" />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="text-center mb-16">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm font-medium mb-4">
+                How It Works
+              </span>
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Three clicks to perfect quotes
+                Three clicks to <span className="gradient-text">perfect quotes</span>
               </h2>
               <p className="text-dark-400 text-lg max-w-2xl mx-auto">
                 No complicated setup. No learning curve. Just beautiful quotes.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  step: '01',
-                  icon: MousePointer,
-                  title: 'Right-click',
-                  description: 'Select any message in Discord and choose "Create Quote" from the context menu'
-                },
-                {
-                  step: '02',
-                  icon: Sliders,
-                  title: 'Customize',
-                  description: 'Pick from templates, fonts, themes, and orientations to match your style'
-                },
-                {
-                  step: '03',
-                  icon: Share2,
-                  title: 'Share',
-                  description: 'Get your quote instantly as PNG or animated GIF with Pro'
-                }
-              ].map((item, index) => (
-                <div key={index} className="relative group">
-                  <div className="glass rounded-2xl p-8 card-hover h-full">
-                    <div className="text-6xl font-bold text-dark-800 mb-4">{item.step}</div>
-                    <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4">
-                      <item.icon className="w-6 h-6 text-brand-400" />
+            <div className="relative">
+              {/* Connecting line for desktop */}
+              <div className="hidden md:block absolute top-24 left-[16.67%] right-[16.67%] h-px">
+                <div className="w-full h-full bg-gradient-to-r from-transparent via-brand-500/30 to-transparent" />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-brand-500/0 via-brand-500/50 to-brand-500/0 blur-sm" />
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+                {[
+                  {
+                    step: '1',
+                    icon: MousePointer,
+                    title: 'Right-click',
+                    description: 'Select any message in Discord and choose "Create Quote" from the context menu',
+                    color: 'from-brand-400 to-brand-500'
+                  },
+                  {
+                    step: '2',
+                    icon: Sliders,
+                    title: 'Customize',
+                    description: 'Pick from templates, fonts, themes, and orientations to match your style',
+                    color: 'from-accent-purple to-brand-400'
+                  },
+                  {
+                    step: '3',
+                    icon: Share2,
+                    title: 'Share',
+                    description: 'Get your quote instantly as PNG or animated GIF with Pro',
+                    color: 'from-accent-pink to-accent-purple'
+                  }
+                ].map((item, index) => (
+                  <div key={index} className="relative group">
+                    {/* Step number badge */}
+                    <div className="flex justify-center mb-6">
+                      <div className={`relative w-12 h-12 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <span className="text-white font-bold text-lg">{item.step}</span>
+                        <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${item.color} blur-lg opacity-50 group-hover:opacity-75 transition-opacity`} />
+                      </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-dark-400">{item.description}</p>
+
+                    {/* Card */}
+                    <div className="glass rounded-2xl p-8 card-hover h-full text-center border-gradient group-hover:border-brand-500/30 transition-colors">
+                      <div className="w-14 h-14 rounded-xl icon-bg flex items-center justify-center mx-auto mb-5 group-hover:scale-105 transition-transform">
+                        <item.icon className="w-7 h-7 text-brand-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
+                      <p className="text-dark-400 leading-relaxed">{item.description}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
