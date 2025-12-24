@@ -126,49 +126,8 @@ export default function BillingSettingsPage() {
       setError(null)
       const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getApiKey()}` }
 
-      // Step 1: Create coupon with minimal discount (1% off)
-      // The real value comes from trial_period_days, not the coupon discount
-      // We need a coupon to have a Stripe promo code, but we don't want to give a big discount
-      const couponRes = await fetch('/api/admin/billing/coupons', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          name: `${promoForm.code} - ${promoForm.trialDays} day trial`,
-          percentOff: 1, // Minimal 1% discount - the trial days are the real benefit
-          duration: 'once',
-          purpose: `Trial promo for ${promoForm.createdFor || 'general use'}`,
-          createdFor: promoForm.createdFor,
-          createdBy: 'admin'
-        })
-      })
-
-      if (!couponRes.ok) {
-        const data = await couponRes.json()
-        throw new Error(data.error || 'Failed to create coupon')
-      }
-
-      const { coupon } = await couponRes.json()
-
-      // Step 2: Create promo code
-      const promoRes = await fetch('/api/admin/billing/promo-codes', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          couponId: coupon.id,
-          code: promoForm.code.toUpperCase(),
-          maxRedemptions: promoForm.maxRedemptions ? parseInt(promoForm.maxRedemptions) : undefined,
-          expiresAt: promoForm.expiresAt || undefined,
-          createdFor: promoForm.createdFor,
-          createdBy: 'admin'
-        })
-      })
-
-      if (!promoRes.ok) {
-        const data = await promoRes.json()
-        throw new Error(data.error || 'Failed to create promo code')
-      }
-
-      // Step 3: Create trial rule
+      // Just create a trial rule in our database - no Stripe coupon needed
+      // The trial days are applied via subscription_data.trial_period_days at checkout
       const ruleRes = await fetch('/api/admin/billing/trial-rules', {
         method: 'POST',
         headers,
@@ -178,13 +137,14 @@ export default function BillingSettingsPage() {
           description: promoForm.createdFor ? `For ${promoForm.createdFor}` : undefined,
           trialDays: parseInt(promoForm.trialDays),
           isActive: true,
+          notes: promoForm.createdFor || undefined,
           createdBy: 'admin'
         })
       })
 
       if (!ruleRes.ok) {
         const data = await ruleRes.json()
-        throw new Error(data.error || 'Failed to create trial rule')
+        throw new Error(data.error || 'Failed to create promo')
       }
 
       setSuccess(`Promo "${promoForm.code.toUpperCase()}" created with ${promoForm.trialDays}-day free trial!`)
@@ -198,16 +158,13 @@ export default function BillingSettingsPage() {
     }
   }
 
-  // Delete promo (deactivate promo code + delete trial rule)
-  const handleDeletePromo = async (code: string, promoId: string, ruleId?: string) => {
+  // Delete promo (delete trial rule from our database)
+  const handleDeletePromo = async (code: string, ruleId: string) => {
     if (!confirm(`Delete promo "${code}"? Users won't be able to use this code anymore.`)) return
 
     try {
       const headers = { 'Authorization': `Bearer ${getApiKey()}` }
-      await fetch(`/api/admin/billing/promo-codes?id=${promoId}`, { method: 'DELETE', headers })
-      if (ruleId) {
-        await fetch(`/api/admin/billing/trial-rules?id=${ruleId}`, { method: 'DELETE', headers })
-      }
+      await fetch(`/api/admin/billing/trial-rules?id=${ruleId}`, { method: 'DELETE', headers })
       setSuccess(`Promo "${code}" deleted`)
       fetchData()
     } catch {
@@ -223,11 +180,8 @@ export default function BillingSettingsPage() {
 
   const copyToClipboard = (text: string) => { navigator.clipboard.writeText(text); setSuccess('Copied!') }
 
-  const getTrialDays = (code: string) => trialRules.find(r => r.promoCode === code)?.trialDays || 0
-  const getTrialRule = (code: string) => trialRules.find(r => r.promoCode === code)
-
-  // Filter to only show active promos
-  const activePromos = promoCodes.filter(p => p.active)
+  // Filter to only show active promos from our trial rules
+  const activePromos = trialRules.filter(r => r.isActive)
 
   return (
     <div className="max-w-4xl">
@@ -441,56 +395,39 @@ export default function BillingSettingsPage() {
                 <div className="flex items-center gap-2 text-xs text-dark-500 px-1">
                   <span className="flex-1">CODE</span>
                   <span className="w-32 text-center">TRIAL</span>
-                  <span className="w-24 text-center">USES</span>
                   <span className="w-8"></span>
                 </div>
-                {activePromos.map(promo => {
-                  const trialDays = getTrialDays(promo.code)
-                  const rule = getTrialRule(promo.code)
-                  return (
-                    <div key={promo.id} className="flex items-center gap-3 p-4 bg-dark-800/50 rounded-xl hover:bg-dark-800/70 transition-colors">
-                      <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-5 h-5 text-success" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <code className="font-mono font-bold text-brand-400">{promo.code}</code>
-                          <button onClick={() => copyToClipboard(promo.code)} className="text-dark-500 hover:text-white" title="Copy code">
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        {promo.expiresAt && (
-                          <p className="text-xs text-dark-500 flex items-center gap-1 mt-0.5">
-                            <Calendar className="w-3 h-3" />
-                            Expires {formatDate(promo.expiresAt)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="w-32 text-center">
-                        {trialDays > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-sm text-success bg-success/10 px-2 py-1 rounded-lg">
-                            <Clock className="w-3.5 h-3.5" />
-                            {trialDays} days
-                          </span>
-                        ) : (
-                          <span className="text-sm text-dark-400">{promo.coupon.percentOff || 0}% off</span>
-                        )}
-                      </div>
-                      <div className="w-24 text-center">
-                        <span className="text-sm text-dark-400">
-                          {promo.timesRedeemed}{promo.maxRedemptions ? `/${promo.maxRedemptions}` : ''}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleDeletePromo(promo.code, promo.id, rule?.id)}
-                        className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
-                        title="Delete promo"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                {activePromos.map(rule => (
+                  <div key={rule.id} className="flex items-center gap-3 p-4 bg-dark-800/50 rounded-xl hover:bg-dark-800/70 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center flex-shrink-0">
+                      <Gift className="w-5 h-5 text-success" />
                     </div>
-                  )
-                })}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono font-bold text-brand-400">{rule.promoCode}</code>
+                        <button onClick={() => copyToClipboard(rule.promoCode)} className="text-dark-500 hover:text-white" title="Copy code">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {rule.notes && (
+                        <p className="text-xs text-dark-500 mt-0.5">{rule.notes}</p>
+                      )}
+                    </div>
+                    <div className="w-32 text-center">
+                      <span className="inline-flex items-center gap-1 text-sm text-success bg-success/10 px-2 py-1 rounded-lg">
+                        <Clock className="w-3.5 h-3.5" />
+                        {rule.trialDays} days
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleDeletePromo(rule.promoCode, rule.id)}
+                      className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
+                      title="Delete promo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
