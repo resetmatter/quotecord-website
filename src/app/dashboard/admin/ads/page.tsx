@@ -522,7 +522,7 @@ export default function AdsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g., QuoteCord Premium Promo"
+                  placeholder="e.g., QuoteCord Pro Promo"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
@@ -537,7 +537,7 @@ export default function AdsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Sponsored • Get Premium at quotecord.com"
+                  placeholder="Sponsored • Get Pro at quotecord.com"
                   value={formData.text}
                   onChange={(e) => setFormData(prev => ({ ...prev, text: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
