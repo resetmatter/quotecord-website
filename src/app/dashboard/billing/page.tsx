@@ -20,8 +20,10 @@ export default function BillingPage() {
     current_period_start: string | null
     current_period_end: string | null
     billing_interval: 'month' | 'year' | null
+    status: string | null
   } | null>(null)
   const [allowPromoCodes, setAllowPromoCodes] = useState(true)
+  const [switchingPlan, setSwitchingPlan] = useState(false)
 
   useEffect(() => {
     getCurrentUser().then(setUser)
@@ -30,11 +32,12 @@ export default function BillingPage() {
     fetch('/api/subscription')
       .then(res => res.json())
       .then(data => {
-        if (data.current_period_start || data.current_period_end || data.billing_interval) {
+        if (data.current_period_start || data.current_period_end || data.billing_interval || data.stripe_status) {
           setSubscriptionData({
             current_period_start: data.current_period_start,
             current_period_end: data.current_period_end,
-            billing_interval: data.billing_interval
+            billing_interval: data.billing_interval,
+            status: data.stripe_status || null
           })
         }
       })
@@ -86,6 +89,43 @@ export default function BillingPage() {
     : subscriptionData?.billing_interval === 'month' ? 'monthly'
     : periodData ? getBillingPeriod(periodData) : null
   const isMonthlySubscriber = isPremium && currentBillingPeriod === 'monthly'
+  const isOnTrial = subscriptionData?.status === 'trialing'
+
+  // Handle switching plans (preserves trial)
+  const handleSwitchPlan = async (newPeriod: 'monthly' | 'annual') => {
+    if (switchingPlan) return
+
+    try {
+      setSwitchingPlan(true)
+      const res = await fetch('/api/switch-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPeriod })
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        // Refresh subscription data
+        const subRes = await fetch('/api/subscription')
+        const subData = await subRes.json()
+        setSubscriptionData({
+          current_period_start: subData.current_period_start,
+          current_period_end: subData.current_period_end,
+          billing_interval: subData.billing_interval,
+          status: subData.stripe_status
+        })
+        alert(`Successfully switched to ${newPeriod} billing!${isOnTrial ? ' Your trial has been preserved.' : ''}`)
+      } else {
+        throw new Error(data.error || 'Failed to switch plan')
+      }
+    } catch (error) {
+      console.error('Switch plan error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to switch plan')
+    } finally {
+      setSwitchingPlan(false)
+    }
+  }
 
   const handleUpgrade = async () => {
     try {
@@ -185,7 +225,7 @@ export default function BillingPage() {
           )}
         </div>
 
-        {isPremium && (
+        {isPremium && !isOnTrial && (
           <button
             onClick={handleManageSubscription}
             disabled={loading}
@@ -196,6 +236,23 @@ export default function BillingPage() {
           </button>
         )}
       </div>
+
+      {/* Trial Info */}
+      {isPremium && isOnTrial && (
+        <div className="glass rounded-2xl p-4 mb-6 border border-brand-500/30">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-brand-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">You&apos;re on a free trial!</p>
+              <p className="text-xs text-dark-400">
+                Your {currentBillingPeriod} plan will start billing on {periodData?.current_period_end ? new Date(periodData.current_period_end).toLocaleDateString() : 'trial end'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upgrade to Annual (for monthly subscribers) */}
       {isMonthlySubscriber && (
@@ -208,14 +265,14 @@ export default function BillingPage() {
               <h3 className="font-semibold mb-1">Save 16% with Annual</h3>
               <p className="text-sm text-dark-400 mb-3">
                 Switch to annual billing for just $19.99/year (instead of $23.88/year on monthly).
-                Your unused monthly balance will be credited.
+                {isOnTrial ? ' Your trial will be preserved!' : ' Your unused monthly balance will be credited.'}
               </p>
               <button
-                onClick={handleManageSubscription}
-                disabled={loading}
+                onClick={() => handleSwitchPlan('annual')}
+                disabled={switchingPlan}
                 className="text-sm bg-success/20 hover:bg-success/30 text-success font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
               >
-                Switch to Annual in Billing Portal
+                {switchingPlan ? 'Switching...' : 'Switch to Annual'}
               </button>
             </div>
           </div>

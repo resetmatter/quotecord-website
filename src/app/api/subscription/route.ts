@@ -53,12 +53,13 @@ export async function GET() {
             .eq('user_id', user.id)
         }
 
-        // Return subscription data with billing interval
+        // Return subscription data with billing interval and status
         return NextResponse.json({
           ...subscription,
           current_period_start: periodStart || subscription.current_period_start,
           current_period_end: periodEnd || subscription.current_period_end,
-          billing_interval: billingInterval // 'month' or 'year'
+          billing_interval: billingInterval, // 'month' or 'year'
+          stripe_status: stripeSubscription.status // 'trialing', 'active', etc.
         })
       } catch (e) {
         console.error('Failed to fetch subscription from Stripe:', e)
