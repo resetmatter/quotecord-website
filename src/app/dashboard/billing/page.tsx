@@ -271,7 +271,7 @@ export default function BillingPage() {
           )}
         </div>
 
-        {isPremium && !isOnTrial && (
+        {isPremium && (
           <button
             onClick={handleManageSubscription}
             disabled={loading}
