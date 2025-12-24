@@ -323,13 +323,18 @@ export async function getUserQuotaInfo(discordId: string): Promise<UserQuotaInfo
   // Determine effective premium status
   // Priority: Global > Individual > Subscription
   let isPremium: boolean
+  let premiumSource: string
   if (globalFlags.globalPremiumOverride !== null) {
     isPremium = globalFlags.globalPremiumOverride
+    premiumSource = `global_flag (${globalFlags.globalPremiumOverride})`
   } else if (flags !== null && flags.premiumOverride !== null) {
     isPremium = flags.premiumOverride === true
+    premiumSource = `individual_flag (${flags.premiumOverride})`
   } else {
     isPremium = !!hasActiveSubscription
+    premiumSource = `subscription (${hasActiveSubscription})`
   }
+  console.log(`[Quota] User ${discordId}: isPremium=${isPremium} via ${premiumSource}`)
 
   // Determine max quotes
   // Priority: Global override > Individual override > Premium status
