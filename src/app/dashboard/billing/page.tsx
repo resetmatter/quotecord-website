@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar } from 'lucide-react'
+import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar, Tag } from 'lucide-react'
 import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function BillingPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual')
+  const [promoCode, setPromoCode] = useState('')
+  const [showPromoInput, setShowPromoInput] = useState(false)
   const [subscriptionData, setSubscriptionData] = useState<{
     current_period_start: string | null
     current_period_end: string | null
@@ -42,7 +44,10 @@ export default function BillingPage() {
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ period: billingPeriod })
+        body: JSON.stringify({
+          period: billingPeriod,
+          promoCode: promoCode.trim().toUpperCase() || undefined
+        })
       })
 
       const data = await res.json()
@@ -228,6 +233,41 @@ export default function BillingPage() {
                 <div className="text-sm text-dark-400">/year</div>
               </button>
             </div>
+          </div>
+
+          {/* Promo Code */}
+          <div className="mb-6">
+            {!showPromoInput ? (
+              <button
+                onClick={() => setShowPromoInput(true)}
+                className="text-sm text-dark-400 hover:text-dark-300 flex items-center gap-1.5 transition-colors"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                Have a promo code?
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter promo code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="flex-1 px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-500"
+                />
+                <button
+                  onClick={() => { setShowPromoInput(false); setPromoCode('') }}
+                  className="px-3 py-2 text-dark-400 hover:text-dark-300 text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+            {promoCode && (
+              <p className="text-xs text-success mt-2 flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                Code &quot;{promoCode}&quot; will be applied at checkout
+              </p>
+            )}
           </div>
 
           <button
