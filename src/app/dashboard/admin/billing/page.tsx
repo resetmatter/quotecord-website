@@ -51,7 +51,6 @@ export default function BillingSettingsPage() {
   const [promoForm, setPromoForm] = useState({
     code: '',
     trialDays: '30',
-    discountPercent: '100',
     maxRedemptions: '',
     expiresAt: '',
     createdFor: ''
@@ -127,13 +126,15 @@ export default function BillingSettingsPage() {
       setError(null)
       const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getApiKey()}` }
 
-      // Step 1: Create coupon (100% off for trial effect, or custom percent)
+      // Step 1: Create coupon with minimal discount (1% off)
+      // The real value comes from trial_period_days, not the coupon discount
+      // We need a coupon to have a Stripe promo code, but we don't want to give a big discount
       const couponRes = await fetch('/api/admin/billing/coupons', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           name: `${promoForm.code} - ${promoForm.trialDays} day trial`,
-          percentOff: parseInt(promoForm.discountPercent) || 100,
+          percentOff: 1, // Minimal 1% discount - the trial days are the real benefit
           duration: 'once',
           purpose: `Trial promo for ${promoForm.createdFor || 'general use'}`,
           createdFor: promoForm.createdFor,
@@ -188,7 +189,7 @@ export default function BillingSettingsPage() {
 
       setSuccess(`Promo "${promoForm.code.toUpperCase()}" created with ${promoForm.trialDays}-day free trial!`)
       setShowCreateForm(false)
-      setPromoForm({ code: '', trialDays: '30', discountPercent: '100', maxRedemptions: '', expiresAt: '', createdFor: '' })
+      setPromoForm({ code: '', trialDays: '30', maxRedemptions: '', expiresAt: '', createdFor: '' })
       fetchData()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create promo')
