@@ -9,6 +9,7 @@ import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
+  const [switchingPlan, setSwitchingPlan] = useState(false)
   const [subscriptionData, setSubscriptionData] = useState<{
     current_period_start: string | null
     current_period_end: string | null
@@ -46,6 +47,43 @@ export default function DashboardPage() {
     : subscriptionData?.billing_interval === 'month' ? 'monthly'
     : periodData ? getBillingPeriod(periodData) : null
   const isMonthlySubscriber = isPremium && currentBillingPeriod === 'monthly'
+
+  // Handle switching from monthly to annual (preserves trial)
+  const handleSwitchToAnnual = async () => {
+    if (switchingPlan) return
+
+    try {
+      setSwitchingPlan(true)
+      const res = await fetch('/api/switch-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPeriod: 'annual' })
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        // Refresh subscription data
+        const subRes = await fetch('/api/subscription')
+        const subData = await subRes.json()
+        if (subData.billing_interval) {
+          setSubscriptionData({
+            current_period_start: subData.current_period_start,
+            current_period_end: subData.current_period_end,
+            billing_interval: subData.billing_interval
+          })
+        }
+        alert('Successfully switched to annual billing! Your trial has been preserved.')
+      } else {
+        throw new Error(data.error || 'Failed to switch plan')
+      }
+    } catch (error) {
+      console.error('Switch plan error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to switch plan')
+    } finally {
+      setSwitchingPlan(false)
+    }
+  }
 
   return (
     <div className="max-w-4xl">
@@ -128,12 +166,13 @@ export default function DashboardPage() {
               <p className="text-sm font-medium">Save 16% with Annual billing</p>
               <p className="text-xs text-dark-400">$19.99/year instead of $23.88</p>
             </div>
-            <Link
-              href="/dashboard/billing"
-              className="text-xs bg-success/20 hover:bg-success/30 text-success font-medium px-3 py-1.5 rounded-lg transition-colors"
+            <button
+              onClick={handleSwitchToAnnual}
+              disabled={switchingPlan}
+              className="text-xs bg-success/20 hover:bg-success/30 disabled:opacity-50 text-success font-medium px-3 py-1.5 rounded-lg transition-colors"
             >
-              Switch
-            </Link>
+              {switchingPlan ? 'Switching...' : 'Switch'}
+            </button>
           </div>
         </div>
       )}
