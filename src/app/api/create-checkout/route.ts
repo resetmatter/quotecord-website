@@ -1,11 +1,10 @@
 import Stripe from 'stripe'
 import { createRouteClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { getBillingSettings, getTrialDaysForPromoCode } from '@/lib/billing'
 
 // Validate required environment variables
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
-const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID
-const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_PREMIUM_ANNUAL_PRICE_ID
 
 if (!STRIPE_SECRET_KEY) {
   console.error('Missing STRIPE_SECRET_KEY environment variable')
@@ -22,10 +21,14 @@ export async function POST(req: Request) {
       console.error('Checkout failed: Missing STRIPE_SECRET_KEY')
       return NextResponse.json({ error: 'Payment system not configured' }, { status: 500 })
     }
-    if (!STRIPE_MONTHLY_PRICE_ID || !STRIPE_ANNUAL_PRICE_ID) {
-      console.error('Checkout failed: Missing price IDs', {
-        monthly: !!STRIPE_MONTHLY_PRICE_ID,
-        annual: !!STRIPE_ANNUAL_PRICE_ID
+
+    // Get dynamic billing settings from database
+    const billingSettings = await getBillingSettings()
+
+    if (!billingSettings.monthlyPriceId || !billingSettings.annualPriceId) {
+      console.error('Checkout failed: Missing price IDs in billing settings', {
+        monthly: !!billingSettings.monthlyPriceId,
+        annual: !!billingSettings.annualPriceId
       })
       return NextResponse.json({ error: 'Payment plans not configured' }, { status: 500 })
     }
@@ -38,8 +41,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { period } = await req.json() // 'monthly' or 'annual'
-    console.log('Creating checkout for period:', period)
+    const { period, promoCode } = await req.json() // 'monthly' or 'annual', optional promoCode
+    console.log('Creating checkout for period:', period, 'promoCode:', promoCode)
 
     // Get user profile with Discord ID
     const { data: profile, error: profileError } = await supabase
@@ -92,11 +95,19 @@ export async function POST(req: Request) {
       }
     }
 
-    const priceId = period === 'annual' ? STRIPE_ANNUAL_PRICE_ID : STRIPE_MONTHLY_PRICE_ID
+    // Get the appropriate price ID from billing settings
+    const priceId = period === 'annual' ? billingSettings.annualPriceId : billingSettings.monthlyPriceId
     console.log('Creating checkout session with price:', priceId)
 
-    // Create checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    // Check if there's a trial rule for this promo code
+    let trialDays = 0
+    if (promoCode) {
+      trialDays = await getTrialDaysForPromoCode(promoCode, period as 'monthly' | 'annual')
+      console.log('Trial days for promo code:', promoCode, '->', trialDays)
+    }
+
+    // Build checkout session options
+    const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -104,14 +115,33 @@ export async function POST(req: Request) {
         price: priceId,
         quantity: 1
       }],
-      allow_promotion_codes: true,
+      allow_promotion_codes: false, // Promo codes are validated on our billing page first
       metadata: {
         discord_id: profile.discord_id,
-        supabase_user_id: user.id
+        supabase_user_id: user.id,
+        promo_code: promoCode || ''
       },
       success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?upgraded=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/dashboard/billing`
-    })
+    }
+
+    // Add trial period if there's a promo code with trial days
+    // This gives X days free before charging, even on annual plans
+    if (trialDays > 0) {
+      sessionOptions.subscription_data = {
+        trial_period_days: trialDays,
+        metadata: {
+          discord_id: profile.discord_id,
+          supabase_user_id: user.id,
+          promo_code: promoCode || '',
+          trial_source: 'promo_code'
+        }
+      }
+      console.log('Adding trial period:', trialDays, 'days')
+    }
+
+    // Create checkout session
+    const checkoutSession = await stripe.checkout.sessions.create(sessionOptions)
 
     console.log('Checkout session created:', checkoutSession.id)
     return NextResponse.json({ url: checkoutSession.url })

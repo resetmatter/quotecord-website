@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
         if (discordId) {
           // Upgrade to premium and save customer ID
+          // Note: Trial periods are applied via subscription_data.trial_period_days at checkout
           await supabase
             .from('subscriptions')
             .update({
@@ -69,8 +70,15 @@ export async function POST(req: Request) {
           ? new Date(subscription.current_period_end * 1000).toISOString()
           : null
 
+        // Map Stripe status to our database status
+        // 'active' and 'trialing' are both valid subscriptions
+        let dbStatus = 'past_due'
+        if (subscription.status === 'active' || subscription.status === 'trialing') {
+          dbStatus = 'active'
+        }
+
         const updateData: Record<string, any> = {
-          status: subscription.status === 'active' ? 'active' : 'past_due',
+          status: dbStatus,
           updated_at: new Date().toISOString()
         }
 
