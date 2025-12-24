@@ -15,9 +15,12 @@ import {
   Info,
   Copy,
   Clock,
-  Users,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  HelpCircle,
+  Zap,
+  Users,
+  Calendar
 } from 'lucide-react'
 import type {
   BillingSettings,
@@ -234,20 +237,60 @@ export default function BillingSettingsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Billing Settings</h1>
-          <p className="text-sm text-dark-400">Manage prices and promotional offers</p>
+          <p className="text-sm text-dark-400">Manage subscription prices and create promotional offers</p>
+        </div>
+      </div>
+
+      {/* How It Works */}
+      <div className="glass rounded-2xl p-5 mb-6 border border-brand-500/20">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center flex-shrink-0">
+            <HelpCircle className="w-4 h-4 text-brand-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white mb-2">How This Works</h3>
+            <div className="space-y-2 text-sm text-dark-400">
+              <p>
+                <strong className="text-white">1. Set your prices</strong> — Choose which Stripe price IDs to use for monthly and annual plans.
+              </p>
+              <p>
+                <strong className="text-white">2. Create promo codes</strong> — Give communities free trial days. When someone uses a code like &quot;GAMING30&quot;,
+                they get 30 days free before any billing starts.
+              </p>
+              <p>
+                <strong className="text-white">3. Share the code</strong> — Give the promo code to the community. They enter it at checkout and get the free trial.
+              </p>
+            </div>
+            <div className="mt-3 p-3 bg-dark-800/50 rounded-xl">
+              <p className="text-xs text-dark-500">
+                <strong className="text-dark-300">Note:</strong> Trial days work even on annual plans.
+                If you give 30 days free, they try premium for 30 days, then the annual charge begins.
+                They don&apos;t get a full year free — just the trial period before billing starts.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* API Key */}
       <div className="glass rounded-xl p-4 mb-6">
-        <label className="block text-xs text-dark-500 mb-2">Admin API Key</label>
+        <div className="flex items-center gap-2 mb-2">
+          <label className="text-sm font-medium">Admin API Key</label>
+          <div className="group relative">
+            <HelpCircle className="w-3.5 h-3.5 text-dark-500 cursor-help" />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-dark-800 rounded-lg text-xs text-dark-300 w-64 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg border border-dark-700">
+              This is your BOT_API_KEY or ADMIN_API_KEY from your environment variables. It authenticates you as an admin.
+            </div>
+          </div>
+        </div>
         <input
           type="password"
-          placeholder="Enter your admin API key"
+          placeholder="Paste your admin API key here"
           defaultValue={getApiKey()}
           onChange={(e) => setApiKey(e.target.value)}
           className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
         />
+        <p className="text-xs text-dark-500 mt-2">Stored locally in your browser. Required to make changes.</p>
       </div>
 
       {/* Messages */}
@@ -273,7 +316,7 @@ export default function BillingSettingsPage() {
         <div className="space-y-6">
           {/* Subscription Prices */}
           <div className="glass rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-brand-400" />
                 <h2 className="text-lg font-semibold">Subscription Prices</h2>
@@ -287,42 +330,56 @@ export default function BillingSettingsPage() {
                 Save
               </button>
             </div>
+            <p className="text-sm text-dark-400 mb-4">
+              Select which Stripe prices to use. These are the actual prices users pay for your subscription plans.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Monthly Plan ($1.99/mo)</label>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="text-sm font-medium">Monthly Plan</label>
+                  <span className="text-xs text-dark-500">($1.99/mo)</span>
+                </div>
                 <select
                   value={billingSettings?.monthlyPriceId || ''}
                   onChange={(e) => setBillingSettings(prev => prev ? { ...prev, monthlyPriceId: e.target.value } : null)}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 >
-                  <option value="">Select price...</option>
+                  <option value="">Select a price from Stripe...</option>
                   {prices.filter(p => p.recurring?.interval === 'month').map(price => (
                     <option key={price.id} value={price.id}>
                       {price.nickname || price.id.slice(0, 20)} - {formatCurrency(price.unitAmount || 0)}
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-dark-500 mt-1">Recurring monthly subscription price</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Annual Plan ($19.99/yr)</label>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="text-sm font-medium">Annual Plan</label>
+                  <span className="text-xs text-dark-500">($19.99/yr)</span>
+                </div>
                 <select
                   value={billingSettings?.annualPriceId || ''}
                   onChange={(e) => setBillingSettings(prev => prev ? { ...prev, annualPriceId: e.target.value } : null)}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 >
-                  <option value="">Select price...</option>
+                  <option value="">Select a price from Stripe...</option>
                   {prices.filter(p => p.recurring?.interval === 'year').map(price => (
                     <option key={price.id} value={price.id}>
                       {price.nickname || price.id.slice(0, 20)} - {formatCurrency(price.unitAmount || 0)}
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-dark-500 mt-1">Recurring yearly subscription price</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-4 p-3 bg-dark-800/50 rounded-xl">
-              <span className="text-sm">Allow promo codes at checkout</span>
+            <div className="flex items-center justify-between mt-4 p-4 bg-dark-800/50 rounded-xl">
+              <div>
+                <span className="text-sm font-medium">Allow promo codes at checkout</span>
+                <p className="text-xs text-dark-500 mt-0.5">Let users enter promotional codes when subscribing</p>
+              </div>
               <button
                 onClick={() => setBillingSettings(prev => prev ? { ...prev, allowPromotionCodes: !prev.allowPromotionCodes } : null)}
                 className={billingSettings?.allowPromotionCodes ? 'text-success' : 'text-dark-500'}
@@ -334,7 +391,7 @@ export default function BillingSettingsPage() {
 
           {/* Promotional Offers */}
           <div className="glass rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Gift className="w-5 h-5 text-brand-400" />
                 <h2 className="text-lg font-semibold">Promotional Offers</h2>
@@ -347,58 +404,86 @@ export default function BillingSettingsPage() {
                 Create Promo
               </button>
             </div>
+            <p className="text-sm text-dark-400 mb-4">
+              Create promo codes to give communities free trial days before billing starts.
+            </p>
 
-            {/* Info */}
-            <div className="bg-dark-800/50 rounded-xl p-4 mb-4 flex items-start gap-3">
-              <Info className="w-5 h-5 text-brand-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-dark-400">
-                <p>Create promo codes that give communities <strong className="text-white">free trial days</strong>.</p>
-                <p className="mt-1">When someone uses a code, they get X days free before billing starts - even on annual plans.</p>
+            {/* Quick Example */}
+            <div className="bg-dark-800/50 rounded-xl p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <Zap className="w-5 h-5 text-pro-gold flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-white font-medium mb-1">Example: Giving a Discord server 30 days free</p>
+                  <ol className="text-dark-400 space-y-1 list-decimal list-inside">
+                    <li>Click &quot;Create Promo&quot; above</li>
+                    <li>Enter code: <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">COOLSERVER30</code></li>
+                    <li>Set trial days: <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">30</code></li>
+                    <li>Add a note: &quot;Cool Gaming Server&quot; (so you remember who it&apos;s for)</li>
+                    <li>Share the code with the server owner!</li>
+                  </ol>
+                  <p className="text-dark-500 mt-2 text-xs">
+                    When members use COOLSERVER30 at checkout, they get 30 days free, then billing starts automatically.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Promos List */}
             {activePromos.length === 0 ? (
-              <div className="text-center py-8 text-dark-400">
+              <div className="text-center py-8 text-dark-400 border-2 border-dashed border-dark-700 rounded-xl">
                 <Gift className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p>No active promos yet</p>
-                <p className="text-sm text-dark-500">Create one to give communities free trials</p>
+                <p className="font-medium">No active promos yet</p>
+                <p className="text-sm text-dark-500 mt-1">Click &quot;Create Promo&quot; to make your first one</p>
               </div>
             ) : (
               <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs text-dark-500 px-1">
+                  <span className="flex-1">CODE</span>
+                  <span className="w-32 text-center">TRIAL</span>
+                  <span className="w-24 text-center">USES</span>
+                  <span className="w-8"></span>
+                </div>
                 {activePromos.map(promo => {
                   const trialDays = getTrialDays(promo.code)
                   const rule = getTrialRule(promo.code)
                   return (
-                    <div key={promo.id} className="flex items-center justify-between p-4 bg-dark-800/50 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center">
-                          <Gift className="w-5 h-5 text-success" />
+                    <div key={promo.id} className="flex items-center gap-3 p-4 bg-dark-800/50 rounded-xl hover:bg-dark-800/70 transition-colors">
+                      <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center flex-shrink-0">
+                        <Gift className="w-5 h-5 text-success" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <code className="font-mono font-bold text-brand-400">{promo.code}</code>
+                          <button onClick={() => copyToClipboard(promo.code)} className="text-dark-500 hover:text-white" title="Copy code">
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <code className="font-mono font-bold text-brand-400">{promo.code}</code>
-                            <button onClick={() => copyToClipboard(promo.code)} className="text-dark-500 hover:text-white">
-                              <Copy className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                          <p className="text-sm text-dark-400">
-                            {trialDays > 0 ? (
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                {trialDays} days free trial
-                              </span>
-                            ) : (
-                              `${promo.coupon.percentOff || 0}% off`
-                            )}
-                            {promo.maxRedemptions && ` • ${promo.timesRedeemed}/${promo.maxRedemptions} uses`}
-                            {promo.expiresAt && ` • Expires ${formatDate(promo.expiresAt)}`}
+                        {promo.expiresAt && (
+                          <p className="text-xs text-dark-500 flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3" />
+                            Expires {formatDate(promo.expiresAt)}
                           </p>
-                        </div>
+                        )}
+                      </div>
+                      <div className="w-32 text-center">
+                        {trialDays > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-sm text-success bg-success/10 px-2 py-1 rounded-lg">
+                            <Clock className="w-3.5 h-3.5" />
+                            {trialDays} days
+                          </span>
+                        ) : (
+                          <span className="text-sm text-dark-400">{promo.coupon.percentOff || 0}% off</span>
+                        )}
+                      </div>
+                      <div className="w-24 text-center">
+                        <span className="text-sm text-dark-400">
+                          {promo.timesRedeemed}{promo.maxRedemptions ? `/${promo.maxRedemptions}` : ''}
+                        </span>
                       </div>
                       <button
                         onClick={() => handleDeletePromo(promo.code, promo.id, rule?.id)}
-                        className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg"
+                        className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
+                        title="Delete promo"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -406,6 +491,13 @@ export default function BillingSettingsPage() {
                   )
                 })}
               </div>
+            )}
+
+            {activePromos.length > 0 && (
+              <p className="text-xs text-dark-500 mt-4 flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                Click the copy icon to copy a promo code, then share it with the community.
+              </p>
             )}
           </div>
         </div>
@@ -423,67 +515,91 @@ export default function BillingSettingsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
+              {/* Promo Code */}
               <div>
                 <label className="block text-sm font-medium mb-2">Promo Code</label>
                 <input
                   type="text"
                   placeholder="e.g., COMMUNITY30"
                   value={promoForm.code}
-                  onChange={(e) => setPromoForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                  onChange={(e) => setPromoForm(prev => ({ ...prev, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-500"
                 />
-                <p className="text-xs text-dark-500 mt-1">The code users will enter at checkout</p>
+                <p className="text-xs text-dark-500 mt-1.5">
+                  The code users type at checkout. Use letters and numbers only, no spaces.
+                </p>
               </div>
 
+              {/* Trial Days */}
               <div>
                 <label className="block text-sm font-medium mb-2">Free Trial Days</label>
-                <input
-                  type="number"
-                  placeholder="30"
-                  value={promoForm.trialDays}
-                  onChange={(e) => setPromoForm(prev => ({ ...prev, trialDays: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-                <p className="text-xs text-dark-500 mt-1">How many days free before billing starts</p>
+                <div className="relative">
+                  <input
+                    type="number"
+                    placeholder="30"
+                    min="1"
+                    max="365"
+                    value={promoForm.trialDays}
+                    onChange={(e) => setPromoForm(prev => ({ ...prev, trialDays: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 pr-16"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-500 text-sm">days</span>
+                </div>
+                <p className="text-xs text-dark-500 mt-1.5">
+                  How many days they can use premium for free. Billing starts after this period ends.
+                </p>
               </div>
 
+              {/* Created For */}
               <div>
-                <label className="block text-sm font-medium mb-2">Created For <span className="text-dark-500">(optional)</span></label>
+                <label className="block text-sm font-medium mb-2">
+                  Who is this for? <span className="text-dark-500 font-normal">(optional)</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g., Gaming Discord Server"
+                  placeholder="e.g., Cool Gaming Discord"
                   value={promoForm.createdFor}
                   onChange={(e) => setPromoForm(prev => ({ ...prev, createdFor: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 />
-                <p className="text-xs text-dark-500 mt-1">Note who this promo is for (just for your reference)</p>
+                <p className="text-xs text-dark-500 mt-1.5">
+                  A note for yourself so you remember who you gave this code to.
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Max Uses <span className="text-dark-500">(optional)</span></label>
-                  <input
-                    type="number"
-                    placeholder="Unlimited"
-                    value={promoForm.maxRedemptions}
-                    onChange={(e) => setPromoForm(prev => ({ ...prev, maxRedemptions: e.target.value }))}
-                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Expires <span className="text-dark-500">(optional)</span></label>
-                  <input
-                    type="date"
-                    value={promoForm.expiresAt}
-                    onChange={(e) => setPromoForm(prev => ({ ...prev, expiresAt: e.target.value }))}
-                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                  />
+              {/* Optional Settings */}
+              <div className="pt-2 border-t border-dark-800">
+                <p className="text-xs text-dark-500 mb-3 flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Optional limits (leave empty for unlimited)
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5 text-dark-400">Max Uses</label>
+                    <input
+                      type="number"
+                      placeholder="Unlimited"
+                      min="1"
+                      value={promoForm.maxRedemptions}
+                      onChange={(e) => setPromoForm(prev => ({ ...prev, maxRedemptions: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5 text-dark-400">Expires On</label>
+                    <input
+                      type="date"
+                      value={promoForm.expiresAt}
+                      onChange={(e) => setPromoForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                      className="w-full px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 p-6 border-t border-dark-800">
+            <div className="flex justify-end gap-3 p-6 border-t border-dark-800 bg-dark-900/50">
               <button
                 onClick={() => setShowCreateForm(false)}
                 disabled={creating}
@@ -494,7 +610,7 @@ export default function BillingSettingsPage() {
               <button
                 onClick={handleCreatePromo}
                 disabled={creating || !promoForm.code || !promoForm.trialDays}
-                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-medium py-2.5 px-4 rounded-xl disabled:opacity-50"
+                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-medium py-2.5 px-5 rounded-xl disabled:opacity-50"
               >
                 {creating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Create Promo
