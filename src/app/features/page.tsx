@@ -15,7 +15,6 @@ import {
   Layers,
   Crown,
   Film,
-  Infinity,
   Users,
   Moon,
   Sun
@@ -83,9 +82,9 @@ export default function FeaturesPage() {
                 description="Generate quotes in either orientation. Perfect for different sharing platforms and use cases."
               />
               <FeatureCard
-                icon={<Infinity className="w-6 h-6" />}
-                title="Unlimited Quotes"
-                description="No daily limits or quotas. Create as many quotes as you want, whenever you want."
+                icon={<Image className="w-6 h-6" />}
+                title="50 Quote Storage"
+                description="Store up to 50 quotes in your gallery. Upgrade to Pro for unlimited storage."
               />
             </div>
           </div>

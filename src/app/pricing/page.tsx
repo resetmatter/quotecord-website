@@ -75,7 +75,7 @@ export default function PricingPage() {
               </div>
 
               <ul className="space-y-4 mb-8">
-                <PricingItem included>Unlimited quote creation</PricingItem>
+                <PricingItem included>Up to 50 quotes saved</PricingItem>
                 <PricingItem included>All 3 templates</PricingItem>
                 <PricingItem included>All 19 fonts</PricingItem>
                 <PricingItem included>Dark & Light themes</PricingItem>
@@ -142,7 +142,7 @@ export default function PricingPage() {
               )}
 
               <ul className="space-y-4 mb-8">
-                <PricingItem included>Unlimited quote creation</PricingItem>
+                <PricingItem included>Unlimited quote storage</PricingItem>
                 <PricingItem included>All 3 templates</PricingItem>
                 <PricingItem included>All 19 fonts</PricingItem>
                 <PricingItem included>Dark & Light themes</PricingItem>
@@ -183,7 +183,7 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
-                  <ComparisonRow feature="Quote Creation" free="Unlimited" premium="Unlimited" />
+                  <ComparisonRow feature="Quote Storage" free="Up to 50" premium="Unlimited" />
                   <ComparisonRow feature="Templates" free="All 3" premium="All 3" />
                   <ComparisonRow feature="Fonts" free="All 19" premium="All 19" />
                   <ComparisonRow feature="Themes" free="Dark & Light" premium="Dark & Light" />
