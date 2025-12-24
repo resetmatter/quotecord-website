@@ -111,7 +111,7 @@ export default function GalleryPage() {
     total: 0,
     totalPages: 0
   })
-  const [quota, setQuota] = useState<{ used: number; max: number | null; remaining: number | null; isUnlimited: boolean }>({ used: 0, max: 50, remaining: 50, isUnlimited: false })
+  const [quota, setQuota] = useState<{ used: number; max: number | null; remaining: number | null; isUnlimited: boolean } | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   // Filters
@@ -176,11 +176,14 @@ export default function GalleryPage() {
       }, 3000)
     }
     // Update quota (only decrement remaining if not unlimited)
-    setQuota(prev => ({
-      ...prev,
-      used: prev.used + 1,
-      remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : Math.max(0, prev.remaining - 1)
-    }))
+    setQuota(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        used: prev.used + 1,
+        remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : Math.max(0, prev.remaining - 1)
+      }
+    })
     // Refresh quoted users list
     fetchQuotedUsers()
   }, [pagination.page, sortBy, sortDir, searchQuery, templateFilter, animatedFilter, quotedUserFilter])
@@ -200,11 +203,14 @@ export default function GalleryPage() {
     // Remove from current view
     setQuotes(prev => prev.filter(q => q.id !== deletedId))
     // Update quota (only increment remaining if not unlimited)
-    setQuota(prev => ({
-      ...prev,
-      used: Math.max(0, prev.used - 1),
-      remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : prev.remaining + 1
-    }))
+    setQuota(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        used: Math.max(0, prev.used - 1),
+        remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : prev.remaining + 1
+      }
+    })
     // Close modals if the deleted quote was open
     setSelectedQuote(prev => prev?.id === deletedId ? null : prev)
     setDeleteConfirm(prev => prev?.id === deletedId ? null : prev)
@@ -312,11 +318,14 @@ export default function GalleryPage() {
     const previousQuotes = quotes
     const previousQuota = quota
     setQuotes(prev => prev.filter(q => q.id !== quote.id))
-    setQuota(prev => ({
-      ...prev,
-      used: Math.max(0, prev.used - 1),
-      remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : prev.remaining + 1
-    }))
+    setQuota(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        used: Math.max(0, prev.used - 1),
+        remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : prev.remaining + 1
+      }
+    })
     setDeleteConfirm(null)
     setSelectedQuote(null)
 
@@ -359,11 +368,14 @@ export default function GalleryPage() {
     const deleteCount = quoteIdsToDelete.length
 
     setQuotes(prev => prev.filter(q => !selectedQuotes.has(q.id)))
-    setQuota(prev => ({
-      ...prev,
-      used: Math.max(0, prev.used - deleteCount),
-      remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : prev.remaining + deleteCount
-    }))
+    setQuota(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        used: Math.max(0, prev.used - deleteCount),
+        remaining: prev.isUnlimited || prev.remaining === null ? prev.remaining : prev.remaining + deleteCount
+      }
+    })
     setBulkDeleteConfirm(false)
     setSelectedQuotes(new Set())
     setSelectionMode(false)
@@ -457,12 +469,14 @@ export default function GalleryPage() {
                 </div>
               )}
             </div>
-            <p className="text-dark-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
-              {quota.isUnlimited
-                ? <span className="hidden sm:inline">{quota.used} quotes (Unlimited storage)</span>
-                : <><span className="sm:hidden">{quota.used}/{quota.max}</span><span className="hidden sm:inline">{quota.used} / {quota.max} quotes used</span></>}
-              {quota.isUnlimited && <span className="sm:hidden">{quota.used} quotes</span>}
-            </p>
+            {quota && (
+              <p className="text-dark-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
+                {quota.isUnlimited
+                  ? <span className="hidden sm:inline">{quota.used} quotes (Unlimited storage)</span>
+                  : <><span className="sm:hidden">{quota.used}/{quota.max}</span><span className="hidden sm:inline">{quota.used} / {quota.max} quotes used</span></>}
+                {quota.isUnlimited && <span className="sm:hidden">{quota.used} quotes</span>}
+              </p>
+            )}
           </div>
 
           {/* Search and Selection Toggle */}
@@ -833,7 +847,7 @@ export default function GalleryPage() {
       </div>
 
       {/* Quota Warning - only show for users with limited quota */}
-      {!quota.isUnlimited && quota.remaining !== null && quota.remaining <= 5 && quota.remaining > 0 && (
+      {quota && !quota.isUnlimited && quota.remaining !== null && quota.remaining <= 5 && quota.remaining > 0 && (
         <div className="bg-warning/10 border border-warning/50 rounded-xl p-4 mb-6 flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
           <p className="text-sm text-warning">
@@ -842,7 +856,7 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {!quota.isUnlimited && quota.remaining === 0 && (
+      {quota && !quota.isUnlimited && quota.remaining === 0 && (
         <div className="bg-error/10 border border-error/50 rounded-xl p-4 mb-6 flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-error flex-shrink-0" />
           <p className="text-sm text-error">
