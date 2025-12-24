@@ -20,10 +20,22 @@ import {
   Link as LinkIcon,
   Type,
   AlignLeft,
-  Zap,
-  Radio
+  BarChart3,
+  MousePointerClick,
+  TrendingUp,
+  Users,
+  ExternalLink,
+  Weight
 } from 'lucide-react'
 import type { Ad } from '@/types/ads'
+
+interface AdsStats {
+  totalAds: number
+  activeAds: number
+  totalImpressions: number
+  totalClicks: number
+  overallCtr: string
+}
 
 export default function AdsManagementPage() {
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +47,7 @@ export default function AdsManagementPage() {
 
   // State
   const [ads, setAds] = useState<Ad[]>([])
+  const [stats, setStats] = useState<AdsStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -46,9 +59,15 @@ export default function AdsManagementPage() {
     shortText: '',
     name: '',
     description: '',
-    url: '',
+    handle: '',
+    destinationUrl: '',
+    weight: 1,
     enabled: true,
-    isActive: false
+    startDate: '',
+    endDate: '',
+    advertiserName: '',
+    advertiserEmail: '',
+    advertiserNotes: ''
   })
 
   // Fetch all ads
@@ -62,6 +81,7 @@ export default function AdsManagementPage() {
       if (response.ok) {
         const data = await response.json()
         setAds(data.ads || [])
+        setStats(data.stats || null)
       } else {
         setError('Failed to load ads. Check your API key.')
       }
@@ -83,9 +103,15 @@ export default function AdsManagementPage() {
       shortText: '',
       name: '',
       description: '',
-      url: '',
+      handle: '',
+      destinationUrl: '',
+      weight: 1,
       enabled: true,
-      isActive: false
+      startDate: '',
+      endDate: '',
+      advertiserName: '',
+      advertiserEmail: '',
+      advertiserNotes: ''
     })
     setShowForm(true)
   }
@@ -98,17 +124,34 @@ export default function AdsManagementPage() {
       shortText: ad.shortText,
       name: ad.name || '',
       description: ad.description || '',
-      url: ad.url || '',
+      handle: ad.handle || '',
+      destinationUrl: ad.destinationUrl || '',
+      weight: ad.weight || 1,
       enabled: ad.enabled,
-      isActive: ad.isActive
+      startDate: ad.startDate ? ad.startDate.split('T')[0] : '',
+      endDate: ad.endDate ? ad.endDate.split('T')[0] : '',
+      advertiserName: ad.advertiserName || '',
+      advertiserEmail: ad.advertiserEmail || '',
+      advertiserNotes: ad.advertiserNotes || ''
     })
     setShowForm(true)
+  }
+
+  // Validate handle format
+  const isValidHandle = (handle: string) => {
+    if (!handle) return true
+    return /^[a-z0-9_-]+$/i.test(handle)
   }
 
   // Save ad (create or update)
   const handleSave = async () => {
     if (!formData.text || !formData.shortText) {
       setError('Both text and short text are required')
+      return
+    }
+
+    if (formData.handle && !isValidHandle(formData.handle)) {
+      setError('Handle can only contain letters, numbers, hyphens, and underscores')
       return
     }
 
@@ -132,9 +175,15 @@ export default function AdsManagementPage() {
             shortText: formData.shortText,
             name: formData.name || null,
             description: formData.description || null,
-            url: formData.url || null,
+            handle: formData.handle || null,
+            destinationUrl: formData.destinationUrl || null,
+            weight: formData.weight,
             enabled: formData.enabled,
-            isActive: formData.isActive,
+            startDate: formData.startDate || null,
+            endDate: formData.endDate || null,
+            advertiserName: formData.advertiserName || null,
+            advertiserEmail: formData.advertiserEmail || null,
+            advertiserNotes: formData.advertiserNotes || null,
             updatedBy: 'admin'
           })
         })
@@ -148,9 +197,15 @@ export default function AdsManagementPage() {
             shortText: formData.shortText,
             name: formData.name || null,
             description: formData.description || null,
-            url: formData.url || null,
+            handle: formData.handle || null,
+            destinationUrl: formData.destinationUrl || null,
+            weight: formData.weight,
             enabled: formData.enabled,
-            isActive: formData.isActive,
+            startDate: formData.startDate || null,
+            endDate: formData.endDate || null,
+            advertiserName: formData.advertiserName || null,
+            advertiserEmail: formData.advertiserEmail || null,
+            advertiserNotes: formData.advertiserNotes || null,
             createdBy: 'admin'
           })
         })
@@ -196,33 +251,9 @@ export default function AdsManagementPage() {
     }
   }
 
-  // Set as active ad
-  const handleSetActive = async (ad: Ad) => {
-    try {
-      const response = await fetch(`/api/admin/ads?id=${ad.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getApiKey()}`
-        },
-        body: JSON.stringify({
-          isActive: true,
-          updatedBy: 'admin'
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to set active ad')
-
-      setSuccess(`"${ad.name || ad.text.slice(0, 30)}..." is now the active ad`)
-      fetchData()
-    } catch {
-      setError('Failed to set active ad')
-    }
-  }
-
   // Delete ad
   const handleDelete = async (ad: Ad) => {
-    if (!confirm(`Delete ad "${ad.name || ad.text.slice(0, 30)}..."? This cannot be undone.`)) return
+    if (!confirm(`Delete ad "${ad.name || ad.advertiserName || ad.text.slice(0, 30)}..."? This cannot be undone.`)) return
 
     try {
       const response = await fetch(`/api/admin/ads?id=${ad.id}`, {
@@ -245,11 +276,21 @@ export default function AdsManagementPage() {
     setSuccess('Copied to clipboard!')
   }
 
-  // Get the active ad
-  const activeAd = ads.find(ad => ad.isActive && ad.enabled)
+  // Calculate CTR
+  const getCtr = (impressions: number, clicks: number) => {
+    if (impressions === 0) return '0.00'
+    return ((clicks / impressions) * 100).toFixed(2)
+  }
+
+  // Calculate weight percentage
+  const getWeightPercentage = (weight: number) => {
+    const totalWeight = ads.filter(a => a.enabled).reduce((sum, a) => sum + (a.weight || 1), 0)
+    if (totalWeight === 0) return 0
+    return Math.round((weight / totalWeight) * 100)
+  }
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-5xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-brand-500/20 flex items-center justify-center">
@@ -257,7 +298,7 @@ export default function AdsManagementPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Ad Management</h1>
-          <p className="text-sm text-dark-400">Configure ads displayed on free user quotes</p>
+          <p className="text-sm text-dark-400">Multi-advertiser system with weighted rotation</p>
         </div>
       </div>
 
@@ -268,22 +309,22 @@ export default function AdsManagementPage() {
             <HelpCircle className="w-4 h-4 text-brand-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white mb-2">How Ads Work</h3>
+            <h3 className="font-semibold text-white mb-2">Multi-Advertiser System</h3>
             <div className="space-y-2 text-sm text-dark-400">
               <p>
-                <strong className="text-white">1. Create ads</strong> — Add multiple ad configurations with different text for different campaigns.
+                <strong className="text-white">Weighted Rotation:</strong> All enabled ads rotate randomly. Higher weight = more impressions.
               </p>
               <p>
-                <strong className="text-white">2. Set one as active</strong> — Only one ad can be active at a time. This is what the bot displays to free users.
+                <strong className="text-white">Tracking URLs:</strong> Create vanity handles like <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">quotecord.com/go/logitech</code> that redirect to destination URLs and track clicks.
               </p>
               <p>
-                <strong className="text-white">3. Two text formats</strong> — &quot;Full text&quot; appears on classic/profile templates, &quot;Short text&quot; on discord/embed templates.
+                <strong className="text-white">Analytics:</strong> Track impressions (when ad is shown) and clicks (when tracking URL is visited) per advertiser.
               </p>
             </div>
             <div className="mt-3 p-3 bg-dark-800/50 rounded-xl">
               <p className="text-xs text-dark-500">
-                <strong className="text-dark-300">Bot API:</strong> The bot fetches the active ad from{' '}
-                <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">GET /api/bot/ads</code>
+                <strong className="text-dark-300">Bot API:</strong>{' '}
+                <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">GET /api/bot/ads</code> returns a random ad based on weights
               </p>
             </div>
           </div>
@@ -332,51 +373,43 @@ export default function AdsManagementPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Current Active Ad */}
-          {activeAd && (
-            <div className="glass rounded-2xl p-6 border-2 border-success/30">
-              <div className="flex items-center gap-2 mb-4">
-                <Radio className="w-5 h-5 text-success animate-pulse" />
-                <h2 className="text-lg font-semibold">Currently Active Ad</h2>
+          {/* Stats Overview */}
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-dark-400 mb-1">
+                  <Megaphone className="w-4 h-4" />
+                  <span className="text-xs">Total Ads</span>
+                </div>
+                <p className="text-2xl font-bold">{stats.totalAds}</p>
               </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-dark-500 mb-1">Full Text (classic/profile templates)</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-dark-800 px-3 py-2 rounded-lg text-sm text-brand-400 font-mono">
-                      {activeAd.text}
-                    </code>
-                    <button onClick={() => copyToClipboard(activeAd.text)} className="p-2 text-dark-400 hover:text-white">
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-success mb-1">
+                  <Eye className="w-4 h-4" />
+                  <span className="text-xs">Active</span>
                 </div>
-                <div>
-                  <p className="text-xs text-dark-500 mb-1">Short Text (discord/embed templates)</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-dark-800 px-3 py-2 rounded-lg text-sm text-brand-400 font-mono">
-                      {activeAd.shortText}
-                    </code>
-                    <button onClick={() => copyToClipboard(activeAd.shortText)} className="p-2 text-dark-400 hover:text-white">
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
+                <p className="text-2xl font-bold">{stats.activeAds}</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-brand-400 mb-1">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="text-xs">Impressions</span>
                 </div>
-                {activeAd.description && (
-                  <div>
-                    <p className="text-xs text-dark-500 mb-1">Description/Caption</p>
-                    <p className="text-sm text-dark-300">{activeAd.description}</p>
-                  </div>
-                )}
-                <div className="flex items-center gap-4 text-xs text-dark-500 pt-2">
-                  <span>Impressions: {activeAd.impressions.toLocaleString()}</span>
-                  {activeAd.url && (
-                    <a href={activeAd.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand-400 hover:text-brand-300">
-                      <LinkIcon className="w-3 h-3" />
-                      View URL
-                    </a>
-                  )}
+                <p className="text-2xl font-bold">{stats.totalImpressions.toLocaleString()}</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-blue-400 mb-1">
+                  <MousePointerClick className="w-4 h-4" />
+                  <span className="text-xs">Clicks</span>
                 </div>
+                <p className="text-2xl font-bold">{stats.totalClicks.toLocaleString()}</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-purple-400 mb-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-xs">CTR</span>
+                </div>
+                <p className="text-2xl font-bold">{stats.overallCtr}%</p>
               </div>
             </div>
           )}
@@ -385,15 +418,15 @@ export default function AdsManagementPage() {
           <div className="glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-brand-400" />
-                <h2 className="text-lg font-semibold">All Ads</h2>
+                <Users className="w-5 h-5 text-brand-400" />
+                <h2 className="text-lg font-semibold">Advertisers</h2>
               </div>
               <button
                 onClick={handleCreate}
                 className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium py-2 px-4 rounded-xl"
               >
                 <Plus className="w-4 h-4" />
-                Create Ad
+                Add Advertiser
               </button>
             </div>
 
@@ -401,101 +434,125 @@ export default function AdsManagementPage() {
               <div className="text-center py-8 text-dark-400 border-2 border-dashed border-dark-700 rounded-xl">
                 <Megaphone className="w-10 h-10 mx-auto mb-2 opacity-50" />
                 <p className="font-medium">No ads yet</p>
-                <p className="text-sm text-dark-500 mt-1">Click &quot;Create Ad&quot; to make your first one</p>
+                <p className="text-sm text-dark-500 mt-1">Click &quot;Add Advertiser&quot; to create your first ad</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {ads.map(ad => (
-                  <div
-                    key={ad.id}
-                    className={`flex items-start gap-3 p-4 rounded-xl transition-colors ${
-                      ad.isActive && ad.enabled
-                        ? 'bg-success/10 border border-success/30'
-                        : 'bg-dark-800/50 hover:bg-dark-800/70'
-                    }`}
-                  >
-                    {/* Status indicator */}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      ad.isActive && ad.enabled
-                        ? 'bg-success/20'
-                        : ad.enabled
-                          ? 'bg-brand-500/20'
-                          : 'bg-dark-700'
-                    }`}>
-                      {ad.isActive && ad.enabled ? (
-                        <Radio className="w-5 h-5 text-success" />
-                      ) : ad.enabled ? (
-                        <Eye className="w-5 h-5 text-brand-400" />
-                      ) : (
-                        <EyeOff className="w-5 h-5 text-dark-500" />
-                      )}
-                    </div>
-
-                    {/* Ad content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        {ad.name && <span className="font-medium text-white">{ad.name}</span>}
-                        {ad.isActive && ad.enabled && (
-                          <span className="text-xs bg-success/20 text-success px-2 py-0.5 rounded-full">Active</span>
-                        )}
-                        {!ad.enabled && (
-                          <span className="text-xs bg-dark-700 text-dark-400 px-2 py-0.5 rounded-full">Disabled</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-dark-300 truncate">{ad.text}</p>
-                      <p className="text-xs text-dark-500 truncate mt-0.5">Short: {ad.shortText}</p>
-                      {ad.description && (
-                        <p className="text-xs text-dark-500 mt-1">Caption: {ad.description}</p>
-                      )}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-dark-500">
-                        <span>{ad.impressions.toLocaleString()} impressions</span>
-                        {ad.url && <span className="flex items-center gap-1"><LinkIcon className="w-3 h-3" /> Has URL</span>}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {/* Set as active button */}
-                      {!ad.isActive && ad.enabled && (
-                        <button
-                          onClick={() => handleSetActive(ad)}
-                          className="p-2 text-dark-400 hover:text-success hover:bg-success/10 rounded-lg transition-colors"
-                          title="Set as active"
-                        >
-                          <Zap className="w-4 h-4" />
-                        </button>
-                      )}
-                      {/* Toggle enabled */}
-                      <button
-                        onClick={() => handleToggleEnabled(ad)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          ad.enabled
-                            ? 'text-success hover:text-dark-400 hover:bg-dark-700'
-                            : 'text-dark-500 hover:text-success hover:bg-success/10'
-                        }`}
-                        title={ad.enabled ? 'Disable' : 'Enable'}
-                      >
-                        {ad.enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                      </button>
-                      {/* Edit */}
-                      <button
-                        onClick={() => handleEdit(ad)}
-                        className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      {/* Delete */}
-                      <button
-                        onClick={() => handleDelete(ad)}
-                        className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-dark-700 text-left text-dark-400">
+                      <th className="pb-3 font-medium">Advertiser</th>
+                      <th className="pb-3 font-medium">Handle</th>
+                      <th className="pb-3 font-medium text-center">Weight</th>
+                      <th className="pb-3 font-medium text-right">Impressions</th>
+                      <th className="pb-3 font-medium text-right">Clicks / CTR</th>
+                      <th className="pb-3 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-800">
+                    {ads.map(ad => (
+                      <tr key={ad.id} className={`hover:bg-dark-800/50 ${!ad.enabled ? 'opacity-50' : ''}`}>
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              ad.enabled ? 'bg-brand-500/20' : 'bg-dark-700'
+                            }`}>
+                              {ad.enabled ? (
+                                <Eye className="w-4 h-4 text-brand-400" />
+                              ) : (
+                                <EyeOff className="w-4 h-4 text-dark-500" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-white">
+                                {ad.advertiserName || ad.name || 'Unnamed'}
+                              </p>
+                              <p className="text-xs text-dark-500 truncate max-w-[200px]">
+                                {ad.shortText}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          {ad.handle ? (
+                            <div className="flex items-center gap-2">
+                              <code className="text-brand-400 bg-dark-900 px-2 py-1 rounded text-xs">
+                                /go/{ad.handle}
+                              </code>
+                              <button
+                                onClick={() => copyToClipboard(`https://quotecord.com/go/${ad.handle}`)}
+                                className="text-dark-500 hover:text-white"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-dark-500 text-xs">No handle</span>
+                          )}
+                        </td>
+                        <td className="py-4 text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="font-medium">{ad.weight || 1}x</span>
+                            {ad.enabled && (
+                              <span className="text-xs text-dark-500">
+                                {getWeightPercentage(ad.weight || 1)}%
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 text-right font-mono">
+                          {ad.impressions.toLocaleString()}
+                        </td>
+                        <td className="py-4 text-right">
+                          <span className="font-mono">{ad.clicks.toLocaleString()}</span>
+                          <span className="text-dark-500 ml-2">
+                            ({getCtr(ad.impressions, ad.clicks)}%)
+                          </span>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            {ad.destinationUrl && (
+                              <a
+                                href={ad.destinationUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"
+                                title="Open destination"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                            )}
+                            <button
+                              onClick={() => handleToggleEnabled(ad)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                ad.enabled
+                                  ? 'text-success hover:text-dark-400 hover:bg-dark-700'
+                                  : 'text-dark-500 hover:text-success hover:bg-success/10'
+                              }`}
+                              title={ad.enabled ? 'Disable' : 'Enable'}
+                            >
+                              {ad.enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                            </button>
+                            <button
+                              onClick={() => handleEdit(ad)}
+                              className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(ad)}
+                              className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -506,118 +563,200 @@ export default function AdsManagementPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80" onClick={() => !saving && setShowForm(false)} />
-          <div className="relative glass rounded-2xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto">
+          <div className="relative glass rounded-2xl max-w-2xl w-full animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-dark-800">
-              <h2 className="text-lg font-semibold">{editingAd ? 'Edit Ad' : 'Create Ad'}</h2>
+              <h2 className="text-lg font-semibold">{editingAd ? 'Edit Advertiser' : 'Add Advertiser'}</h2>
               <button onClick={() => !saving && setShowForm(false)} className="p-2 hover:bg-dark-800 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Name <span className="text-dark-500 font-normal">(internal reference)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., QuoteCord Pro Promo"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
+            <div className="p-6 space-y-6">
+              {/* Advertiser Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Advertiser Info</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Company/Brand Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Logitech"
+                      value={formData.advertiserName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, advertiserName: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Contact Email</label>
+                    <input
+                      type="email"
+                      placeholder="ads@company.com"
+                      value={formData.advertiserEmail}
+                      onChange={(e) => setFormData(prev => ({ ...prev, advertiserEmail: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Internal Name <span className="text-dark-500 font-normal">(for admin reference)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Logitech Q4 2024 Campaign"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Internal Notes</label>
+                  <textarea
+                    placeholder="Contract details, campaign notes, etc..."
+                    value={formData.advertiserNotes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, advertiserNotes: e.target.value }))}
+                    rows={2}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 resize-none"
+                  />
+                </div>
               </div>
 
-              {/* Full Text */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <Type className="w-4 h-4 text-brand-400" />
-                  Full Text <span className="text-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Sponsored • Get Pro at quotecord.com"
-                  value={formData.text}
-                  onChange={(e) => setFormData(prev => ({ ...prev, text: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                  maxLength={150}
-                />
-                <p className="text-xs text-dark-500 mt-1">Shown on classic/profile templates. Max ~100 chars recommended.</p>
+              {/* Tracking URL Section */}
+              <div className="space-y-4 pt-4 border-t border-dark-800">
+                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Tracking URL</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                      <LinkIcon className="w-4 h-4 text-brand-400" />
+                      Handle
+                    </label>
+                    <div className="flex items-center">
+                      <span className="px-3 py-2.5 bg-dark-900 border border-r-0 border-dark-700 rounded-l-xl text-sm text-dark-500">
+                        /go/
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="logitech"
+                        value={formData.handle}
+                        onChange={(e) => setFormData(prev => ({ ...prev, handle: e.target.value.toLowerCase() }))}
+                        className="flex-1 px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-r-xl text-sm focus:outline-none focus:border-brand-500"
+                      />
+                    </div>
+                    <p className="text-xs text-dark-500 mt-1">Letters, numbers, hyphens, underscores only</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Destination URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://logitech.com/promo"
+                      value={formData.destinationUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, destinationUrl: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                    <p className="text-xs text-dark-500 mt-1">Where clicks are redirected to</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Short Text */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <AlignLeft className="w-4 h-4 text-brand-400" />
-                  Short Text <span className="text-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Sponsored • quotecord.com"
-                  value={formData.shortText}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shortText: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                  maxLength={80}
-                />
-                <p className="text-xs text-dark-500 mt-1">Shown on discord/embed templates. Max ~50 chars recommended.</p>
+              {/* Ad Content Section */}
+              <div className="space-y-4 pt-4 border-t border-dark-800">
+                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Ad Content</h3>
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                    <Type className="w-4 h-4 text-brand-400" />
+                    Full Text <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Sponsored by Logitech • Shop gaming gear at logitech.com"
+                    value={formData.text}
+                    onChange={(e) => setFormData(prev => ({ ...prev, text: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    maxLength={150}
+                  />
+                  <p className="text-xs text-dark-500 mt-1">Shown on classic/profile templates. Max ~100 chars recommended.</p>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                    <AlignLeft className="w-4 h-4 text-brand-400" />
+                    Short Text <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Sponsored • logitech.com"
+                    value={formData.shortText}
+                    onChange={(e) => setFormData(prev => ({ ...prev, shortText: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    maxLength={80}
+                  />
+                  <p className="text-xs text-dark-500 mt-1">Shown on discord/embed templates. Max ~50 chars recommended.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Description <span className="text-dark-500 font-normal">(optional caption)</span>
+                  </label>
+                  <textarea
+                    placeholder="A brief description/caption for the ad..."
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={2}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 resize-none"
+                  />
+                </div>
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Description/Caption <span className="text-dark-500 font-normal">(optional)</span>
-                </label>
-                <textarea
-                  placeholder="A brief description that can be shown under the quote..."
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={2}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 resize-none"
-                />
-                <p className="text-xs text-dark-500 mt-1">Context for what the ad URL is about.</p>
-              </div>
+              {/* Settings Section */}
+              <div className="space-y-4 pt-4 border-t border-dark-800">
+                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Settings</h3>
 
-              {/* URL */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <LinkIcon className="w-4 h-4 text-brand-400" />
-                  URL <span className="text-dark-500 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://quotecord.com"
-                  value={formData.url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                      <Weight className="w-4 h-4 text-brand-400" />
+                      Weight
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={formData.weight}
+                      onChange={(e) => setFormData(prev => ({ ...prev, weight: parseInt(e.target.value) || 1 }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                    <p className="text-xs text-dark-500 mt-1">Higher = more impressions</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">End Date</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
 
-              {/* Toggles */}
-              <div className="pt-2 border-t border-dark-800 space-y-3">
                 <div className="flex items-center justify-between p-3 bg-dark-800/50 rounded-xl">
                   <div>
                     <span className="text-sm font-medium">Enabled</span>
-                    <p className="text-xs text-dark-500 mt-0.5">Allow this ad to be shown</p>
+                    <p className="text-xs text-dark-500 mt-0.5">Include this ad in rotation</p>
                   </div>
                   <button
                     onClick={() => setFormData(prev => ({ ...prev, enabled: !prev.enabled }))}
                     className={formData.enabled ? 'text-success' : 'text-dark-500'}
                   >
                     {formData.enabled ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-dark-800/50 rounded-xl">
-                  <div>
-                    <span className="text-sm font-medium">Set as Active</span>
-                    <p className="text-xs text-dark-500 mt-0.5">Make this the currently shown ad</p>
-                  </div>
-                  <button
-                    onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
-                    className={formData.isActive ? 'text-success' : 'text-dark-500'}
-                  >
-                    {formData.isActive ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8" />}
                   </button>
                 </div>
               </div>
@@ -637,7 +776,7 @@ export default function AdsManagementPage() {
                 className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-medium py-2.5 px-5 rounded-xl disabled:opacity-50"
               >
                 {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {editingAd ? 'Save Changes' : 'Create Ad'}
+                {editingAd ? 'Save Changes' : 'Add Advertiser'}
               </button>
             </div>
           </div>

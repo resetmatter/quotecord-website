@@ -9,14 +9,20 @@ interface AdRow {
   short_text: string
   name: string | null
   description: string | null
-  url: string | null
+  handle: string | null
+  destination_url: string | null
+  url: string | null // Legacy field
   enabled: boolean
-  is_active: boolean
+  weight: number
   priority: number
   start_date: string | null
   end_date: string | null
   target_guilds: string[] | null
   impressions: number
+  clicks: number
+  advertiser_name: string | null
+  advertiser_email: string | null
+  advertiser_notes: string | null
   created_by: string | null
   updated_by: string | null
   created_at: string
@@ -43,14 +49,19 @@ function dbRowToAd(row: AdRow): Ad {
     shortText: row.short_text,
     name: row.name,
     description: row.description,
-    url: row.url,
+    handle: row.handle,
+    destinationUrl: row.destination_url,
     enabled: row.enabled,
-    isActive: row.is_active,
-    priority: row.priority,
+    weight: row.weight || 1,
+    priority: row.priority || 0,
     startDate: row.start_date,
     endDate: row.end_date,
     targetGuilds: row.target_guilds,
-    impressions: row.impressions,
+    impressions: row.impressions || 0,
+    clicks: row.clicks || 0,
+    advertiserName: row.advertiser_name,
+    advertiserEmail: row.advertiser_email,
+    advertiserNotes: row.advertiser_notes,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -58,7 +69,7 @@ function dbRowToAd(row: AdRow): Ad {
   }
 }
 
-// GET /api/admin/ads - Get all ads
+// GET /api/admin/ads - Get all ads with stats
 export async function GET(request: Request) {
   if (!verifyAdminKey(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -70,8 +81,8 @@ export async function GET(request: Request) {
     const { data: ads, error } = await (supabase as any)
       .from('ads')
       .select('*')
-      .order('is_active', { ascending: false })
-      .order('priority', { ascending: false })
+      .order('enabled', { ascending: false })
+      .order('weight', { ascending: false })
       .order('created_at', { ascending: false }) as { data: AdRow[] | null; error: any }
 
     if (error) {
@@ -79,8 +90,20 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch ads' }, { status: 500 })
     }
 
+    // Calculate total stats
+    const totalImpressions = (ads || []).reduce((sum, ad) => sum + (ad.impressions || 0), 0)
+    const totalClicks = (ads || []).reduce((sum, ad) => sum + (ad.clicks || 0), 0)
+    const activeCount = (ads || []).filter(ad => ad.enabled).length
+
     return NextResponse.json({
-      ads: (ads || []).map(dbRowToAd)
+      ads: (ads || []).map(dbRowToAd),
+      stats: {
+        totalAds: (ads || []).length,
+        activeAds: activeCount,
+        totalImpressions,
+        totalClicks,
+        overallCtr: totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : '0.00'
+      }
     })
   } catch (error) {
     console.error('Error in GET /api/admin/ads:', error)
@@ -104,14 +127,33 @@ export async function POST(request: Request) {
       )
     }
 
+    // Validate handle format if provided
+    if (body.handle) {
+      const handleRegex = /^[a-z0-9_-]+$/i
+      if (!handleRegex.test(body.handle)) {
+        return NextResponse.json(
+          { error: 'Handle can only contain letters, numbers, hyphens, and underscores' },
+          { status: 400 }
+        )
+      }
+    }
+
     const supabase = createServiceClient()
 
-    // If this ad is being set as active, deactivate all other ads first
-    if (body.isActive) {
-      await (supabase as any)
+    // Check if handle is already taken
+    if (body.handle) {
+      const { data: existing } = await (supabase as any)
         .from('ads')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('is_active', true)
+        .select('id')
+        .eq('handle', body.handle.toLowerCase())
+        .single()
+
+      if (existing) {
+        return NextResponse.json(
+          { error: `Handle "${body.handle}" is already taken` },
+          { status: 400 }
+        )
+      }
     }
 
     const { data: ad, error } = await (supabase as any)
@@ -121,13 +163,16 @@ export async function POST(request: Request) {
         short_text: body.shortText,
         name: body.name || null,
         description: body.description || null,
-        url: body.url || null,
+        handle: body.handle?.toLowerCase() || null,
+        destination_url: body.destinationUrl || null,
         enabled: body.enabled ?? true,
-        is_active: body.isActive ?? false,
-        priority: body.priority ?? 0,
+        weight: body.weight ?? 1,
         start_date: body.startDate || null,
         end_date: body.endDate || null,
         target_guilds: body.targetGuilds || null,
+        advertiser_name: body.advertiserName || null,
+        advertiser_email: body.advertiserEmail || null,
+        advertiser_notes: body.advertiserNotes || null,
         created_by: body.createdBy || 'admin'
       })
       .select()
@@ -165,13 +210,30 @@ export async function PATCH(request: Request) {
     const body: UpdateAdRequest = await request.json()
     const supabase = createServiceClient()
 
-    // If this ad is being set as active, deactivate all other ads first
-    if (body.isActive) {
-      await (supabase as any)
+    // Validate handle format if provided
+    if (body.handle) {
+      const handleRegex = /^[a-z0-9_-]+$/i
+      if (!handleRegex.test(body.handle)) {
+        return NextResponse.json(
+          { error: 'Handle can only contain letters, numbers, hyphens, and underscores' },
+          { status: 400 }
+        )
+      }
+
+      // Check if handle is already taken by another ad
+      const { data: existing } = await (supabase as any)
         .from('ads')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .select('id')
+        .eq('handle', body.handle.toLowerCase())
         .neq('id', id)
-        .eq('is_active', true)
+        .single()
+
+      if (existing) {
+        return NextResponse.json(
+          { error: `Handle "${body.handle}" is already taken` },
+          { status: 400 }
+        )
+      }
     }
 
     // Build update object
@@ -183,13 +245,16 @@ export async function PATCH(request: Request) {
     if (body.shortText !== undefined) updates.short_text = body.shortText
     if (body.name !== undefined) updates.name = body.name
     if (body.description !== undefined) updates.description = body.description
-    if (body.url !== undefined) updates.url = body.url
+    if (body.handle !== undefined) updates.handle = body.handle?.toLowerCase() || null
+    if (body.destinationUrl !== undefined) updates.destination_url = body.destinationUrl
     if (body.enabled !== undefined) updates.enabled = body.enabled
-    if (body.isActive !== undefined) updates.is_active = body.isActive
-    if (body.priority !== undefined) updates.priority = body.priority
+    if (body.weight !== undefined) updates.weight = body.weight
     if (body.startDate !== undefined) updates.start_date = body.startDate
     if (body.endDate !== undefined) updates.end_date = body.endDate
     if (body.targetGuilds !== undefined) updates.target_guilds = body.targetGuilds
+    if (body.advertiserName !== undefined) updates.advertiser_name = body.advertiserName
+    if (body.advertiserEmail !== undefined) updates.advertiser_email = body.advertiserEmail
+    if (body.advertiserNotes !== undefined) updates.advertiser_notes = body.advertiserNotes
     if (body.updatedBy !== undefined) updates.updated_by = body.updatedBy
 
     const { data: ad, error } = await (supabase as any)

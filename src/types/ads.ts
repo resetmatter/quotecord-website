@@ -1,4 +1,4 @@
-// Ad Types
+// Ad Types for multi-advertiser system
 
 export interface Ad {
   id: string
@@ -6,18 +6,45 @@ export interface Ad {
   shortText: string // Short ad text for discord/embed templates
   name: string | null // Internal name for admin reference
   description: string | null // Optional description/caption for context
-  url: string | null // Optional URL for the ad destination
-  enabled: boolean // Global on/off switch
-  isActive: boolean // Which ad is currently being served
-  priority: number // Higher priority shown first
+
+  // Vanity URL system
+  handle: string | null // Vanity URL handle (e.g., "logitech" for quotecord.com/go/logitech)
+  destinationUrl: string | null // Where the handle redirects to
+
+  // Status
+  enabled: boolean // Whether this ad is in rotation
+  weight: number // Weight for random selection (higher = more impressions)
+
+  // Scheduling
+  priority: number // Legacy field
   startDate: string | null // When this ad should start showing
   endDate: string | null // When this ad should stop showing
   targetGuilds: string[] | null // Optional: only show to specific guilds
-  impressions: number // Number of times this ad has been shown
+
+  // Tracking
+  impressions: number // Number of times this ad was shown
+  clicks: number // Number of times the handle URL was visited
+
+  // Advertiser info
+  advertiserName: string | null // Company/brand name
+  advertiserEmail: string | null // Contact email
+  advertiserNotes: string | null // Internal notes
+
+  // Metadata
   createdBy: string | null
   updatedBy: string | null
   createdAt: string
   updatedAt: string
+}
+
+// Computed stats
+export interface AdStats {
+  impressions: number
+  clicks: number
+  ctr: number // Click-through rate as percentage
+  clicksToday: number
+  clicksThisWeek: number
+  clicksThisMonth: number
 }
 
 // What the bot receives from GET /api/bot/ads
@@ -26,12 +53,8 @@ export interface BotAdResponse {
   shortText: string // Short ad text for discord/embed templates
   enabled: boolean // Global on/off switch
   description?: string // Optional description/caption
-  url?: string // Optional URL
-  // Future fields:
-  // priority?: number
-  // startDate?: string
-  // endDate?: string
-  // targetGuilds?: string[]
+  handle?: string // The vanity handle
+  url?: string // The tracking URL (quotecord.com/go/handle)
 }
 
 // Admin API request/response types
@@ -40,13 +63,16 @@ export interface CreateAdRequest {
   shortText: string
   name?: string
   description?: string
-  url?: string
+  handle?: string
+  destinationUrl?: string
   enabled?: boolean
-  isActive?: boolean
-  priority?: number
+  weight?: number
   startDate?: string
   endDate?: string
   targetGuilds?: string[]
+  advertiserName?: string
+  advertiserEmail?: string
+  advertiserNotes?: string
   createdBy?: string
 }
 
@@ -55,12 +81,15 @@ export interface UpdateAdRequest {
   shortText?: string
   name?: string
   description?: string
-  url?: string
+  handle?: string
+  destinationUrl?: string
   enabled?: boolean
-  isActive?: boolean
-  priority?: number
+  weight?: number
   startDate?: string
   endDate?: string
   targetGuilds?: string[]
+  advertiserName?: string
+  advertiserEmail?: string
+  advertiserNotes?: string
   updatedBy?: string
 }
