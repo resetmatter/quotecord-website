@@ -12,20 +12,22 @@ export default function DashboardPage() {
   const [subscriptionData, setSubscriptionData] = useState<{
     current_period_start: string | null
     current_period_end: string | null
+    billing_interval: 'month' | 'year' | null
   } | null>(null)
   const searchParams = useSearchParams()
 
   useEffect(() => {
     getCurrentUser().then(setUser)
 
-    // Fetch subscription data from API (which fetches from Stripe if dates are missing)
+    // Fetch subscription data from API (which fetches from Stripe)
     fetch('/api/subscription')
       .then(res => res.json())
       .then(data => {
-        if (data.current_period_start && data.current_period_end) {
+        if (data.current_period_start || data.current_period_end || data.billing_interval) {
           setSubscriptionData({
             current_period_start: data.current_period_start,
-            current_period_end: data.current_period_end
+            current_period_end: data.current_period_end,
+            billing_interval: data.billing_interval
           })
         }
       })
@@ -38,8 +40,11 @@ export default function DashboardPage() {
   }, [searchParams])
 
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
+  // Use billing_interval from Stripe API (accurate even during trials)
   const periodData = subscriptionData || user?.subscription
-  const currentBillingPeriod = periodData ? getBillingPeriod(periodData) : null
+  const currentBillingPeriod = subscriptionData?.billing_interval === 'year' ? 'annual'
+    : subscriptionData?.billing_interval === 'month' ? 'monthly'
+    : periodData ? getBillingPeriod(periodData) : null
   const isMonthlySubscriber = isPremium && currentBillingPeriod === 'monthly'
 
   return (

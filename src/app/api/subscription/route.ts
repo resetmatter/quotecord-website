@@ -27,9 +27,8 @@ export async function GET() {
         [key: string]: any
       } | null }
 
-    // If we have a subscription but missing period dates, fetch from Stripe
-    if (subscription?.stripe_subscription_id &&
-        (!subscription.current_period_start || !subscription.current_period_end)) {
+    // If we have a Stripe subscription, fetch additional details
+    if (subscription?.stripe_subscription_id) {
       try {
         const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id)
 
@@ -40,8 +39,11 @@ export async function GET() {
           ? new Date(stripeSubscription.current_period_end * 1000).toISOString()
           : null
 
-        // Update the database with the dates
-        if (periodStart && periodEnd) {
+        // Get billing interval from the subscription's price
+        const billingInterval = stripeSubscription.items.data[0]?.price?.recurring?.interval || null
+
+        // Update the database with the dates if they were missing
+        if (periodStart && periodEnd && (!subscription.current_period_start || !subscription.current_period_end)) {
           await (supabase as any)
             .from('subscriptions')
             .update({
@@ -49,14 +51,15 @@ export async function GET() {
               current_period_end: periodEnd
             })
             .eq('user_id', user.id)
-
-          // Return updated subscription data
-          return NextResponse.json({
-            ...subscription,
-            current_period_start: periodStart,
-            current_period_end: periodEnd
-          })
         }
+
+        // Return subscription data with billing interval
+        return NextResponse.json({
+          ...subscription,
+          current_period_start: periodStart || subscription.current_period_start,
+          current_period_end: periodEnd || subscription.current_period_end,
+          billing_interval: billingInterval // 'month' or 'year'
+        })
       } catch (e) {
         console.error('Failed to fetch subscription from Stripe:', e)
       }
