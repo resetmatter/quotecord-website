@@ -115,7 +115,7 @@ export async function POST(req: Request) {
         price: priceId,
         quantity: 1
       }],
-      allow_promotion_codes: true, // Users can enter promo codes at Stripe checkout
+      allow_promotion_codes: false, // Promo codes are validated on our billing page first
       metadata: {
         discord_id: profile.discord_id,
         supabase_user_id: user.id,

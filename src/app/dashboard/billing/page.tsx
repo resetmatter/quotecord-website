@@ -1,13 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar } from 'lucide-react'
+import { Crown, Sparkles, ExternalLink, Shield, Check, Star, ArrowRight, Calendar, Tag, X, Loader2 } from 'lucide-react'
 import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function BillingPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual')
+  const [promoCode, setPromoCode] = useState('')
+  const [promoStatus, setPromoStatus] = useState<{
+    checking: boolean
+    valid: boolean | null
+    trialDays: number | null
+    error: string | null
+  }>({ checking: false, valid: null, trialDays: null, error: null })
+  const [showPromoInput, setShowPromoInput] = useState(false)
   const [subscriptionData, setSubscriptionData] = useState<{
     current_period_start: string | null
     current_period_end: string | null
@@ -30,6 +38,33 @@ export default function BillingPage() {
       .catch(console.error)
   }, [])
 
+  // Validate promo code
+  const validatePromoCode = async (code: string) => {
+    if (!code.trim()) {
+      setPromoStatus({ checking: false, valid: null, trialDays: null, error: null })
+      return
+    }
+
+    setPromoStatus({ checking: true, valid: null, trialDays: null, error: null })
+
+    try {
+      const res = await fetch('/api/validate-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim().toUpperCase() })
+      })
+      const data = await res.json()
+
+      if (data.valid) {
+        setPromoStatus({ checking: false, valid: true, trialDays: data.trialDays, error: null })
+      } else {
+        setPromoStatus({ checking: false, valid: false, trialDays: null, error: data.error || 'Invalid code' })
+      }
+    } catch {
+      setPromoStatus({ checking: false, valid: false, trialDays: null, error: 'Failed to check code' })
+    }
+  }
+
   const isPremium = user?.subscription?.tier === 'premium' && user?.subscription?.status === 'active'
   // Use subscriptionData from API if available (more up-to-date), otherwise fall back to user data
   const periodData = subscriptionData || user?.subscription
@@ -42,7 +77,10 @@ export default function BillingPage() {
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ period: billingPeriod })
+        body: JSON.stringify({
+          period: billingPeriod,
+          promoCode: promoStatus.valid ? promoCode.trim().toUpperCase() : undefined
+        })
       })
 
       const data = await res.json()
@@ -230,6 +268,73 @@ export default function BillingPage() {
             </div>
           </div>
 
+          {/* Promo Code */}
+          <div className="mb-6">
+            {!showPromoInput ? (
+              <button
+                onClick={() => setShowPromoInput(true)}
+                className="text-sm text-dark-400 hover:text-dark-300 flex items-center gap-1.5 transition-colors"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                Have a promo code?
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter promo code"
+                    value={promoCode}
+                    onChange={(e) => {
+                      const code = e.target.value.toUpperCase()
+                      setPromoCode(code)
+                      // Reset status when typing
+                      if (promoStatus.valid !== null) {
+                        setPromoStatus({ checking: false, valid: null, trialDays: null, error: null })
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && promoCode.trim()) {
+                        validatePromoCode(promoCode)
+                      }
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm font-mono focus:outline-none focus:border-brand-500"
+                  />
+                  <button
+                    onClick={() => validatePromoCode(promoCode)}
+                    disabled={!promoCode.trim() || promoStatus.checking}
+                    className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors"
+                  >
+                    {promoStatus.checking ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Apply'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPromoInput(false)
+                      setPromoCode('')
+                      setPromoStatus({ checking: false, valid: null, trialDays: null, error: null })
+                    }}
+                    className="p-2 text-dark-400 hover:text-dark-300"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                {promoStatus.valid === true && promoStatus.trialDays && (
+                  <div className="flex items-center gap-2 text-success text-sm bg-success/10 px-3 py-2 rounded-lg">
+                    <Check className="w-4 h-4" />
+                    <span><strong>{promoStatus.trialDays} days free!</strong> You won&apos;t be charged until the trial ends.</span>
+                  </div>
+                )}
+                {promoStatus.valid === false && promoStatus.error && (
+                  <p className="text-error text-sm">{promoStatus.error}</p>
+                )}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleUpgrade}
             disabled={loading}
@@ -240,7 +345,7 @@ export default function BillingPage() {
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                Upgrade Now
+                {promoStatus.valid && promoStatus.trialDays ? 'Start Free Trial' : 'Upgrade Now'}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </>
             )}

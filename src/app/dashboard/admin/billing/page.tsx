@@ -126,50 +126,8 @@ export default function BillingSettingsPage() {
       setError(null)
       const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getApiKey()}` }
 
-      // Step 1: Create Stripe coupon with $0.01 off (essentially free, but needed for Stripe promo codes)
-      const couponRes = await fetch('/api/admin/billing/coupons', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          name: `${promoForm.code} - ${promoForm.trialDays} day trial`,
-          amountOff: 1, // $0.01 off - essentially nothing
-          currency: 'usd',
-          duration: 'once',
-          metadata: {
-            trial_days: promoForm.trialDays,
-            created_for: promoForm.createdFor || ''
-          }
-        })
-      })
-
-      if (!couponRes.ok) {
-        const data = await couponRes.json()
-        throw new Error(data.error || 'Failed to create coupon')
-      }
-
-      const { coupon } = await couponRes.json()
-
-      // Step 2: Create Stripe promo code (so users can enter it at checkout)
-      const stripePromoRes = await fetch('/api/admin/billing/promo-codes', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          couponId: coupon.id,
-          code: promoForm.code.toUpperCase(),
-          maxRedemptions: promoForm.maxRedemptions ? parseInt(promoForm.maxRedemptions) : undefined,
-          expiresAt: promoForm.expiresAt || undefined,
-          metadata: {
-            trial_days: promoForm.trialDays
-          }
-        })
-      })
-
-      if (!stripePromoRes.ok) {
-        const data = await stripePromoRes.json()
-        throw new Error(data.error || 'Failed to create Stripe promo code')
-      }
-
-      // Step 3: Create trial rule in our database (for looking up trial days)
+      // Create trial rule in our database
+      // No Stripe coupons needed - trial is applied via subscription_data.trial_period_days at checkout
       const ruleRes = await fetch('/api/admin/billing/trial-rules', {
         method: 'POST',
         headers,
@@ -186,7 +144,7 @@ export default function BillingSettingsPage() {
 
       if (!ruleRes.ok) {
         const data = await ruleRes.json()
-        throw new Error(data.error || 'Failed to create trial rule')
+        throw new Error(data.error || 'Failed to create promo')
       }
 
       setSuccess(`Promo "${promoForm.code.toUpperCase()}" created with ${promoForm.trialDays}-day free trial!`)
