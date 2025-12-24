@@ -522,7 +522,7 @@ export default function AdsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g., FlirtFactory Winter Campaign"
+                  placeholder="e.g., QuoteCord Premium Promo"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
@@ -537,7 +537,7 @@ export default function AdsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Sponsored • Join Us at discord.gg/flirtfactory"
+                  placeholder="Sponsored • Get Premium at quotecord.com"
                   value={formData.text}
                   onChange={(e) => setFormData(prev => ({ ...prev, text: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
@@ -554,7 +554,7 @@ export default function AdsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Sponsored • Try DisQuote"
+                  placeholder="Sponsored • quotecord.com"
                   value={formData.shortText}
                   onChange={(e) => setFormData(prev => ({ ...prev, shortText: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
@@ -586,7 +586,7 @@ export default function AdsManagementPage() {
                 </label>
                 <input
                   type="url"
-                  placeholder="https://discord.gg/flirtfactory"
+                  placeholder="https://quotecord.com"
                   value={formData.url}
                   onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"

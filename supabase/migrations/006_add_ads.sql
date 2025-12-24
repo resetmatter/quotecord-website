@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS ads (
   short_text TEXT NOT NULL, -- Short ad text for discord/embed templates (max ~50 chars recommended)
 
   -- Ad metadata
-  name TEXT, -- Internal name for admin reference (e.g., "FlirtFactory Promo")
+  name TEXT, -- Internal name for admin reference (e.g., "QuoteCord Premium Promo")
   description TEXT, -- Optional description/caption that advertisers can display under the quote
   url TEXT, -- Optional URL for the ad destination
 
@@ -94,11 +94,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Insert a default ad (matching current bot config)
+-- Insert a default ad promoting QuoteCord
 INSERT INTO ads (text, short_text, name, enabled, is_active, created_by)
 VALUES (
-  'Sponsored • Join Us at discord.gg/flirtfactory',
-  'Sponsored • Try DisQuote',
+  'Sponsored • Get Premium at quotecord.com',
+  'Sponsored • quotecord.com',
   'Default Ad',
   TRUE,
   TRUE,
