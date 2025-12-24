@@ -107,8 +107,6 @@ export async function POST(req: Request) {
     }
 
     // Build checkout session options
-    // Note: We handle promo codes ourselves (not Stripe promo codes) so users enter codes
-    // on our billing page before checkout, and we apply trial_period_days
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
@@ -117,7 +115,7 @@ export async function POST(req: Request) {
         price: priceId,
         quantity: 1
       }],
-      allow_promotion_codes: false, // We handle promos via trial_period_days instead
+      allow_promotion_codes: true, // Users can enter promo codes at Stripe checkout
       metadata: {
         discord_id: profile.discord_id,
         supabase_user_id: user.id,

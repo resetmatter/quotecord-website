@@ -54,6 +54,58 @@ export async function POST(req: Request) {
             .eq('discord_id', discordId)
 
           console.log(`Upgraded user ${discordId} to premium`)
+
+          // Check if a promo code was used and apply trial days
+          if (session.subscription) {
+            try {
+              // Retrieve the full checkout session with line items to get discount info
+              const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+                expand: ['total_details.breakdown']
+              })
+
+              // Check for applied discounts
+              const discounts = fullSession.total_details?.breakdown?.discounts || []
+              if (discounts.length > 0) {
+                const discount = discounts[0]
+                // Get the promotion code that was used
+                if (discount.discount.promotion_code) {
+                  const promoCodeId = typeof discount.discount.promotion_code === 'string'
+                    ? discount.discount.promotion_code
+                    : discount.discount.promotion_code.id
+
+                  // Retrieve the promotion code to get the code string
+                  const promoCode = await stripe.promotionCodes.retrieve(promoCodeId)
+                  const code = promoCode.code
+
+                  console.log(`Promo code used: ${code}`)
+
+                  // Look up trial days from our database
+                  const { data: trialRule } = await supabase
+                    .from('promo_trial_rules')
+                    .select('trial_days')
+                    .eq('promo_code', code)
+                    .eq('is_active', true)
+                    .single()
+
+                  if (trialRule && trialRule.trial_days > 0) {
+                    // Calculate trial end date
+                    const trialEndTimestamp = Math.floor(Date.now() / 1000) + (trialRule.trial_days * 24 * 60 * 60)
+
+                    // Update the subscription to add trial period
+                    await stripe.subscriptions.update(session.subscription as string, {
+                      trial_end: trialEndTimestamp,
+                      proration_behavior: 'none'
+                    })
+
+                    console.log(`Applied ${trialRule.trial_days}-day trial to subscription ${session.subscription}`)
+                  }
+                }
+              }
+            } catch (trialError) {
+              // Don't fail the whole webhook if trial application fails
+              console.error('Failed to apply trial:', trialError)
+            }
+          }
         }
         break
       }
