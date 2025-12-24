@@ -21,6 +21,7 @@ export default function BillingPage() {
     current_period_end: string | null
     billing_interval: 'month' | 'year' | null
   } | null>(null)
+  const [allowPromoCodes, setAllowPromoCodes] = useState(true)
 
   useEffect(() => {
     getCurrentUser().then(setUser)
@@ -35,6 +36,16 @@ export default function BillingPage() {
             current_period_end: data.current_period_end,
             billing_interval: data.billing_interval
           })
+        }
+      })
+      .catch(console.error)
+
+    // Fetch billing settings to check if promo codes are enabled
+    fetch('/api/billing/checkout-settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.allowPromotionCodes !== undefined) {
+          setAllowPromoCodes(data.allowPromotionCodes)
         }
       })
       .catch(console.error)
@@ -273,7 +284,8 @@ export default function BillingPage() {
             </div>
           </div>
 
-          {/* Promo Code */}
+          {/* Promo Code - only show if enabled in billing settings */}
+          {allowPromoCodes && (
           <div className="mb-6">
             {!showPromoInput ? (
               <button
@@ -339,6 +351,7 @@ export default function BillingPage() {
               </div>
             )}
           </div>
+          )}
 
           <button
             onClick={handleUpgrade}
