@@ -71,6 +71,69 @@ export default function AdsManagementPage() {
     }, 0)
   }
 
+  const insertLink = () => {
+    const textarea = descriptionRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const text = formData.description
+    const selectedText = text.substring(start, end)
+
+    // Check if selected text looks like a URL
+    const looksLikeUrl = selectedText && /^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}/.test(selectedText)
+
+    let newText: string
+    let cursorStart: number
+    let cursorEnd: number
+
+    if (looksLikeUrl) {
+      // Use selected text as both display and URL
+      const url = selectedText.startsWith('http') ? selectedText : `https://${selectedText}`
+      newText = text.substring(0, start) + `[${selectedText}](${url})` + text.substring(end)
+      cursorStart = cursorEnd = start + `[${selectedText}](${url})`.length
+    } else if (selectedText) {
+      // Use selected text as display, placeholder for URL
+      newText = text.substring(0, start) + `[${selectedText}](url)` + text.substring(end)
+      cursorStart = start + selectedText.length + 3 // position at "url"
+      cursorEnd = cursorStart + 3
+    } else {
+      // No selection, insert placeholder
+      newText = text.substring(0, start) + '[link text](url)' + text.substring(end)
+      cursorStart = start + 1
+      cursorEnd = start + 10
+    }
+
+    setFormData(prev => ({ ...prev, description: newText }))
+
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(cursorStart, cursorEnd)
+    }, 0)
+  }
+
+  // Render Discord-style markdown preview
+  const renderPreview = (markdown: string) => {
+    if (!markdown) return null
+
+    // Process markdown - order matters!
+    let html = markdown
+      // Escape HTML
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      // Links [text](url)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-brand-400 underline" target="_blank">$1</a>')
+      // Bold **text**
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      // Italic *text*
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      // Small text -# text (to end of line or string)
+      .replace(/-#\s*([^\n]*)/g, '<span class="text-xs text-dark-400">$1</span>')
+
+    return <span dangerouslySetInnerHTML={{ __html: html }} />
+  }
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
@@ -436,7 +499,7 @@ export default function AdsManagementPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => insertFormat('[', '](url)', 'link text')}
+                    onClick={insertLink}
                     className="p-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-lg text-dark-400 hover:text-white transition-colors"
                     title="Link"
                   >
@@ -460,7 +523,15 @@ export default function AdsManagementPage() {
                   rows={2}
                   maxLength={200}
                 />
-                <p className="text-xs text-dark-500 mt-1">Shows below quote, above &quot;remove quote&quot; button</p>
+                {formData.description && (
+                  <div className="mt-2 p-3 bg-dark-800/50 border border-dark-700 rounded-xl">
+                    <p className="text-xs text-dark-500 mb-1">Preview:</p>
+                    <p className="text-sm">{renderPreview(formData.description)}</p>
+                  </div>
+                )}
+                {!formData.description && (
+                  <p className="text-xs text-dark-500 mt-1">Shows below quote, above &quot;remove quote&quot; button</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
