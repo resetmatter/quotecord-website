@@ -55,8 +55,11 @@ export default function AddBotPage() {
           </a>
         </div>
 
-        <div className="text-center">
-          <Link href="/" className="text-gray-500 hover:text-gray-400 text-sm">
+        <div className="text-center space-y-2">
+          <Link href="/install-modes" className="block text-indigo-400 hover:text-indigo-300 text-sm">
+            What&apos;s the difference?
+          </Link>
+          <Link href="/" className="block text-gray-500 hover:text-gray-400 text-sm">
             ← Back to home
           </Link>
         </div>
