@@ -8,7 +8,7 @@ interface AdRow {
   short_text: string
   name: string | null
   enabled: boolean
-  is_active: boolean
+  weight: number
   created_at: string
   updated_at: string
 }
@@ -28,7 +28,7 @@ function dbRowToAd(row: AdRow): Ad {
     shortText: row.short_text,
     name: row.name,
     enabled: row.enabled,
-    isActive: row.is_active,
+    weight: row.weight || 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   }
@@ -46,7 +46,8 @@ export async function GET(request: Request) {
     const { data: ads, error } = await (supabase as any)
       .from('ads')
       .select('*')
-      .order('is_active', { ascending: false })
+      .order('enabled', { ascending: false })
+      .order('weight', { ascending: false })
       .order('created_at', { ascending: false }) as { data: AdRow[] | null; error: any }
 
     if (error) {
@@ -80,8 +81,8 @@ export async function POST(request: Request) {
         text: body.text,
         short_text: body.shortText,
         name: body.name || null,
-        enabled: body.enabled ?? true,
-        is_active: false
+        enabled: body.enabled ?? false,
+        weight: body.weight ?? 1
       })
       .select()
       .single() as { data: AdRow | null; error: any }
@@ -113,20 +114,12 @@ export async function PATCH(request: Request) {
     const body = await request.json()
     const supabase = createServiceClient()
 
-    // If setting this ad as active, deactivate all others first
-    if (body.isActive === true) {
-      await (supabase as any)
-        .from('ads')
-        .update({ is_active: false })
-        .neq('id', id)
-    }
-
     const updates: Record<string, any> = { updated_at: new Date().toISOString() }
     if (body.text !== undefined) updates.text = body.text
     if (body.shortText !== undefined) updates.short_text = body.shortText
     if (body.name !== undefined) updates.name = body.name
     if (body.enabled !== undefined) updates.enabled = body.enabled
-    if (body.isActive !== undefined) updates.is_active = body.isActive
+    if (body.weight !== undefined) updates.weight = body.weight
 
     const { data: ad, error } = await (supabase as any)
       .from('ads')

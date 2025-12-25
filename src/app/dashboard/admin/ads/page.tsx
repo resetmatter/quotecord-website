@@ -12,7 +12,8 @@ import {
   Save,
   HelpCircle,
   Edit3,
-  Radio
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react'
 import type { Ad } from '@/types/ads'
 
@@ -33,7 +34,8 @@ export default function AdsManagementPage() {
     text: '',
     shortText: '',
     name: '',
-    enabled: true
+    enabled: false,
+    weight: 1
   })
 
   const fetchData = useCallback(async () => {
@@ -61,7 +63,7 @@ export default function AdsManagementPage() {
 
   const handleCreate = () => {
     setEditingAd(null)
-    setFormData({ text: '', shortText: '', name: '', enabled: true })
+    setFormData({ text: '', shortText: '', name: '', enabled: false, weight: 1 })
     setShowForm(true)
   }
 
@@ -71,7 +73,8 @@ export default function AdsManagementPage() {
       text: ad.text,
       shortText: ad.shortText,
       name: ad.name || '',
-      enabled: ad.enabled
+      enabled: ad.enabled,
+      weight: ad.weight || 1
     })
     setShowForm(true)
   }
@@ -118,7 +121,7 @@ export default function AdsManagementPage() {
     }
   }
 
-  const handleSetActive = async (ad: Ad) => {
+  const handleToggle = async (ad: Ad) => {
     try {
       const response = await fetch(`/api/admin/ads?id=${ad.id}`, {
         method: 'PATCH',
@@ -126,15 +129,15 @@ export default function AdsManagementPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getApiKey()}`
         },
-        body: JSON.stringify({ isActive: true })
+        body: JSON.stringify({ enabled: !ad.enabled })
       })
 
       if (!response.ok) throw new Error('Failed')
 
-      setSuccess(`"${ad.name || 'Ad'}" is now active`)
+      setSuccess(ad.enabled ? 'Ad disabled' : 'Ad enabled')
       fetchData()
     } catch {
-      setError('Failed to set active ad')
+      setError('Failed to update ad')
     }
   }
 
@@ -156,6 +159,12 @@ export default function AdsManagementPage() {
     }
   }
 
+  // Calculate percentage for each enabled ad
+  const totalWeight = ads.filter(a => a.enabled).reduce((sum, a) => sum + (a.weight || 1), 0)
+  const getPercentage = (weight: number) => totalWeight > 0 ? Math.round((weight / totalWeight) * 100) : 0
+
+  const enabledCount = ads.filter(a => a.enabled).length
+
   return (
     <div className="max-w-3xl">
       {/* Header */}
@@ -165,7 +174,7 @@ export default function AdsManagementPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Ad Management</h1>
-          <p className="text-sm text-dark-400">Manage the ad shown in QuoteCord bot</p>
+          <p className="text-sm text-dark-400">Manage ads shown in QuoteCord bot</p>
         </div>
       </div>
 
@@ -174,7 +183,12 @@ export default function AdsManagementPage() {
         <div className="flex items-start gap-3">
           <HelpCircle className="w-5 h-5 text-brand-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-dark-400">
-            <p>Create multiple ads and select which one is <strong className="text-white">active</strong>. The active ad will be shown to free users in the QuoteCord bot.</p>
+            <p className="mb-2">
+              <strong className="text-white">Single ad:</strong> Enable just one ad to always show that ad.
+            </p>
+            <p>
+              <strong className="text-white">Multiple ads:</strong> Enable multiple ads and set weights. Higher weight = shows more often.
+            </p>
           </div>
         </div>
       </div>
@@ -212,6 +226,16 @@ export default function AdsManagementPage() {
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Status */}
+          {enabledCount > 0 && (
+            <div className="glass rounded-xl p-4">
+              <p className="text-sm text-dark-400">
+                <span className="text-white font-medium">{enabledCount}</span> ad{enabledCount !== 1 ? 's' : ''} in rotation
+                {enabledCount > 1 && ' (weighted random)'}
+              </p>
+            </div>
+          )}
+
           {/* Ads List */}
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
@@ -236,7 +260,7 @@ export default function AdsManagementPage() {
                   <div
                     key={ad.id}
                     className={`p-4 rounded-xl border ${
-                      ad.isActive
+                      ad.enabled
                         ? 'bg-brand-500/10 border-brand-500/50'
                         : 'bg-dark-800/50 border-dark-700'
                     }`}
@@ -244,28 +268,38 @@ export default function AdsManagementPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {ad.isActive && (
+                          <p className="font-medium text-white truncate">
+                            {ad.name || 'Unnamed Ad'}
+                          </p>
+                          {ad.enabled && enabledCount > 1 && (
+                            <span className="text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full">
+                              {getPercentage(ad.weight)}%
+                            </span>
+                          )}
+                          {ad.enabled && enabledCount === 1 && (
                             <span className="text-xs bg-brand-500 text-white px-2 py-0.5 rounded-full">
                               Active
                             </span>
                           )}
-                          <p className="font-medium text-white truncate">
-                            {ad.name || 'Unnamed Ad'}
-                          </p>
                         </div>
                         <p className="text-sm text-dark-400 truncate">{ad.text}</p>
                         <p className="text-xs text-dark-500 truncate mt-1">{ad.shortText}</p>
+                        {ad.enabled && enabledCount > 1 && (
+                          <p className="text-xs text-dark-500 mt-2">Weight: {ad.weight}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
-                        {!ad.isActive && (
-                          <button
-                            onClick={() => handleSetActive(ad)}
-                            className="p-2 text-dark-400 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg"
-                            title="Set as active"
-                          >
-                            <Radio className="w-4 h-4" />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleToggle(ad)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            ad.enabled
+                              ? 'text-success hover:bg-success/10'
+                              : 'text-dark-500 hover:text-success hover:bg-success/10'
+                          }`}
+                          title={ad.enabled ? 'Disable' : 'Enable'}
+                        >
+                          {ad.enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
                         <button
                           onClick={() => handleEdit(ad)}
                           className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg"
@@ -326,7 +360,7 @@ export default function AdsManagementPage() {
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                   maxLength={150}
                 />
-                <p className="text-xs text-dark-500 mt-1">Shown on classic/profile templates (~100 chars max)</p>
+                <p className="text-xs text-dark-500 mt-1">Shown on classic/profile templates</p>
               </div>
 
               <div>
@@ -341,7 +375,45 @@ export default function AdsManagementPage() {
                   className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                   maxLength={80}
                 />
-                <p className="text-xs text-dark-500 mt-1">Shown on discord/embed templates (~50 chars max)</p>
+                <p className="text-xs text-dark-500 mt-1">Shown on discord/embed templates</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Weight</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formData.weight}
+                    onChange={(e) => setFormData(prev => ({ ...prev, weight: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                  />
+                  <p className="text-xs text-dark-500 mt-1">Higher = more frequent</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Status</label>
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, enabled: !prev.enabled }))}
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium ${
+                      formData.enabled
+                        ? 'bg-success/20 text-success border border-success/50'
+                        : 'bg-dark-800 text-dark-400 border border-dark-700'
+                    }`}
+                  >
+                    {formData.enabled ? (
+                      <>
+                        <ToggleRight className="w-5 h-5" />
+                        Enabled
+                      </>
+                    ) : (
+                      <>
+                        <ToggleLeft className="w-5 h-5" />
+                        Disabled
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
