@@ -18,7 +18,8 @@ import {
   Image,
   Lock,
   HelpCircle,
-  Zap
+  Zap,
+  Trash2
 } from 'lucide-react'
 
 const CLIENT_ID = '1439621877285785711'
@@ -99,6 +100,7 @@ export default function InstallModesPage() {
                   <FeatureItem status="partial">Multi-Message Quotes</FeatureItem>
                   <FeatureItem status="none">Server Avatar Selection</FeatureItem>
                   <FeatureItem status="none">Server Nicknames</FeatureItem>
+                  <FeatureItem status="none">Delete Quote Button</FeatureItem>
                 </ul>
               </div>
 
@@ -168,6 +170,7 @@ export default function InstallModesPage() {
                   <FeatureItem status="full">Multi-Message Quotes</FeatureItem>
                   <FeatureItem status="full">Server Avatar Selection</FeatureItem>
                   <FeatureItem status="full">Server Nicknames</FeatureItem>
+                  <FeatureItem status="full">Delete Quote Button</FeatureItem>
                 </ul>
               </div>
 
@@ -221,6 +224,7 @@ export default function InstallModesPage() {
                   <ComparisonRow feature="Server Avatar Selection" user="none" server="full" note="Requires guild member access" />
                   <ComparisonRow feature="Multi-Message Quotes" user="partial" server="full" note="Needs Read Message History permission" />
                   <ComparisonRow feature="Server Nicknames" user="none" server="full" note="Falls back to username" />
+                  <ComparisonRow feature="Delete Quote Button" user="none" server="full" note="Bot needs Manage Messages permission" />
                 </tbody>
               </table>
             </div>
@@ -287,6 +291,12 @@ export default function InstallModesPage() {
                       Can&apos;t access guild member data without server install
                     </td>
                   </tr>
+                  <tr>
+                    <td className="py-4 px-4 text-white font-medium">No Delete Button</td>
+                    <td className="py-4 px-4 text-dark-400">
+                      Bot needs &quot;Manage Messages&quot; permission to delete generated quotes
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -316,6 +326,12 @@ export default function InstallModesPage() {
                   <User className="w-3.5 h-3.5 text-brand-400" />
                 </div>
                 <span><strong className="text-white">Server nickname display</strong></span>
+              </li>
+              <li className="flex items-center gap-3 text-dark-300">
+                <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-3.5 h-3.5 text-brand-400" />
+                </div>
+                <span><strong className="text-white">Delete quote button</strong> (remove generated quotes)</span>
               </li>
             </ul>
             <a
