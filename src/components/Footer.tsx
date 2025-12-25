@@ -89,6 +89,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/install-modes" className="text-dark-400 hover:text-white text-sm transition-colors">
+                  Install Modes
+                </Link>
+              </li>
+              <li>
                 <Link href="/dashboard" className="text-dark-400 hover:text-white text-sm transition-colors">
                   Dashboard
                 </Link>
