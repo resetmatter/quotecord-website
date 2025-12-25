@@ -1,14 +1,116 @@
-import Link from 'next/link'
+'use client'
+
+import { useState } from 'react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { MessageCircle, Mail, Book, ExternalLink, ChevronRight } from 'lucide-react'
+import {
+  CreditCard,
+  Bug,
+  Lightbulb,
+  User,
+  HelpCircle,
+  Book,
+  ChevronRight,
+  ChevronLeft,
+  Send,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react'
 
-export const metadata = {
-  title: 'Support - quotecord',
-  description: 'Get help with quotecord or contact us for any questions.',
-}
+const CATEGORIES = [
+  {
+    id: 'billing',
+    name: 'Billing',
+    description: 'Payment issues, refunds, or subscription questions',
+    icon: CreditCard,
+  },
+  {
+    id: 'bug',
+    name: 'Bug Report',
+    description: 'Something not working as expected',
+    icon: Bug,
+  },
+  {
+    id: 'feature',
+    name: 'Feature Request',
+    description: 'Suggest a new feature or improvement',
+    icon: Lightbulb,
+  },
+  {
+    id: 'account',
+    name: 'Account Issue',
+    description: 'Login problems or account-related questions',
+    icon: User,
+  },
+  {
+    id: 'other',
+    name: 'Other',
+    description: 'General inquiries and other questions',
+    icon: HelpCircle,
+  },
+]
 
 export default function SupportPage() {
+  const [step, setStep] = useState<'category' | 'form' | 'success'>('category')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    email: '',
+    discordUsername: '',
+    subject: '',
+    message: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+    setStep('form')
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: selectedCategory,
+          ...formData,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit request')
+      }
+
+      setStep('success')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleBack = () => {
+    setStep('category')
+    setError(null)
+  }
+
+  const handleNewRequest = () => {
+    setStep('category')
+    setSelectedCategory(null)
+    setFormData({ email: '', discordUsername: '', subject: '', message: '' })
+    setError(null)
+  }
+
+  const selectedCategoryData = CATEGORIES.find((c) => c.id === selectedCategory)
+
   return (
     <>
       <Header />
@@ -21,43 +123,190 @@ export default function SupportPage() {
               <span className="gradient-text"> Support</span>
             </h1>
             <p className="text-dark-400 text-lg">
-              Get help with quotecord or contact us for any questions
+              {step === 'category' && 'Select a category to get started'}
+              {step === 'form' && 'Fill out the form below and we\'ll get back to you'}
+              {step === 'success' && 'Your request has been submitted'}
             </p>
           </div>
 
-          {/* Support Options */}
-          <div className="grid md:grid-cols-2 gap-6 mb-16">
-            <a
-              href="https://discord.gg/your-support-server"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass rounded-2xl p-6 card-hover group"
-            >
-              <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <MessageCircle className="w-6 h-6 text-brand-400" />
-              </div>
-              <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                Discord Support Server
-                <ExternalLink className="w-4 h-4 text-dark-500" />
-              </h2>
-              <p className="text-dark-400 text-sm">
-                Join our community for quick help, feature requests, and updates
-              </p>
-            </a>
+          {/* Category Selection */}
+          {step === 'category' && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
+              {CATEGORIES.map((category) => {
+                const Icon = category.icon
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategorySelect(category.id)}
+                    className="glass rounded-2xl p-6 card-hover group text-left"
+                  >
+                    <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <Icon className="w-6 h-6 text-brand-400" />
+                    </div>
+                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                      {category.name}
+                      <ChevronRight className="w-4 h-4 text-dark-500 group-hover:translate-x-1 transition-transform" />
+                    </h2>
+                    <p className="text-dark-400 text-sm">{category.description}</p>
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
-            <a
-              href="mailto:support@quotecord.com"
-              className="glass rounded-2xl p-6 card-hover group"
-            >
-              <div className="w-12 h-12 rounded-xl icon-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Mail className="w-6 h-6 text-brand-400" />
+          {/* Contact Form */}
+          {step === 'form' && selectedCategoryData && (
+            <div className="max-w-2xl mx-auto">
+              <div className="glass rounded-2xl p-8 mb-16">
+                {/* Category Badge */}
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={handleBack}
+                    className="p-2 rounded-lg hover:bg-dark-700 transition-colors"
+                    aria-label="Go back"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-dark-400" />
+                  </button>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20">
+                    <selectedCategoryData.icon className="w-4 h-4 text-brand-400" />
+                    <span className="text-sm font-medium text-brand-400">
+                      {selectedCategoryData.name}
+                    </span>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-dark-300 mb-2"
+                      >
+                        Email <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-dark-600 text-white placeholder-dark-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="discord"
+                        className="block text-sm font-medium text-dark-300 mb-2"
+                      >
+                        Discord Username{' '}
+                        <span className="text-dark-500">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="discord"
+                        value={formData.discordUsername}
+                        onChange={(e) =>
+                          setFormData({ ...formData, discordUsername: e.target.value })
+                        }
+                        className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-dark-600 text-white placeholder-dark-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors"
+                        placeholder="username"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="subject"
+                      className="block text-sm font-medium text-dark-300 mb-2"
+                    >
+                      Subject <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      required
+                      value={formData.subject}
+                      onChange={(e) =>
+                        setFormData({ ...formData, subject: e.target.value })
+                      }
+                      className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-dark-600 text-white placeholder-dark-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors"
+                      placeholder="Brief description of your issue"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-medium text-dark-300 mb-2"
+                    >
+                      Message <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      id="message"
+                      required
+                      rows={6}
+                      value={formData.message}
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
+                      }
+                      className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-dark-600 text-white placeholder-dark-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none transition-colors resize-none"
+                      placeholder="Please provide as much detail as possible..."
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                      <span className="text-sm">{error}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3.5 rounded-xl font-semibold bg-brand-500 hover:bg-brand-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Submit Request
+                      </>
+                    )}
+                  </button>
+                </form>
               </div>
-              <h2 className="text-lg font-semibold mb-2">Email Support</h2>
-              <p className="text-dark-400 text-sm">
-                For billing issues or private inquiries, email us at support@quotecord.com
-              </p>
-            </a>
-          </div>
+            </div>
+          )}
+
+          {/* Success State */}
+          {step === 'success' && (
+            <div className="max-w-md mx-auto text-center mb-16">
+              <div className="glass rounded-2xl p-8">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 className="w-8 h-8 text-green-400" />
+                </div>
+                <h2 className="text-2xl font-bold mb-3">Request Submitted!</h2>
+                <p className="text-dark-400 mb-6">
+                  We&apos;ve received your message and will get back to you as soon as
+                  possible. Please check your email for updates.
+                </p>
+                <button
+                  onClick={handleNewRequest}
+                  className="px-6 py-3 rounded-xl font-semibold bg-brand-500 hover:bg-brand-600 text-white transition-colors"
+                >
+                  Submit Another Request
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* FAQ */}
           <div className="glass rounded-2xl p-8" id="faq">
@@ -93,7 +342,7 @@ export default function SupportPage() {
               />
               <FAQItem
                 question="Is there a refund policy?"
-                answer="We offer refunds within 7 days of purchase if you're not satisfied. Contact us at support@quotecord.com with your Discord username and we'll process your refund."
+                answer="We offer refunds within 7 days of purchase if you're not satisfied. Submit a billing request through the form above with your Discord username and we'll process your refund."
               />
             </div>
           </div>
