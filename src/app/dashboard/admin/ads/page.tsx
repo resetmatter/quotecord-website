@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Megaphone,
   Plus,
@@ -13,7 +13,11 @@ import {
   HelpCircle,
   Edit3,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Bold,
+  Italic,
+  Link,
+  Type
 } from 'lucide-react'
 import type { Ad } from '@/types/ads'
 
@@ -38,6 +42,34 @@ export default function AdsManagementPage() {
     enabled: false,
     weight: 1
   })
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
+
+  const insertFormat = (prefix: string, suffix: string = prefix, placeholder: string = '') => {
+    const textarea = descriptionRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const text = formData.description
+    const selectedText = text.substring(start, end)
+
+    const insertText = selectedText || placeholder
+    const newText = text.substring(0, start) + prefix + insertText + suffix + text.substring(end)
+
+    setFormData(prev => ({ ...prev, description: newText }))
+
+    // Set cursor position after update
+    setTimeout(() => {
+      textarea.focus()
+      const newCursorPos = selectedText
+        ? start + prefix.length + insertText.length + suffix.length
+        : start + prefix.length
+      textarea.setSelectionRange(
+        selectedText ? newCursorPos : newCursorPos,
+        selectedText ? newCursorPos : newCursorPos + placeholder.length
+      )
+    }, 0)
+  }
 
   const fetchData = useCallback(async () => {
     try {
@@ -385,7 +417,42 @@ export default function AdsManagementPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Description (Discord subtext)</label>
+                <div className="flex gap-1 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => insertFormat('**', '**', 'bold')}
+                    className="p-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-lg text-dark-400 hover:text-white transition-colors"
+                    title="Bold"
+                  >
+                    <Bold className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormat('*', '*', 'italic')}
+                    className="p-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-lg text-dark-400 hover:text-white transition-colors"
+                    title="Italic"
+                  >
+                    <Italic className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormat('[', '](url)', 'link text')}
+                    className="p-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-lg text-dark-400 hover:text-white transition-colors"
+                    title="Link"
+                  >
+                    <Link className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormat('-# ', '', 'small text')}
+                    className="p-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-lg text-dark-400 hover:text-white transition-colors"
+                    title="Small text"
+                  >
+                    <Type className="w-4 h-4" />
+                  </button>
+                </div>
                 <textarea
+                  ref={descriptionRef}
                   placeholder="1-2 sentences that appear below the quote in Discord"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -394,9 +461,6 @@ export default function AdsManagementPage() {
                   maxLength={200}
                 />
                 <p className="text-xs text-dark-500 mt-1">Shows below quote, above &quot;remove quote&quot; button</p>
-                <p className="text-xs text-dark-500 mt-1">
-                  Markdown: <code className="bg-dark-700 px-1 rounded">[text](url)</code> links, <code className="bg-dark-700 px-1 rounded">**bold**</code>, <code className="bg-dark-700 px-1 rounded">*italic*</code>, <code className="bg-dark-700 px-1 rounded">-# small</code>
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
