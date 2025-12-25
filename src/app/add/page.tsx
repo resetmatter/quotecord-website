@@ -3,7 +3,7 @@ import Link from 'next/link'
 const CLIENT_ID = '1439621877285785711'
 
 // Server install: bot with slash commands
-const SERVER_INSTALL_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=2147485696&integration_type=0&scope=bot+applications.commands`
+const SERVER_INSTALL_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}`
 
 // User install: user app with slash commands
 const USER_INSTALL_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&integration_type=1&scope=applications.commands`

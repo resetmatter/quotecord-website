@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 
 const CLIENT_ID = '1439621877285785711'
-const SERVER_INSTALL_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=2147485696&integration_type=0&scope=bot+applications.commands`
+const SERVER_INSTALL_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}`
 const USER_INSTALL_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&integration_type=1&scope=applications.commands`
 
 export default function InstallModesPage() {
