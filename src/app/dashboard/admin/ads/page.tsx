@@ -394,6 +394,9 @@ export default function AdsManagementPage() {
                   maxLength={200}
                 />
                 <p className="text-xs text-dark-500 mt-1">Shows below quote, above &quot;remove quote&quot; button</p>
+                <p className="text-xs text-dark-500 mt-1">
+                  Markdown: <code className="bg-dark-700 px-1 rounded">[text](url)</code> links, <code className="bg-dark-700 px-1 rounded">**bold**</code>, <code className="bg-dark-700 px-1 rounded">*italic*</code>, <code className="bg-dark-700 px-1 rounded">-# small</code>
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
