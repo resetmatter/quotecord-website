@@ -211,16 +211,16 @@ export default function InstallModesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
-                  <ComparisonRow feature="Basic Quote Creation" user="full" server="full" />
+                  <ComparisonRow feature="Basic Quote Creation" user="full" server="full" note="Works everywhere" />
                   <ComparisonRow feature="All 4 Templates" user="full" server="full" note="Classic, Discord, Profile L/P" />
-                  <ComparisonRow feature="All 19 Fonts" user="full" server="full" />
-                  <ComparisonRow feature="Dark/Light Themes" user="full" server="full" />
+                  <ComparisonRow feature="All 19 Fonts" user="full" server="full" note="Full font selection available" />
+                  <ComparisonRow feature="Dark/Light Themes" user="full" server="full" note="No restrictions" />
                   <ComparisonRow feature="Privacy Modes" user="full" server="full" note="Public/Anonymous/Private/DM" />
-                  <ComparisonRow feature="Font Gallery (/fonts)" user="full" server="full" />
-                  <ComparisonRow feature="Default Avatar" user="full" server="full" note="Uses global Discord avatar" />
+                  <ComparisonRow feature="Font Gallery (/fonts)" user="full" server="full" note="Works in all contexts" />
+                  <ComparisonRow feature="Default Avatar" user="full" server="full" note="Always uses global Discord avatar" />
                   <ComparisonRow feature="Server Avatar Selection" user="none" server="full" note="Requires guild member access" />
                   <ComparisonRow feature="Multi-Message Quotes" user="partial" server="full" note="Needs Read Message History permission" />
-                  <ComparisonRow feature="Server Nicknames" user="none" server="full" note="Falls back to username in User Install" />
+                  <ComparisonRow feature="Server Nicknames" user="none" server="full" note="Falls back to username" />
                 </tbody>
               </table>
             </div>
@@ -253,67 +253,78 @@ export default function InstallModesPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-2">Why These Limitations?</h2>
                 <p className="text-dark-400">
-                  When you install quotecord as a User App, the bot is added to your personal
-                  Discord account—not the server. Discord restricts what user-installed apps can access
-                  to protect server privacy.
+                  <strong className="text-white">User Install Mode</strong> = The bot is added to your personal
+                  Discord account, not the server. Discord restricts what user-installed apps can access:
                 </p>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <LimitationCard
-                icon={<Image className="w-5 h-5" />}
-                title="No Server Avatars"
-                description="The bot can't access server member data to fetch your server-specific avatar without server permissions."
-              />
-              <LimitationCard
-                icon={<MessageSquare className="w-5 h-5" />}
-                title="Multi-Message Unreliable"
-                description="The bot needs 'Read Message History' permission to fetch other messages in the channel for multi-quote."
-              />
-              <LimitationCard
-                icon={<User className="w-5 h-5" />}
-                title="No Server Nicknames"
-                description="Server nicknames require access to guild member data, which isn't available in User Install mode."
-              />
+            {/* Limitations Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-dark-700">
+                    <th className="text-left py-3 px-4 font-medium text-dark-300">Limitation</th>
+                    <th className="text-left py-3 px-4 font-medium text-dark-300">Reason</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-800">
+                  <tr>
+                    <td className="py-4 px-4 text-white font-medium">No Server Avatars</td>
+                    <td className="py-4 px-4 text-dark-400">
+                      Bot can&apos;t call <code className="bg-dark-800 px-1.5 py-0.5 rounded text-brand-400 text-sm">guild.members.fetch()</code> without server permissions
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-4 text-white font-medium">Multi-Message Unreliable</td>
+                    <td className="py-4 px-4 text-dark-400">
+                      Bot needs &quot;Read Message History&quot; permission to fetch other messages in channel
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-4 text-white font-medium">No Server Nicknames</td>
+                    <td className="py-4 px-4 text-dark-400">
+                      Can&apos;t access guild member data without server install
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
           {/* User-Facing Info Box */}
           <div className="glass rounded-2xl p-8 mb-20 border border-brand-500/30">
-            <h2 className="text-xl font-semibold mb-4">Missing Features?</h2>
+            <h2 className="text-xl font-semibold mb-2">Some features require the bot to be installed on this server</h2>
             <p className="text-dark-300 mb-6">
-              If you&apos;re using quotecord as a User Install and notice certain features
-              aren&apos;t working, it&apos;s not a bug—it&apos;s a Discord limitation. These features
-              need a server admin to add the bot:
+              You&apos;re using quotecord as a User Install, which works great for basic quotes! However, these features need a server admin to add the bot:
             </p>
             <ul className="space-y-3 mb-6">
               <li className="flex items-center gap-3 text-dark-300">
                 <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
                   <Image className="w-3.5 h-3.5 text-brand-400" />
                 </div>
-                <span><strong className="text-white">Server avatar selection</strong> — your server-specific profile picture</span>
+                <span><strong className="text-white">Server avatar selection</strong> (your server-specific profile picture)</span>
               </li>
               <li className="flex items-center gap-3 text-dark-300">
                 <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
                   <MessageSquare className="w-3.5 h-3.5 text-brand-400" />
                 </div>
-                <span><strong className="text-white">Multi-message quotes</strong> — combining multiple messages into one quote</span>
+                <span><strong className="text-white">Multi-message quotes</strong> (combining multiple messages)</span>
               </li>
               <li className="flex items-center gap-3 text-dark-300">
                 <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
                   <User className="w-3.5 h-3.5 text-brand-400" />
                 </div>
-                <span><strong className="text-white">Server nickname display</strong> — showing your server nickname instead of username</span>
+                <span><strong className="text-white">Server nickname display</strong></span>
               </li>
             </ul>
             <a
               href={SERVER_INSTALL_URL}
-              className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 font-medium transition-colors"
+              className="group inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 px-5 rounded-xl transition-all shadow-glow"
             >
               <Server className="w-4 h-4" />
-              Ask a server admin to add quotecord
-              <ArrowRight className="w-4 h-4" />
+              Add quotecord to Server
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
           </div>
 
@@ -431,28 +442,6 @@ function FeatureItem({
         {children}
       </span>
     </li>
-  )
-}
-
-function LimitationCard({
-  icon,
-  title,
-  description
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
-  return (
-    <div className="p-5 rounded-xl bg-dark-800/50 border border-dark-700">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center text-warning">
-          {icon}
-        </div>
-        <h3 className="font-semibold">{title}</h3>
-      </div>
-      <p className="text-dark-400 text-sm">{description}</p>
-    </div>
   )
 }
 
