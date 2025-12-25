@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
-import type { Ad, CreateAdRequest, UpdateAdRequest } from '@/types/ads'
+import type { Ad, CreateAdRequest, UpdateAdRequest, BillingType } from '@/types/ads'
 
 // Database row type for ads table
 interface AdRow {
@@ -20,6 +20,14 @@ interface AdRow {
   target_guilds: string[] | null
   impressions: number
   clicks: number
+  gallery_shares: number
+  // Billing fields
+  billing_type: BillingType
+  cost_per_quote_cents: number
+  budget_cents: number
+  spent_cents: number
+  stripe_customer_id: string | null
+  // Advertiser info
   advertiser_name: string | null
   advertiser_email: string | null
   advertiser_notes: string | null
@@ -59,6 +67,14 @@ function dbRowToAd(row: AdRow): Ad {
     targetGuilds: row.target_guilds,
     impressions: row.impressions || 0,
     clicks: row.clicks || 0,
+    galleryShares: row.gallery_shares || 0,
+    // Billing
+    billingType: row.billing_type || 'free',
+    costPerQuoteCents: row.cost_per_quote_cents || 1,
+    budgetCents: row.budget_cents || 0,
+    spentCents: row.spent_cents || 0,
+    stripeCustomerId: row.stripe_customer_id,
+    // Advertiser
     advertiserName: row.advertiser_name,
     advertiserEmail: row.advertiser_email,
     advertiserNotes: row.advertiser_notes,
@@ -93,7 +109,10 @@ export async function GET(request: Request) {
     // Calculate total stats
     const totalImpressions = (ads || []).reduce((sum, ad) => sum + (ad.impressions || 0), 0)
     const totalClicks = (ads || []).reduce((sum, ad) => sum + (ad.clicks || 0), 0)
+    const totalGalleryShares = (ads || []).reduce((sum, ad) => sum + (ad.gallery_shares || 0), 0)
     const activeCount = (ads || []).filter(ad => ad.enabled).length
+    const totalRevenue = (ads || []).reduce((sum, ad) => sum + (ad.spent_cents || 0), 0)
+    const totalBudget = (ads || []).reduce((sum, ad) => sum + (ad.budget_cents || 0), 0)
 
     return NextResponse.json({
       ads: (ads || []).map(dbRowToAd),
@@ -102,7 +121,12 @@ export async function GET(request: Request) {
         activeAds: activeCount,
         totalImpressions,
         totalClicks,
-        overallCtr: totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : '0.00'
+        totalGalleryShares,
+        overallCtr: totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : '0.00',
+        // Billing stats
+        totalRevenueCents: totalRevenue,
+        totalBudgetCents: totalBudget,
+        remainingBudgetCents: totalBudget - totalRevenue
       }
     })
   } catch (error) {
@@ -170,6 +194,11 @@ export async function POST(request: Request) {
         start_date: body.startDate || null,
         end_date: body.endDate || null,
         target_guilds: body.targetGuilds || null,
+        // Billing
+        billing_type: body.billingType || 'free',
+        cost_per_quote_cents: body.costPerQuoteCents ?? 1,
+        budget_cents: body.budgetCents ?? 0,
+        // Advertiser
         advertiser_name: body.advertiserName || null,
         advertiser_email: body.advertiserEmail || null,
         advertiser_notes: body.advertiserNotes || null,
@@ -252,6 +281,11 @@ export async function PATCH(request: Request) {
     if (body.startDate !== undefined) updates.start_date = body.startDate
     if (body.endDate !== undefined) updates.end_date = body.endDate
     if (body.targetGuilds !== undefined) updates.target_guilds = body.targetGuilds
+    // Billing
+    if (body.billingType !== undefined) updates.billing_type = body.billingType
+    if (body.costPerQuoteCents !== undefined) updates.cost_per_quote_cents = body.costPerQuoteCents
+    if (body.budgetCents !== undefined) updates.budget_cents = body.budgetCents
+    // Advertiser
     if (body.advertiserName !== undefined) updates.advertiser_name = body.advertiserName
     if (body.advertiserEmail !== undefined) updates.advertiser_email = body.advertiserEmail
     if (body.advertiserNotes !== undefined) updates.advertiser_notes = body.advertiserNotes

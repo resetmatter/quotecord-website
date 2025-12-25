@@ -16,6 +16,11 @@ interface AdRow {
   start_date: string | null
   end_date: string | null
   impressions: number
+  // Billing fields
+  billing_type: 'free' | 'prepaid' | 'unlimited'
+  budget_cents: number
+  spent_cents: number
+  cost_per_quote_cents: number
 }
 
 // Response type for the bot
@@ -29,6 +34,7 @@ interface BotAdResponse {
 }
 
 // GET /api/bot/ads - Get a random ad from all enabled ads (weighted selection)
+// This also charges the advertiser for the quote generation
 export async function GET(request: Request) {
   // Verify bot API key
   if (!await verifyBotApiKey(request)) {
@@ -62,12 +68,24 @@ export async function GET(request: Request) {
       } as BotAdResponse)
     }
 
-    // Filter ads by date constraints
+    // Filter ads by date constraints AND budget availability
     const now = new Date()
     const activeAds = ads.filter(ad => {
+      // Date constraints
       if (ad.start_date && new Date(ad.start_date) > now) return false
       if (ad.end_date && new Date(ad.end_date) <= now) return false
-      return true
+
+      // Budget constraints
+      if (ad.billing_type === 'free' || ad.billing_type === 'unlimited') {
+        return true // Always available
+      }
+
+      if (ad.billing_type === 'prepaid') {
+        const remainingBudget = ad.budget_cents - ad.spent_cents
+        return remainingBudget >= (ad.cost_per_quote_cents || 1)
+      }
+
+      return true // Default to available if no billing_type set yet
     })
 
     if (activeAds.length === 0) {
@@ -96,12 +114,39 @@ export async function GET(request: Request) {
       selectedAd = activeAds[0]
     }
 
-    // Increment impressions (fire and forget)
-    ;(supabase as any)
-      .from('ads')
-      .update({ impressions: selectedAd.impressions + 1 })
-      .eq('id', selectedAd.id)
-      .then(() => {})
+    // Charge the advertiser for this quote generation
+    // Uses the database function which handles billing_type logic
+    const { data: chargeResult, error: chargeError } = await (supabase as any)
+      .rpc('charge_ad_for_quote', { ad_id: selectedAd.id })
+
+    if (chargeError) {
+      console.error('Error charging for ad:', chargeError)
+      // Fall back to simple impression increment if charge function doesn't exist yet
+      await (supabase as any)
+        .from('ads')
+        .update({ impressions: selectedAd.impressions + 1 })
+        .eq('id', selectedAd.id)
+    }
+
+    // If charge failed (no budget), try to get another ad
+    if (chargeResult === false) {
+      console.log(`Ad ${selectedAd.id} has no budget, finding alternative`)
+      // Remove this ad and try again with remaining ads
+      const remainingAds = activeAds.filter(ad => ad.id !== selectedAd!.id)
+      if (remainingAds.length > 0) {
+        // Simple fallback: just pick the first remaining ad
+        selectedAd = remainingAds[0]
+        // Try to charge this one
+        await (supabase as any).rpc('charge_ad_for_quote', { ad_id: selectedAd.id })
+      } else {
+        // No ads with budget available
+        return NextResponse.json({
+          text: '',
+          shortText: '',
+          enabled: false
+        } as BotAdResponse)
+      }
+    }
 
     // Build the tracking URL if handle exists
     const trackingUrl = selectedAd.handle

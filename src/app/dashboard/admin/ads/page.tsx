@@ -25,16 +25,29 @@ import {
   TrendingUp,
   Users,
   ExternalLink,
-  Weight
+  Weight,
+  DollarSign,
+  CreditCard,
+  Share2,
+  Wallet
 } from 'lucide-react'
-import type { Ad } from '@/types/ads'
+import type { Ad, BillingType } from '@/types/ads'
 
 interface AdsStats {
   totalAds: number
   activeAds: number
   totalImpressions: number
   totalClicks: number
+  totalGalleryShares: number
   overallCtr: string
+  totalRevenueCents: number
+  totalBudgetCents: number
+  remainingBudgetCents: number
+}
+
+// Format cents to dollars
+const formatCents = (cents: number) => {
+  return `$${(cents / 100).toFixed(2)}`
 }
 
 export default function AdsManagementPage() {
@@ -67,7 +80,11 @@ export default function AdsManagementPage() {
     endDate: '',
     advertiserName: '',
     advertiserEmail: '',
-    advertiserNotes: ''
+    advertiserNotes: '',
+    // Billing
+    billingType: 'free' as BillingType,
+    costPerQuoteCents: 1,
+    budgetCents: 0
   })
 
   // Fetch all ads
@@ -111,7 +128,10 @@ export default function AdsManagementPage() {
       endDate: '',
       advertiserName: '',
       advertiserEmail: '',
-      advertiserNotes: ''
+      advertiserNotes: '',
+      billingType: 'prepaid',
+      costPerQuoteCents: 1,
+      budgetCents: 0
     })
     setShowForm(true)
   }
@@ -132,7 +152,10 @@ export default function AdsManagementPage() {
       endDate: ad.endDate ? ad.endDate.split('T')[0] : '',
       advertiserName: ad.advertiserName || '',
       advertiserEmail: ad.advertiserEmail || '',
-      advertiserNotes: ad.advertiserNotes || ''
+      advertiserNotes: ad.advertiserNotes || '',
+      billingType: ad.billingType || 'free',
+      costPerQuoteCents: ad.costPerQuoteCents || 1,
+      budgetCents: ad.budgetCents || 0
     })
     setShowForm(true)
   }
@@ -166,7 +189,6 @@ export default function AdsManagementPage() {
       let response: Response
 
       if (editingAd) {
-        // Update existing ad
         response = await fetch(`/api/admin/ads?id=${editingAd.id}`, {
           method: 'PATCH',
           headers,
@@ -184,11 +206,13 @@ export default function AdsManagementPage() {
             advertiserName: formData.advertiserName || null,
             advertiserEmail: formData.advertiserEmail || null,
             advertiserNotes: formData.advertiserNotes || null,
+            billingType: formData.billingType,
+            costPerQuoteCents: formData.costPerQuoteCents,
+            budgetCents: formData.budgetCents,
             updatedBy: 'admin'
           })
         })
       } else {
-        // Create new ad
         response = await fetch('/api/admin/ads', {
           method: 'POST',
           headers,
@@ -206,6 +230,9 @@ export default function AdsManagementPage() {
             advertiserName: formData.advertiserName || null,
             advertiserEmail: formData.advertiserEmail || null,
             advertiserNotes: formData.advertiserNotes || null,
+            billingType: formData.billingType,
+            costPerQuoteCents: formData.costPerQuoteCents,
+            budgetCents: formData.budgetCents,
             createdBy: 'admin'
           })
         })
@@ -289,8 +316,22 @@ export default function AdsManagementPage() {
     return Math.round((weight / totalWeight) * 100)
   }
 
+  // Get remaining budget
+  const getRemainingBudget = (ad: Ad) => {
+    if (ad.billingType === 'free' || ad.billingType === 'unlimited') return null
+    return ad.budgetCents - ad.spentCents
+  }
+
+  // Get remaining quotes estimate
+  const getRemainingQuotes = (ad: Ad) => {
+    if (ad.billingType === 'free' || ad.billingType === 'unlimited') return null
+    const remaining = ad.budgetCents - ad.spentCents
+    if (ad.costPerQuoteCents <= 0) return null
+    return Math.floor(remaining / ad.costPerQuoteCents)
+  }
+
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-6xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-brand-500/20 flex items-center justify-center">
@@ -298,7 +339,7 @@ export default function AdsManagementPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Ad Management</h1>
-          <p className="text-sm text-dark-400">Multi-advertiser system with weighted rotation</p>
+          <p className="text-sm text-dark-400">Multi-advertiser billing system</p>
         </div>
       </div>
 
@@ -309,22 +350,16 @@ export default function AdsManagementPage() {
             <HelpCircle className="w-4 h-4 text-brand-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white mb-2">Multi-Advertiser System</h3>
+            <h3 className="font-semibold text-white mb-2">Prepaid Billing System</h3>
             <div className="space-y-2 text-sm text-dark-400">
               <p>
-                <strong className="text-white">Weighted Rotation:</strong> All enabled ads rotate randomly. Higher weight = more impressions.
+                <strong className="text-white">Per-Quote Charging:</strong> Advertisers are charged for each quote generated with their ad.
               </p>
               <p>
-                <strong className="text-white">Tracking URLs:</strong> Create vanity handles like <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">quotecord.com/go/logitech</code> that redirect to destination URLs and track clicks.
+                <strong className="text-white">Prepaid Credits:</strong> Advertisers buy credits upfront. Ads stop showing when budget is depleted.
               </p>
               <p>
-                <strong className="text-white">Analytics:</strong> Track impressions (when ad is shown) and clicks (when tracking URL is visited) per advertiser.
-              </p>
-            </div>
-            <div className="mt-3 p-3 bg-dark-800/50 rounded-xl">
-              <p className="text-xs text-dark-500">
-                <strong className="text-dark-300">Bot API:</strong>{' '}
-                <code className="text-brand-400 bg-dark-900 px-1.5 py-0.5 rounded">GET /api/bot/ads</code> returns a random ad based on weights
+                <strong className="text-white">Tracking:</strong> Impressions (quotes), clicks (URL visits), and gallery shares are all tracked.
               </p>
             </div>
           </div>
@@ -335,12 +370,6 @@ export default function AdsManagementPage() {
       <div className="glass rounded-xl p-4 mb-6">
         <div className="flex items-center gap-2 mb-2">
           <label className="text-sm font-medium">Admin API Key</label>
-          <div className="group relative">
-            <HelpCircle className="w-3.5 h-3.5 text-dark-500 cursor-help" />
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-dark-800 rounded-lg text-xs text-dark-300 w-64 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg border border-dark-700">
-              This is your BOT_API_KEY or ADMIN_API_KEY from your environment variables. It authenticates you as an admin.
-            </div>
-          </div>
         </div>
         <input
           type="password"
@@ -349,7 +378,6 @@ export default function AdsManagementPage() {
           onChange={(e) => setApiKey(e.target.value)}
           className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
         />
-        <p className="text-xs text-dark-500 mt-2">Stored locally in your browser. Required to make changes.</p>
       </div>
 
       {/* Messages */}
@@ -375,41 +403,62 @@ export default function AdsManagementPage() {
         <div className="space-y-6">
           {/* Stats Overview */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <div className="glass rounded-xl p-4">
                 <div className="flex items-center gap-2 text-dark-400 mb-1">
                   <Megaphone className="w-4 h-4" />
-                  <span className="text-xs">Total Ads</span>
+                  <span className="text-xs">Total</span>
                 </div>
-                <p className="text-2xl font-bold">{stats.totalAds}</p>
+                <p className="text-xl font-bold">{stats.totalAds}</p>
               </div>
               <div className="glass rounded-xl p-4">
                 <div className="flex items-center gap-2 text-success mb-1">
                   <Eye className="w-4 h-4" />
                   <span className="text-xs">Active</span>
                 </div>
-                <p className="text-2xl font-bold">{stats.activeAds}</p>
+                <p className="text-xl font-bold">{stats.activeAds}</p>
               </div>
               <div className="glass rounded-xl p-4">
                 <div className="flex items-center gap-2 text-brand-400 mb-1">
                   <BarChart3 className="w-4 h-4" />
-                  <span className="text-xs">Impressions</span>
+                  <span className="text-xs">Quotes</span>
                 </div>
-                <p className="text-2xl font-bold">{stats.totalImpressions.toLocaleString()}</p>
+                <p className="text-xl font-bold">{stats.totalImpressions.toLocaleString()}</p>
               </div>
               <div className="glass rounded-xl p-4">
                 <div className="flex items-center gap-2 text-blue-400 mb-1">
                   <MousePointerClick className="w-4 h-4" />
                   <span className="text-xs">Clicks</span>
                 </div>
-                <p className="text-2xl font-bold">{stats.totalClicks.toLocaleString()}</p>
+                <p className="text-xl font-bold">{stats.totalClicks.toLocaleString()}</p>
               </div>
               <div className="glass rounded-xl p-4">
                 <div className="flex items-center gap-2 text-purple-400 mb-1">
+                  <Share2 className="w-4 h-4" />
+                  <span className="text-xs">Shares</span>
+                </div>
+                <p className="text-xl font-bold">{stats.totalGalleryShares.toLocaleString()}</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-orange-400 mb-1">
                   <TrendingUp className="w-4 h-4" />
                   <span className="text-xs">CTR</span>
                 </div>
-                <p className="text-2xl font-bold">{stats.overallCtr}%</p>
+                <p className="text-xl font-bold">{stats.overallCtr}%</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-emerald-400 mb-1">
+                  <DollarSign className="w-4 h-4" />
+                  <span className="text-xs">Revenue</span>
+                </div>
+                <p className="text-xl font-bold">{formatCents(stats.totalRevenueCents)}</p>
+              </div>
+              <div className="glass rounded-xl p-4">
+                <div className="flex items-center gap-2 text-yellow-400 mb-1">
+                  <Wallet className="w-4 h-4" />
+                  <span className="text-xs">Pending</span>
+                </div>
+                <p className="text-xl font-bold">{formatCents(stats.remainingBudgetCents)}</p>
               </div>
             </div>
           )}
@@ -434,7 +483,6 @@ export default function AdsManagementPage() {
               <div className="text-center py-8 text-dark-400 border-2 border-dashed border-dark-700 rounded-xl">
                 <Megaphone className="w-10 h-10 mx-auto mb-2 opacity-50" />
                 <p className="font-medium">No ads yet</p>
-                <p className="text-sm text-dark-500 mt-1">Click &quot;Add Advertiser&quot; to create your first ad</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -443,114 +491,133 @@ export default function AdsManagementPage() {
                     <tr className="border-b border-dark-700 text-left text-dark-400">
                       <th className="pb-3 font-medium">Advertiser</th>
                       <th className="pb-3 font-medium">Handle</th>
-                      <th className="pb-3 font-medium text-center">Weight</th>
-                      <th className="pb-3 font-medium text-right">Impressions</th>
-                      <th className="pb-3 font-medium text-right">Clicks / CTR</th>
+                      <th className="pb-3 font-medium text-center">Type</th>
+                      <th className="pb-3 font-medium text-right">Budget</th>
+                      <th className="pb-3 font-medium text-right">Quotes</th>
+                      <th className="pb-3 font-medium text-right">Clicks</th>
                       <th className="pb-3 font-medium text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-800">
-                    {ads.map(ad => (
-                      <tr key={ad.id} className={`hover:bg-dark-800/50 ${!ad.enabled ? 'opacity-50' : ''}`}>
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                              ad.enabled ? 'bg-brand-500/20' : 'bg-dark-700'
+                    {ads.map(ad => {
+                      const remaining = getRemainingBudget(ad)
+                      const remainingQuotes = getRemainingQuotes(ad)
+                      return (
+                        <tr key={ad.id} className={`hover:bg-dark-800/50 ${!ad.enabled ? 'opacity-50' : ''}`}>
+                          <td className="py-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                ad.enabled ? 'bg-brand-500/20' : 'bg-dark-700'
+                              }`}>
+                                {ad.enabled ? (
+                                  <Eye className="w-4 h-4 text-brand-400" />
+                                ) : (
+                                  <EyeOff className="w-4 h-4 text-dark-500" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium text-white">
+                                  {ad.advertiserName || ad.name || 'Unnamed'}
+                                </p>
+                                <p className="text-xs text-dark-500 truncate max-w-[180px]">
+                                  {ad.shortText}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            {ad.handle ? (
+                              <div className="flex items-center gap-2">
+                                <code className="text-brand-400 bg-dark-900 px-2 py-1 rounded text-xs">
+                                  /go/{ad.handle}
+                                </code>
+                                <button
+                                  onClick={() => copyToClipboard(`https://quotecord.com/go/${ad.handle}`)}
+                                  className="text-dark-500 hover:text-white"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-dark-500 text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="py-4 text-center">
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              ad.billingType === 'free' ? 'bg-dark-700 text-dark-300' :
+                              ad.billingType === 'prepaid' ? 'bg-emerald-500/20 text-emerald-400' :
+                              'bg-purple-500/20 text-purple-400'
                             }`}>
-                              {ad.enabled ? (
-                                <Eye className="w-4 h-4 text-brand-400" />
-                              ) : (
-                                <EyeOff className="w-4 h-4 text-dark-500" />
+                              {ad.billingType}
+                            </span>
+                          </td>
+                          <td className="py-4 text-right">
+                            {ad.billingType === 'prepaid' ? (
+                              <div>
+                                <p className={`font-mono ${remaining !== null && remaining <= 0 ? 'text-error' : 'text-white'}`}>
+                                  {formatCents(remaining || 0)}
+                                </p>
+                                <p className="text-xs text-dark-500">
+                                  of {formatCents(ad.budgetCents)}
+                                </p>
+                              </div>
+                            ) : (
+                              <span className="text-dark-500">—</span>
+                            )}
+                          </td>
+                          <td className="py-4 text-right">
+                            <p className="font-mono">{ad.impressions.toLocaleString()}</p>
+                            {remainingQuotes !== null && (
+                              <p className="text-xs text-dark-500">
+                                ~{remainingQuotes.toLocaleString()} left
+                              </p>
+                            )}
+                          </td>
+                          <td className="py-4 text-right">
+                            <p className="font-mono">{ad.clicks.toLocaleString()}</p>
+                            <p className="text-xs text-dark-500">
+                              {getCtr(ad.impressions, ad.clicks)}% CTR
+                            </p>
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center justify-end gap-1">
+                              {ad.destinationUrl && (
+                                <a
+                                  href={ad.destinationUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
                               )}
-                            </div>
-                            <div>
-                              <p className="font-medium text-white">
-                                {ad.advertiserName || ad.name || 'Unnamed'}
-                              </p>
-                              <p className="text-xs text-dark-500 truncate max-w-[200px]">
-                                {ad.shortText}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          {ad.handle ? (
-                            <div className="flex items-center gap-2">
-                              <code className="text-brand-400 bg-dark-900 px-2 py-1 rounded text-xs">
-                                /go/{ad.handle}
-                              </code>
                               <button
-                                onClick={() => copyToClipboard(`https://quotecord.com/go/${ad.handle}`)}
-                                className="text-dark-500 hover:text-white"
+                                onClick={() => handleToggleEnabled(ad)}
+                                className={`p-2 rounded-lg ${
+                                  ad.enabled
+                                    ? 'text-success hover:bg-dark-700'
+                                    : 'text-dark-500 hover:text-success hover:bg-success/10'
+                                }`}
                               >
-                                <Copy className="w-3.5 h-3.5" />
+                                {ad.enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                              </button>
+                              <button
+                                onClick={() => handleEdit(ad)}
+                                className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(ad)}
+                                className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg"
+                              >
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          ) : (
-                            <span className="text-dark-500 text-xs">No handle</span>
-                          )}
-                        </td>
-                        <td className="py-4 text-center">
-                          <div className="flex flex-col items-center">
-                            <span className="font-medium">{ad.weight || 1}x</span>
-                            {ad.enabled && (
-                              <span className="text-xs text-dark-500">
-                                {getWeightPercentage(ad.weight || 1)}%
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-4 text-right font-mono">
-                          {ad.impressions.toLocaleString()}
-                        </td>
-                        <td className="py-4 text-right">
-                          <span className="font-mono">{ad.clicks.toLocaleString()}</span>
-                          <span className="text-dark-500 ml-2">
-                            ({getCtr(ad.impressions, ad.clicks)}%)
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center justify-end gap-1">
-                            {ad.destinationUrl && (
-                              <a
-                                href={ad.destinationUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"
-                                title="Open destination"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            )}
-                            <button
-                              onClick={() => handleToggleEnabled(ad)}
-                              className={`p-2 rounded-lg transition-colors ${
-                                ad.enabled
-                                  ? 'text-success hover:text-dark-400 hover:bg-dark-700'
-                                  : 'text-dark-500 hover:text-success hover:bg-success/10'
-                              }`}
-                              title={ad.enabled ? 'Disable' : 'Enable'}
-                            >
-                              {ad.enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                            </button>
-                            <button
-                              onClick={() => handleEdit(ad)}
-                              className="p-2 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors"
-                              title="Edit"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(ad)}
-                              className="p-2 text-dark-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -572,12 +639,12 @@ export default function AdsManagementPage() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Advertiser Info Section */}
+              {/* Advertiser Info */}
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Advertiser Info</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Company/Brand Name</label>
+                    <label className="block text-sm font-medium mb-2">Company Name</label>
                     <input
                       type="text"
                       placeholder="e.g., Logitech"
@@ -597,31 +664,62 @@ export default function AdsManagementPage() {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Internal Name <span className="text-dark-500 font-normal">(for admin reference)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Logitech Q4 2024 Campaign"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Internal Notes</label>
-                  <textarea
-                    placeholder="Contract details, campaign notes, etc..."
-                    value={formData.advertiserNotes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, advertiserNotes: e.target.value }))}
-                    rows={2}
-                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 resize-none"
-                  />
-                </div>
               </div>
 
-              {/* Tracking URL Section */}
+              {/* Billing */}
+              <div className="space-y-4 pt-4 border-t border-dark-800">
+                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Billing
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Billing Type</label>
+                    <select
+                      value={formData.billingType}
+                      onChange={(e) => setFormData(prev => ({ ...prev, billingType: e.target.value as BillingType }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    >
+                      <option value="free">Free (internal)</option>
+                      <option value="prepaid">Prepaid</option>
+                      <option value="unlimited">Unlimited</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cost per Quote (¢)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.costPerQuoteCents}
+                      onChange={(e) => setFormData(prev => ({ ...prev, costPerQuoteCents: parseInt(e.target.value) || 1 }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                    <p className="text-xs text-dark-500 mt-1">{formatCents(formData.costPerQuoteCents)} per quote</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Budget (¢)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.budgetCents}
+                      onChange={(e) => setFormData(prev => ({ ...prev, budgetCents: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                    />
+                    <p className="text-xs text-dark-500 mt-1">{formatCents(formData.budgetCents)} total</p>
+                  </div>
+                </div>
+                {formData.billingType === 'prepaid' && formData.budgetCents > 0 && (
+                  <div className="bg-dark-800/50 rounded-xl p-3">
+                    <p className="text-sm text-dark-300">
+                      This budget allows for approximately <strong className="text-white">
+                        {Math.floor(formData.budgetCents / formData.costPerQuoteCents).toLocaleString()}
+                      </strong> quotes at {formatCents(formData.costPerQuoteCents)} each.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Tracking URL */}
               <div className="space-y-4 pt-4 border-t border-dark-800">
                 <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Tracking URL</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -642,7 +740,6 @@ export default function AdsManagementPage() {
                         className="flex-1 px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-r-xl text-sm focus:outline-none focus:border-brand-500"
                       />
                     </div>
-                    <p className="text-xs text-dark-500 mt-1">Letters, numbers, hyphens, underscores only</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Destination URL</label>
@@ -653,12 +750,11 @@ export default function AdsManagementPage() {
                       onChange={(e) => setFormData(prev => ({ ...prev, destinationUrl: e.target.value }))}
                       className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                     />
-                    <p className="text-xs text-dark-500 mt-1">Where clicks are redirected to</p>
                   </div>
                 </div>
               </div>
 
-              {/* Ad Content Section */}
+              {/* Ad Content */}
               <div className="space-y-4 pt-4 border-t border-dark-800">
                 <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Ad Content</h3>
                 <div>
@@ -668,15 +764,13 @@ export default function AdsManagementPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="Sponsored by Logitech • Shop gaming gear at logitech.com"
+                    placeholder="Sponsored by Logitech • Shop gaming gear"
                     value={formData.text}
                     onChange={(e) => setFormData(prev => ({ ...prev, text: e.target.value }))}
                     className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                     maxLength={150}
                   />
-                  <p className="text-xs text-dark-500 mt-1">Shown on classic/profile templates. Max ~100 chars recommended.</p>
                 </div>
-
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium mb-2">
                     <AlignLeft className="w-4 h-4 text-brand-400" />
@@ -690,27 +784,12 @@ export default function AdsManagementPage() {
                     className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                     maxLength={80}
                   />
-                  <p className="text-xs text-dark-500 mt-1">Shown on discord/embed templates. Max ~50 chars recommended.</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Description <span className="text-dark-500 font-normal">(optional caption)</span>
-                  </label>
-                  <textarea
-                    placeholder="A brief description/caption for the ad..."
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={2}
-                    className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 resize-none"
-                  />
                 </div>
               </div>
 
-              {/* Settings Section */}
+              {/* Settings */}
               <div className="space-y-4 pt-4 border-t border-dark-800">
                 <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wide">Settings</h3>
-
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="flex items-center gap-2 text-sm font-medium mb-2">
@@ -725,7 +804,6 @@ export default function AdsManagementPage() {
                       onChange={(e) => setFormData(prev => ({ ...prev, weight: parseInt(e.target.value) || 1 }))}
                       className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                     />
-                    <p className="text-xs text-dark-500 mt-1">Higher = more impressions</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Start Date</label>
@@ -746,11 +824,10 @@ export default function AdsManagementPage() {
                     />
                   </div>
                 </div>
-
                 <div className="flex items-center justify-between p-3 bg-dark-800/50 rounded-xl">
                   <div>
                     <span className="text-sm font-medium">Enabled</span>
-                    <p className="text-xs text-dark-500 mt-0.5">Include this ad in rotation</p>
+                    <p className="text-xs text-dark-500">Include in ad rotation</p>
                   </div>
                   <button
                     onClick={() => setFormData(prev => ({ ...prev, enabled: !prev.enabled }))}
