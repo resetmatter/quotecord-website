@@ -6,6 +6,7 @@ interface AdRow {
   id: string
   text: string
   short_text: string
+  description: string | null
   name: string | null
   enabled: boolean
   weight: number
@@ -26,6 +27,7 @@ function dbRowToAd(row: AdRow): Ad {
     id: row.id,
     text: row.text,
     shortText: row.short_text,
+    description: row.description,
     name: row.name,
     enabled: row.enabled,
     weight: row.weight || 1,
@@ -80,6 +82,7 @@ export async function POST(request: Request) {
       .insert({
         text: body.text,
         short_text: body.shortText,
+        description: body.description || null,
         name: body.name || null,
         enabled: body.enabled ?? false,
         weight: body.weight ?? 1
@@ -117,6 +120,7 @@ export async function PATCH(request: Request) {
     const updates: Record<string, any> = { updated_at: new Date().toISOString() }
     if (body.text !== undefined) updates.text = body.text
     if (body.shortText !== undefined) updates.short_text = body.shortText
+    if (body.description !== undefined) updates.description = body.description
     if (body.name !== undefined) updates.name = body.name
     if (body.enabled !== undefined) updates.enabled = body.enabled
     if (body.weight !== undefined) updates.weight = body.weight

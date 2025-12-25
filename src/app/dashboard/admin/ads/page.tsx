@@ -33,6 +33,7 @@ export default function AdsManagementPage() {
   const [formData, setFormData] = useState({
     text: '',
     shortText: '',
+    description: '',
     name: '',
     enabled: false,
     weight: 1
@@ -63,7 +64,7 @@ export default function AdsManagementPage() {
 
   const handleCreate = () => {
     setEditingAd(null)
-    setFormData({ text: '', shortText: '', name: '', enabled: false, weight: 1 })
+    setFormData({ text: '', shortText: '', description: '', name: '', enabled: false, weight: 1 })
     setShowForm(true)
   }
 
@@ -72,6 +73,7 @@ export default function AdsManagementPage() {
     setFormData({
       text: ad.text,
       shortText: ad.shortText,
+      description: ad.description || '',
       name: ad.name || '',
       enabled: ad.enabled,
       weight: ad.weight || 1
@@ -284,6 +286,9 @@ export default function AdsManagementPage() {
                         </div>
                         <p className="text-sm text-dark-400 truncate">{ad.text}</p>
                         <p className="text-xs text-dark-500 truncate mt-1">{ad.shortText}</p>
+                        {ad.description && (
+                          <p className="text-xs text-dark-500 italic mt-1 truncate">&quot;{ad.description}&quot;</p>
+                        )}
                         {ad.enabled && enabledCount > 1 && (
                           <p className="text-xs text-dark-500 mt-2">Weight: {ad.weight}</p>
                         )}
@@ -376,6 +381,19 @@ export default function AdsManagementPage() {
                   maxLength={80}
                 />
                 <p className="text-xs text-dark-500 mt-1">Shown on discord/embed templates</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Description (Discord subtext)</label>
+                <textarea
+                  placeholder="1-2 sentences that appear below the quote in Discord"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-dark-800 border border-dark-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 resize-none"
+                  rows={2}
+                  maxLength={200}
+                />
+                <p className="text-xs text-dark-500 mt-1">Shows below quote, above &quot;remove quote&quot; button</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

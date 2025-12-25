@@ -6,6 +6,7 @@ interface AdRow {
   id: string
   text: string
   short_text: string
+  description: string | null
   enabled: boolean
   weight: number
 }
@@ -13,6 +14,7 @@ interface AdRow {
 interface BotAdResponse {
   text: string
   shortText: string
+  description: string | null
   enabled: boolean
 }
 
@@ -28,13 +30,14 @@ export async function GET(request: Request) {
     // Get all enabled ads
     const { data: ads, error } = await (supabase as any)
       .from('ads')
-      .select('id, text, short_text, enabled, weight')
+      .select('id, text, short_text, description, enabled, weight')
       .eq('enabled', true) as { data: AdRow[] | null; error: any }
 
     if (error || !ads || ads.length === 0) {
       return NextResponse.json({
         text: '',
         shortText: '',
+        description: null,
         enabled: false
       } as BotAdResponse)
     }
@@ -44,6 +47,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         text: ads[0].text,
         shortText: ads[0].short_text,
+        description: ads[0].description,
         enabled: true
       } as BotAdResponse)
     }
@@ -64,6 +68,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       text: selectedAd.text,
       shortText: selectedAd.short_text,
+      description: selectedAd.description,
       enabled: true
     } as BotAdResponse)
   } catch (error) {
@@ -71,6 +76,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       text: '',
       shortText: '',
+      description: null,
       enabled: false
     } as BotAdResponse)
   }
