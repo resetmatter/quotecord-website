@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus, Server, HelpCircle, Calendar } from 'lucide-react'
+import { Crown, Sparkles, ArrowRight, CheckCircle, Zap, UserPlus, Server, HelpCircle, Calendar, Images } from 'lucide-react'
 import { getCurrentUser, UserProfile, getBillingPeriod } from '@/lib/user'
 
 export default function DashboardPage() {
@@ -225,11 +225,46 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Your Quote Archive - Prominent Gallery CTA */}
+      <div className="glass rounded-2xl p-6 mb-6 border border-brand-500/30 bg-gradient-to-br from-dark-800 to-dark-800/50">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-brand-500/20 flex items-center justify-center">
+                <Images className="w-5 h-5 text-brand-400" />
+              </div>
+              <h2 className="text-lg font-semibold">Your Quote Archive</h2>
+            </div>
+            <p className="text-dark-400 text-sm mb-4 ml-[52px]">
+              Every quote you've ever created is saved here. Browse, search, and revisit your favorite moments anytime.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/dashboard/gallery"
+          className="flex items-center justify-center gap-2 w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 px-4 rounded-xl transition-all group"
+        >
+          <Images className="w-4 h-4" />
+          Open Gallery
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </div>
+
       {/* Quick Actions */}
       <div className="glass rounded-2xl p-6">
         <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
 
         <div className="space-y-3">
+          <Link
+            href="/dashboard/gallery"
+            className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
+          >
+            <span className="flex items-center gap-2">
+              <Images className="w-4 h-4 text-brand-400" />
+              Browse Your Quote Archive
+            </span>
+            <ArrowRight className="w-4 h-4 text-dark-400 group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
+          </Link>
           <Link
             href="/add"
             className="flex items-center justify-between p-4 bg-dark-800/50 hover:bg-dark-800 rounded-xl transition-all group"
